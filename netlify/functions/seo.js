@@ -5,18 +5,16 @@ function extract(html, regex) {
   return m ? m[1].trim() : "";
 }
 
-async function safePSI(url, strategy) {
+async function runPSI(url) {
   try {
     const res = await fetch(
       "https://www.googleapis.com/pagespeedonline/v5/runPagespeed" +
         `?url=${encodeURIComponent(url)}` +
-        `&strategy=${strategy}` +
-        `&key=${PSI_API_KEY}`,
-      { timeout: 15000 }
+        "&strategy=mobile" +
+        "&category=performance" +
+        `&key=${PSI_API_KEY}`
     );
-
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch {
     return null;
   }
@@ -27,7 +25,7 @@ function getScore(data) {
   return score !== undefined ? Math.round(score * 100) : null;
 }
 
-function getAmpAudit(data) {
+function getAmpStatus(data) {
   const audit = data?.lighthouseResult?.audits?.["amp-valid"];
   if (!audit) return "Cannot be evaluated";
   return audit.score === 1 ? "Valid" : "Invalid";
@@ -62,14 +60,8 @@ export async function handler(event) {
       /<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i
     );
 
-    // PSI calls (SAFE)
-    const psiMobile = await safePSI(url, "mobile");
-    const psiDesktop = await safePSI(url, "desktop");
-
-    let linkedAmpPSI = null;
-    if (amphtml) {
-      linkedAmpPSI = await safePSI(amphtml, "mobile");
-    }
+    // ONE PSI CALL ONLY
+    const psi = await runPSI(url);
 
     return {
       statusCode: 200,
@@ -81,27 +73,25 @@ export async function handler(event) {
         canonical,
         amphtml,
         pageSpeed: {
-          mobile: getScore(psiMobile),
-          desktop: getScore(psiDesktop)
+          mobile: getScore(psi),
+          desktop: null // desktop removed to avoid timeout
         },
-        ampStatus: getAmpAudit(psiMobile),
-        linkedAmp: {
-          url: amphtml || null,
-          status: linkedAmpPSI ? getAmpAudit(linkedAmpPSI) : "No AMP linked"
-        },
+        ampStatus: getAmpStatus(psi),
         ampTestUrl: `https://search.google.com/test/amp?url=${encodeURIComponent(
           url
-        )}`
+        )}`,
+        linkedAmp: {
+          url: amphtml || null,
+          status: "Check manually"
+        }
       })
     };
-  } catch (err) {
+  } catch {
     return {
-      statusCode: 200, // IMPORTANT: still return 200
+      statusCode: 200,
       body: JSON.stringify({
         url,
-        error: "Partial failure",
-        pageSpeed: {},
-        ampStatus: "Cannot be evaluated"
+        error: "Partial failure"
       })
     };
   }
