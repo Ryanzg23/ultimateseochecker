@@ -1,19 +1,23 @@
 const PSI_API_KEY = "AIzaSyCHPQ51PmfyXRoOOJqxc_15wuMKrI_yR-c";
 
+// ===============================
+// HELPERS
+// ===============================
 function extract(html, regex) {
   const m = html.match(regex);
   return m ? m[1].trim() : "";
 }
 
-async function runPSI(url) {
+async function runPSI(url, strategy) {
   try {
     const res = await fetch(
       "https://www.googleapis.com/pagespeedonline/v5/runPagespeed" +
         `?url=${encodeURIComponent(url)}` +
-        "&strategy=mobile" +
+        `&strategy=${strategy}` +
         "&category=performance" +
         `&key=${PSI_API_KEY}`
     );
+
     return await res.json();
   } catch {
     return null;
@@ -25,22 +29,27 @@ function getScore(data) {
   return score !== undefined ? Math.round(score * 100) : null;
 }
 
-function getAmpStatus(data) {
-  const audit = data?.lighthouseResult?.audits?.["amp-valid"];
-  if (!audit) return "Cannot be evaluated";
-  return audit.score === 1 ? "Valid" : "Invalid";
-}
-
+// ===============================
+// NETLIFY FUNCTION
+// ===============================
 export async function handler(event) {
   let url = event.queryStringParameters?.url;
+
   if (!url) {
-    return { statusCode: 400, body: JSON.stringify({ error: "Missing URL" }) };
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Missing URL parameter" })
+    };
   }
 
-  if (!url.startsWith("http")) url = "https://" + url;
+  if (!url.startsWith("http")) {
+    url = "https://" + url;
+  }
 
   try {
-    // Fetch HTML
+    // -------------------------------
+    // Fetch HTML (SEO tags)
+    // -------------------------------
     const htmlRes = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 SEO-Checker" }
     });
@@ -55,13 +64,15 @@ export async function handler(event) {
       html,
       /<link\s+rel=["']canonical["']\s+href=["']([^"']*)["']/i
     );
-    const amphtml = extract(
-      html,
-      /<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i
-    );
 
-    // ONE PSI CALL ONLY
-    const psi = await runPSI(url);
+    // -------------------------------
+    // PageSpeed (Desktop + Mobile)
+    // Run in parallel to save time
+    // -------------------------------
+    const [psiDesktop, psiMobile] = await Promise.all([
+      runPSI(url, "desktop"),
+      runPSI(url, "mobile")
+    ]);
 
     return {
       statusCode: 200,
@@ -71,27 +82,22 @@ export async function handler(event) {
         title,
         description,
         canonical,
-        amphtml,
         pageSpeed: {
-          mobile: getScore(psi),
-          desktop: null // desktop removed to avoid timeout
-        },
-        ampStatus: getAmpStatus(psi),
-        ampTestUrl: `https://search.google.com/test/amp?url=${encodeURIComponent(
-          url
-        )}`,
-        linkedAmp: {
-          url: amphtml || null,
-          status: "Check manually"
+          desktop: getScore(psiDesktop),
+          mobile: getScore(psiMobile)
         }
       })
     };
   } catch {
+    // IMPORTANT: still return 200 so UI does not break
     return {
       statusCode: 200,
       body: JSON.stringify({
         url,
-        error: "Partial failure"
+        pageSpeed: {
+          desktop: null,
+          mobile: null
+        }
       })
     };
   }
