@@ -1,101 +1,53 @@
-// ===============================
-// CONFIG
-// ===============================
 const PSI_API_KEY = "AIzaSyCHPQ51PmfyXRoOOJqxc_15wuMKrI_yR-c";
 
-// ===============================
-// HELPERS
-// ===============================
 function extract(html, regex) {
-  const match = html.match(regex);
-  return match ? match[1].trim() : "";
+  const m = html.match(regex);
+  return m ? m[1].trim() : "";
 }
 
-async function getPageSpeed(url, strategy) {
-  const apiUrl =
-    "https://www.googleapis.com/pagespeedonline/v5/runPagespeed" +
-    `?url=${encodeURIComponent(url)}` +
-    `&strategy=${strategy}` +
-    "&category=performance" +
-    `&key=${PSI_API_KEY}`;
-
+async function safePSI(url, strategy) {
   try {
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-    const score =
-      data.lighthouseResult?.categories?.performance?.score;
+    const res = await fetch(
+      "https://www.googleapis.com/pagespeedonline/v5/runPagespeed" +
+        `?url=${encodeURIComponent(url)}` +
+        `&strategy=${strategy}` +
+        `&key=${PSI_API_KEY}`,
+      { timeout: 15000 }
+    );
 
-    return score !== undefined ? Math.round(score * 100) : null;
+    const data = await res.json();
+    return data;
   } catch {
     return null;
   }
 }
 
-async function checkAMP(url) {
-  const apiUrl =
-    "https://www.googleapis.com/pagespeedonline/v5/runPagespeed" +
-    `?url=${encodeURIComponent(url)}` +
-    "&strategy=mobile" +
-    `&key=${PSI_API_KEY}`;
-
-  try {
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-    const audit = data.lighthouseResult?.audits?.["amp-valid"];
-
-    if (!audit) return "Not AMP";
-    return audit.score === 1 ? "Valid" : "Invalid";
-  } catch {
-    return "Unknown";
-  }
+function getScore(data) {
+  const score = data?.lighthouseResult?.categories?.performance?.score;
+  return score !== undefined ? Math.round(score * 100) : null;
 }
 
-async function checkLinkedAMP(ampUrl) {
-  if (!ampUrl) return null;
-
-  const apiUrl =
-    "https://www.googleapis.com/pagespeedonline/v5/runPagespeed" +
-    `?url=${encodeURIComponent(ampUrl)}` +
-    "&strategy=mobile" +
-    `&key=${PSI_API_KEY}`;
-
-  try {
-    const res = await fetch(apiUrl);
-    const data = await res.json();
-    const audit = data.lighthouseResult?.audits?.["amp-valid"];
-
-    if (!audit) return "Invalid";
-    return audit.score === 1 ? "Valid" : "Invalid";
-  } catch {
-    return "Unknown";
-  }
+function getAmpAudit(data) {
+  const audit = data?.lighthouseResult?.audits?.["amp-valid"];
+  if (!audit) return "Cannot be evaluated";
+  return audit.score === 1 ? "Valid" : "Invalid";
 }
 
-// ===============================
-// NETLIFY FUNCTION
-// ===============================
 export async function handler(event) {
   let url = event.queryStringParameters?.url;
-
   if (!url) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: "Missing URL parameter" })
-    };
+    return { statusCode: 400, body: JSON.stringify({ error: "Missing URL" }) };
   }
 
-  if (!url.startsWith("http")) {
-    url = "https://" + url;
-  }
+  if (!url.startsWith("http")) url = "https://" + url;
 
   try {
     // Fetch HTML
-    const response = await fetch(url, {
+    const htmlRes = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 SEO-Checker" }
     });
-    const html = await response.text();
+    const html = await htmlRes.text();
 
-    // Extract SEO tags
     const title = extract(html, /<title[^>]*>([^<]*)<\/title>/i);
     const description = extract(
       html,
@@ -110,14 +62,13 @@ export async function handler(event) {
       /<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i
     );
 
-    // PageSpeed + AMP
-    const mobileScore = await getPageSpeed(url, "mobile");
-    const desktopScore = await getPageSpeed(url, "desktop");
-    const ampStatus = await checkAMP(url);
+    // PSI calls (SAFE)
+    const psiMobile = await safePSI(url, "mobile");
+    const psiDesktop = await safePSI(url, "desktop");
 
-    let linkedAmpStatus = null;
+    let linkedAmpPSI = null;
     if (amphtml) {
-      linkedAmpStatus = await checkLinkedAMP(amphtml);
+      linkedAmpPSI = await safePSI(amphtml, "mobile");
     }
 
     return {
@@ -130,23 +81,28 @@ export async function handler(event) {
         canonical,
         amphtml,
         pageSpeed: {
-          mobile: mobileScore,
-          desktop: desktopScore
+          mobile: getScore(psiMobile),
+          desktop: getScore(psiDesktop)
         },
-        ampStatus,
-        ampTestUrl: `https://search.google.com/test/amp?url=${encodeURIComponent(
-          url
-        )}`,
+        ampStatus: getAmpAudit(psiMobile),
         linkedAmp: {
           url: amphtml || null,
-          status: linkedAmpStatus
-        }
+          status: linkedAmpPSI ? getAmpAudit(linkedAmpPSI) : "No AMP linked"
+        },
+        ampTestUrl: `https://search.google.com/test/amp?url=${encodeURIComponent(
+          url
+        )}`
       })
     };
-  } catch {
+  } catch (err) {
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Failed to analyze page" })
+      statusCode: 200, // IMPORTANT: still return 200
+      body: JSON.stringify({
+        url,
+        error: "Partial failure",
+        pageSpeed: {},
+        ampStatus: "Cannot be evaluated"
+      })
     };
   }
 }
