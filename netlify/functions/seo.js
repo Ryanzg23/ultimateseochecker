@@ -1,6 +1,30 @@
 const PSI_API_KEY = "AIzaSyCHPQ51PmfyXRoOOJqxc_15wuMKrI_yR-c";
 
 // ===============================
+// SIMPLE IN-MEMORY CACHE
+// ===============================
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const cache = new Map();
+
+function getFromCache(key) {
+  const cached = cache.get(key);
+  if (!cached) return null;
+
+  if (Date.now() - cached.timestamp > CACHE_TTL) {
+    cache.delete(key);
+    return null;
+  }
+  return cached.data;
+}
+
+function saveToCache(key, data) {
+  cache.set(key, {
+    timestamp: Date.now(),
+    data
+  });
+}
+
+// ===============================
 // HELPERS
 // ===============================
 function extract(html, regex) {
@@ -45,9 +69,24 @@ export async function handler(event) {
     url = "https://" + url;
   }
 
+  // -------------------------------
+  // CHECK CACHE FIRST
+  // -------------------------------
+  const cachedResult = getFromCache(url);
+  if (cachedResult) {
+    return {
+      statusCode: 200,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({
+        ...cachedResult,
+        cached: true
+      })
+    };
+  }
+
   try {
     // -------------------------------
-    // Fetch HTML (SEO tags)
+    // Fetch HTML
     // -------------------------------
     const htmlRes = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 SEO-Checker" }
@@ -69,33 +108,39 @@ export async function handler(event) {
     );
 
     // -------------------------------
-    // PageSpeed (Desktop + Mobile)
-    // Parallel to reduce total time
+    // PageSpeed (parallel)
     // -------------------------------
     const [psiDesktop, psiMobile] = await Promise.all([
       runPSI(url, "desktop"),
       runPSI(url, "mobile")
     ]);
 
+    const result = {
+      url,
+      title,
+      description,
+      canonical,
+      amphtml,
+      pageSpeed: {
+        desktop: getScore(psiDesktop),
+        mobile: getScore(psiMobile)
+      }
+    };
+
+    // -------------------------------
+    // SAVE TO CACHE
+    // -------------------------------
+    saveToCache(url, result);
+
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      },
+      headers: { "Access-Control-Allow-Origin": "*" },
       body: JSON.stringify({
-        url,
-        title,
-        description,
-        canonical,
-        amphtml,
-        pageSpeed: {
-          desktop: getScore(psiDesktop),
-          mobile: getScore(psiMobile)
-        }
+        ...result,
+        cached: false
       })
     };
   } catch {
-    // IMPORTANT: return 200 so frontend can show Retry button
     return {
       statusCode: 200,
       body: JSON.stringify({
