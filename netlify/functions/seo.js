@@ -17,7 +17,6 @@ async function runPSI(url, strategy) {
         "&category=performance" +
         `&key=${PSI_API_KEY}`
     );
-
     return await res.json();
   } catch {
     return null;
@@ -64,10 +63,14 @@ export async function handler(event) {
       html,
       /<link\s+rel=["']canonical["']\s+href=["']([^"']*)["']/i
     );
+    const amphtml = extract(
+      html,
+      /<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i
+    );
 
     // -------------------------------
     // PageSpeed (Desktop + Mobile)
-    // Run in parallel to save time
+    // Parallel to reduce total time
     // -------------------------------
     const [psiDesktop, psiMobile] = await Promise.all([
       runPSI(url, "desktop"),
@@ -76,12 +79,15 @@ export async function handler(event) {
 
     return {
       statusCode: 200,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: {
+        "Access-Control-Allow-Origin": "*"
+      },
       body: JSON.stringify({
         url,
         title,
         description,
         canonical,
+        amphtml,
         pageSpeed: {
           desktop: getScore(psiDesktop),
           mobile: getScore(psiMobile)
@@ -89,11 +95,15 @@ export async function handler(event) {
       })
     };
   } catch {
-    // IMPORTANT: still return 200 so UI does not break
+    // IMPORTANT: return 200 so frontend can show Retry button
     return {
       statusCode: 200,
       body: JSON.stringify({
         url,
+        title: "",
+        description: "",
+        canonical: "",
+        amphtml: "",
         pageSpeed: {
           desktop: null,
           mobile: null
