@@ -43,25 +43,6 @@ async function run() {
         <div class="label">Canonical</div>
         <div class="value">${data.canonical || "—"}</div>
 
-        <div class="label">AMP HTML</div>
-        <div class="value">${data.amphtml || "—"}</div>
-
-        <div class="label">AMP Status (Canonical)</div>
-        <div class="value">
-          ${data.ampStatus || "—"}<br>
-          <a href="${data.ampTestUrl}" target="_blank">Open AMP Test</a>
-        </div>
-
-        <div class="label">Linked AMP Version</div>
-        <div class="value">
-          ${
-            data.linkedAmp?.url
-              ? `Status: ${data.linkedAmp.status}<br>
-                 <a href="${data.linkedAmp.url}" target="_blank">Open AMP URL</a>`
-              : "No AMP linked"
-          }
-        </div>
-
         <div class="label">PageSpeed</div>
         <div class="value">
           Desktop: ${data.pageSpeed?.desktop ?? "—"} / 100<br>
