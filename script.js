@@ -29,10 +29,7 @@ async function run() {
   if (!domains.length) return;
 
   setLoading(true);
-
-  const results = document.getElementById("results");
-  results.innerHTML = "";
-
+  document.getElementById("results").innerHTML = "";
   initProgress(domains.length);
 
   let completed = 0;
@@ -75,22 +72,20 @@ async function processDomain(domain) {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
 
-    if (!res.ok || data.error) {
-      throw new Error("inactive");
-    }
+    if (!res.ok || data.error) throw new Error();
 
-    const isRedirect = data.finalUrl && data.finalUrl !== data.inputUrl;
+    const redirected = data.finalUrl && data.finalUrl !== data.inputUrl;
 
-    const titleCount = data.title ? data.title.length : 0;
-    const descCount = data.description ? data.description.length : 0;
+    const titleCount = data.title.length;
+    const descCount = data.description.length;
 
     card.innerHTML = `
       <div class="card-header">
-        <h3>${data.finalUrl}</h3>
-        ${!isRedirect ? `<span class="badge green ok-badge">OK</span>` : ``}
+        <h3>${data.inputUrl}</h3>
+        ${!redirected ? `<span class="badge green ok-badge">OK</span>` : ``}
       </div>
 
-      ${isRedirect ? `
+      ${redirected ? `
         <div class="redirect">
           301 Redirect → ${data.finalUrl}
         </div>
@@ -109,11 +104,8 @@ async function processDomain(domain) {
       <div class="value">${data.amphtml || "—"}</div>
     `;
 
-    // Auto-hide OK badge after 2s
     const okBadge = card.querySelector(".ok-badge");
-    if (okBadge) {
-      setTimeout(() => okBadge.remove(), 2000);
-    }
+    if (okBadge) setTimeout(() => okBadge.remove(), 2000);
 
   } catch {
     card.innerHTML = `
@@ -127,40 +119,19 @@ async function processDomain(domain) {
 }
 
 /* ================================
-   PROGRESS BAR
+   PROGRESS
 ================================ */
 
 function initProgress(total) {
-  const progress = document.getElementById("progress");
-  progress.classList.remove("hidden");
+  const p = document.getElementById("progress");
+  p.classList.remove("hidden");
   updateProgress(0, total);
 }
 
 function updateProgress(done, total) {
-  const percent = Math.round((done / total) * 100);
-  document.getElementById("progressBar").style.width = percent + "%";
+  document.getElementById("progressBar").style.width =
+    Math.round((done / total) * 100) + "%";
+
   document.getElementById("progressText").textContent =
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
-
-/* ================================
-   THEME TOGGLE
-================================ */
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const btn = document.getElementById("themeToggle");
-
-  const next = html.dataset.theme === "dark" ? "light" : "dark";
-  html.dataset.theme = next;
-  localStorage.setItem("theme", next);
-
-  btn.textContent = next === "dark" ? "🌙" : "☀️";
-}
-
-(function () {
-  const saved = localStorage.getItem("theme") || "dark";
-  document.documentElement.dataset.theme = saved;
-  const btn = document.getElementById("themeToggle");
-  if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
-})();
