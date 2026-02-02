@@ -1,25 +1,6 @@
 const CONCURRENCY = 5;
 
 /* ================================
-   UTIL: HOSTNAME NORMALIZATION
-================================ */
-
-function normalizeHost(url) {
-  try {
-    return new URL(url)
-      .hostname
-      .replace(/^www\./, "")
-      .toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
-function isSameSite(a, b) {
-  return normalizeHost(a) === normalizeHost(b);
-}
-
-/* ================================
    UI HELPERS
 ================================ */
 
@@ -98,34 +79,22 @@ async function processDomain(domain) {
       throw new Error("inactive");
     }
 
-    /* -------- EXTERNAL REDIRECT ONLY -------- */
-    // EXTERNAL redirect → hide meta
-if (data.redirectType === "external") {
-  card.innerHTML = `
-    <div class="card-header">
-      <h3>${data.url}</h3>
-    </div>
-    <div class="redirect">
-      301 Redirect → ${data.redirect301}
-    </div>
-  `;
-  return;
-}
-    /* -------- ACTIVE (INTERNAL REDIRECT OK) -------- */
+    const isRedirect = data.finalUrl && data.finalUrl !== data.inputUrl;
+
     const titleCount = data.title ? data.title.length : 0;
     const descCount = data.description ? data.description.length : 0;
 
     card.innerHTML = `
       <div class="card-header">
-        <h3>${data.url}</h3>
-        <span class="badge green ok-badge">OK</span>
+        <h3>${data.finalUrl}</h3>
+        ${!isRedirect ? `<span class="badge green ok-badge">OK</span>` : ``}
       </div>
 
-      ${data.redirect301 ? `
+      ${isRedirect ? `
         <div class="redirect">
-          301 Redirect → ${data.redirect301}
+          301 Redirect → ${data.finalUrl}
         </div>
-      ` : ""}
+      ` : ``}
 
       <div class="label">Title (${titleCount} characters)</div>
       <div class="value">${data.title || "—"}</div>
@@ -140,7 +109,7 @@ if (data.redirectType === "external") {
       <div class="value">${data.amphtml || "—"}</div>
     `;
 
-    /* -------- AUTO-HIDE OK BADGE -------- */
+    // Auto-hide OK badge after 2s
     const okBadge = card.querySelector(".ok-badge");
     if (okBadge) {
       setTimeout(() => okBadge.remove(), 2000);
@@ -185,6 +154,7 @@ function toggleTheme() {
   const next = html.dataset.theme === "dark" ? "light" : "dark";
   html.dataset.theme = next;
   localStorage.setItem("theme", next);
+
   btn.textContent = next === "dark" ? "🌙" : "☀️";
 }
 
@@ -194,5 +164,3 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
