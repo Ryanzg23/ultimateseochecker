@@ -7,6 +7,7 @@ const CONCURRENCY = 5;
 function setLoading(state) {
   document.getElementById("runBtn").disabled = state;
   document.getElementById("clearBtn").disabled = state;
+  document.getElementById("openBulkBtn").disabled = state;
 }
 
 function clearDomains() {
@@ -17,6 +18,22 @@ function clearDomains() {
   progress.classList.add("hidden");
   document.getElementById("progressBar").style.width = "0%";
   document.getElementById("progressText").textContent = "";
+}
+
+/* ================================
+   OPEN BULK
+================================ */
+
+function openBulk() {
+  const input = document.getElementById("domains").value;
+  const domains = input.split("\n").map(d => d.trim()).filter(Boolean);
+
+  if (!domains.length) return;
+
+  domains.forEach(url => {
+    const finalUrl = url.startsWith("http") ? url : "https://" + url;
+    window.open(finalUrl, "_blank", "noopener");
+  });
 }
 
 /* ================================
@@ -71,7 +88,6 @@ async function processDomain(domain) {
   try {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
-
     if (!res.ok || data.error) throw new Error();
 
     const redirected = data.finalUrl && data.finalUrl !== data.inputUrl;
@@ -137,7 +153,7 @@ function updateProgress(done, total) {
 }
 
 /* ================================
-   THEME TOGGLE (FIXED)
+   THEME TOGGLE
 ================================ */
 
 function toggleTheme() {
@@ -147,19 +163,12 @@ function toggleTheme() {
   const next = html.dataset.theme === "dark" ? "light" : "dark";
   html.dataset.theme = next;
   localStorage.setItem("theme", next);
-
   btn.textContent = next === "dark" ? "🌙" : "☀️";
 }
 
-// Restore saved theme on load
 (function () {
   const saved = localStorage.getItem("theme") || "dark";
   document.documentElement.dataset.theme = saved;
-
   const btn = document.getElementById("themeToggle");
-  if (btn) {
-    btn.textContent = saved === "dark" ? "🌙" : "☀️";
-  }
+  if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
