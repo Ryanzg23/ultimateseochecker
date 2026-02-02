@@ -1,58 +1,20 @@
 export async function handler(event) {
   let inputUrl = event.queryStringParameters.url;
-  if (!inputUrl.startsWith("http")) inputUrl = "https://" + inputUrl;
+
+  if (!inputUrl.startsWith("http")) {
+    inputUrl = "https://" + inputUrl;
+  }
 
   try {
-    const normalizeHost = (u) =>
-      new URL(u).hostname.replace(/^www\./, "").toLowerCase();
-
-    /* ---------- FIRST REQUEST (detect redirect) ---------- */
-    const first = await fetch(inputUrl, {
-      redirect: "manual",
-      headers: { "User-Agent": "Mozilla/5.0 (SEO Meta Checker)" }
-    });
-
-    let redirect301 = null;
-    let redirectType = "none";
-    let finalUrl = inputUrl;
-
-    const locationHeader = first.headers.get("location");
-
-    if (locationHeader && [301, 302].includes(first.status)) {
-      // ✅ Resolve relative redirects properly
-      const resolvedLocation = new URL(locationHeader, inputUrl).href;
-      redirect301 = resolvedLocation;
-
-      const fromHost = normalizeHost(inputUrl);
-      const toHost = normalizeHost(resolvedLocation);
-
-      if (fromHost === toHost) {
-        // INTERNAL redirect → follow
-        redirectType = "internal";
-        finalUrl = resolvedLocation;
-      } else {
-        // EXTERNAL redirect → stop
-        redirectType = "external";
+    // ✅ Fetch with automatic redirect following
+    const response = await fetch(inputUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (SEO Meta Checker)"
       }
-    }
-
-    /* ---------- EXTERNAL REDIRECT: DO NOT FETCH HTML ---------- */
-    if (redirectType === "external") {
-      return {
-        statusCode: 200,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({
-          url: inputUrl,
-          redirect301,
-          redirectType
-        })
-      };
-    }
-
-    /* ---------- FETCH FINAL URL (original or internal redirect) ---------- */
-    const response = await fetch(finalUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (SEO Meta Checker)" }
     });
+
+    // ✅ Final URL after ALL redirects
+    const finalUrl = response.url;
 
     const html = await response.text();
 
@@ -63,11 +25,12 @@ export async function handler(event) {
 
     return {
       statusCode: 200,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: {
+        "Access-Control-Allow-Origin": "*"
+      },
       body: JSON.stringify({
-        url: finalUrl,
-        redirect301,
-        redirectType,
+        inputUrl,
+        finalUrl,
         title: getTag(/<title[^>]*>([^<]+)<\/title>/i),
         description: getTag(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i),
         canonical: getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i),
