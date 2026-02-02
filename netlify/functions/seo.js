@@ -7,12 +7,19 @@ export async function handler(event) {
 
   try {
     const response = await fetch(url, {
+      redirect: "manual",
       headers: {
         "User-Agent": "Mozilla/5.0 (SEO Meta Checker)"
       }
     });
 
-    const html = await response.text();
+    let redirect301 = null;
+
+    if (response.status === 301 || response.status === 302) {
+      redirect301 = response.headers.get("location") || "";
+    }
+
+    const html = response.status === 200 ? await response.text() : "";
 
     const getTag = (regex) => {
       const match = html.match(regex);
@@ -34,9 +41,11 @@ export async function handler(event) {
         title,
         description,
         canonical,
-        amphtml
+        amphtml,
+        redirect301
       })
     };
+
   } catch (err) {
     return {
       statusCode: 500,
