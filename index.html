@@ -11,15 +11,19 @@
 <div class="container">
   <div class="top-bar">
     <h1>Bulk SEO Meta Viewer</h1>
-    <button class="toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+    <div class="top-actions">
+      <button class="toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
+    </div>
   </div>
+
   
   <textarea id="domains" placeholder="example.com
   https://example.com/page
   example.org"></textarea>
   
-  <div class="action-row">
-    <button onclick="run()">Check SEO</button>
+ <div class="action-row">
+    <button id="runBtn" onclick="run()">Check SEO</button>
+    <button id="clearBtn" class="secondary" onclick="clearDomains()">Clear</button>
   
     <div id="progress" class="progress hidden">
       <div class="bar" id="progressBar"></div>
@@ -34,4 +38,5 @@
 <script src="script.js"></script>
 </body>
 </html>
+
 
