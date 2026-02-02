@@ -135,3 +135,31 @@ function updateProgress(done, total) {
   document.getElementById("progressText").textContent =
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
+
+/* ================================
+   THEME TOGGLE (FIXED)
+================================ */
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn = document.getElementById("themeToggle");
+
+  const next = html.dataset.theme === "dark" ? "light" : "dark";
+  html.dataset.theme = next;
+  localStorage.setItem("theme", next);
+
+  btn.textContent = next === "dark" ? "🌙" : "☀️";
+}
+
+// Restore saved theme on load
+(function () {
+  const saved = localStorage.getItem("theme") || "dark";
+  document.documentElement.dataset.theme = saved;
+
+  const btn = document.getElementById("themeToggle");
+  if (btn) {
+    btn.textContent = saved === "dark" ? "🌙" : "☀️";
+  }
+})();
+
+
