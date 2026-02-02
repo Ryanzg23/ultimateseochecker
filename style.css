@@ -33,25 +33,13 @@ button {
   border-radius: 6px;
   cursor: pointer;
 }
-.container{ width: 100%; max-width: 1400px; }
+.container{ width: 100%; max-width: 1400px; margin: 0 auto; }
 #results {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
   gap: 15px;
 }
-.retry-btn {
-  margin-top: 10px;
-  padding: 6px 12px;
-  background: #2563eb;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
 
-.retry-btn:hover {
-  opacity: 0.9;
-}
 .card {
   background: #151515;
   border: 1px solid #2a2a2a;
