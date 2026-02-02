@@ -13,6 +13,8 @@
   --primary: #2563eb;
   --success: #22c55e;
   --error: #dc2626;
+   --open-bulk: #7c3aed;      /* purple */
+  --open-bulk-hover: #6d28d9;
 }
 
 [data-theme="light"] {
@@ -305,4 +307,17 @@ button.secondary:hover:not(:disabled) {
   color: #fbbf24;
   font-weight: 600;
 }
+/* ================================
+   OPEN BULK BUTTON
+================================ */
+
+button.open-bulk {
+  background: var(--open-bulk);
+  color: #fff;
+}
+
+button.open-bulk:hover:not(:disabled) {
+  background: var(--open-bulk-hover);
+}
+
 
