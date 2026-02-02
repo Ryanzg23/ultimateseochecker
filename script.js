@@ -1,6 +1,24 @@
 const CONCURRENCY = 5;
 
 /* ================================
+   UTIL: ROOT DOMAIN CHECK
+================================ */
+
+function getRootDomain(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    const parts = host.split(".");
+    return parts.slice(-2).join(".");
+  } catch {
+    return "";
+  }
+}
+
+function isSameRootDomain(a, b) {
+  return getRootDomain(a) === getRootDomain(b);
+}
+
+/* ================================
    UI HELPERS
 ================================ */
 
@@ -75,13 +93,12 @@ async function processDomain(domain) {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
 
-    /* -------- DOMAIN NOT ACTIVE -------- */
     if (!res.ok || data.error) {
       throw new Error("inactive");
     }
 
-    /* -------- 301 / 302 REDIRECT -------- */
-    if (data.redirect301) {
+    /* -------- REDIRECT HANDLING -------- */
+    if (data.redirect301 && !isSameRootDomain(domain, data.redirect301)) {
       card.innerHTML = `
         <div class="card-header">
           <h3>${data.url}</h3>
@@ -102,6 +119,12 @@ async function processDomain(domain) {
         <h3>${data.url}</h3>
         <span class="badge green ok-badge">OK</span>
       </div>
+
+      ${data.redirect301 ? `
+        <div class="redirect">
+          301 Redirect → ${data.redirect301}
+        </div>
+      ` : ""}
 
       <div class="label">Title (${titleCount} characters)</div>
       <div class="value">${data.title || "—"}</div>
@@ -146,7 +169,6 @@ function initProgress(total) {
 function updateProgress(done, total) {
   const percent = Math.round((done / total) * 100);
   document.getElementById("progressBar").style.width = percent + "%";
-
   document.getElementById("progressText").textContent =
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
@@ -162,7 +184,6 @@ function toggleTheme() {
   const next = html.dataset.theme === "dark" ? "light" : "dark";
   html.dataset.theme = next;
   localStorage.setItem("theme", next);
-
   btn.textContent = next === "dark" ? "🌙" : "☀️";
 }
 
