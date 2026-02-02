@@ -1,11 +1,24 @@
 const CONCURRENCY = 5;
 
+function setLoading(state) {
+  document.getElementById("runBtn").disabled = state;
+  document.getElementById("clearBtn").disabled = state;
+}
+
+function clearDomains() {
+  document.getElementById("domains").value = "";
+}
+
 async function run() {
   const input = document.getElementById("domains").value;
   const domains = input.split("\n").map(d => d.trim()).filter(Boolean);
-  const results = document.getElementById("results");
+  if (!domains.length) return;
 
+  setLoading(true);
+
+  const results = document.getElementById("results");
   results.innerHTML = "";
+
   initProgress(domains.length);
 
   let completed = 0;
@@ -23,8 +36,9 @@ async function run() {
   }
 
   await Promise.all(workers);
-}
 
+  setLoading(false);
+}
 async function processDomain(domain) {
   const results = document.getElementById("results");
 
@@ -115,4 +129,5 @@ function toggleTheme() {
   document.getElementById("themeToggle").textContent =
     saved === "dark" ? "🌙" : "☀️";
 })();
+
 
