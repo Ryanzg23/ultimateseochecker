@@ -6,7 +6,7 @@ export async function handler(event) {
     const normalizeHost = (u) =>
       new URL(u).hostname.replace(/^www\./, "").toLowerCase();
 
-    // First request (detect redirect)
+    /* ---------- FIRST REQUEST (detect redirect) ---------- */
     const first = await fetch(inputUrl, {
       redirect: "manual",
       headers: { "User-Agent": "Mozilla/5.0 (SEO Meta Checker)" }
@@ -16,25 +16,27 @@ export async function handler(event) {
     let redirectType = "none";
     let finalUrl = inputUrl;
 
-    const location = first.headers.get("location");
+    const locationHeader = first.headers.get("location");
 
-    if (location && [301, 302].includes(first.status)) {
-      redirect301 = location;
+    if (locationHeader && [301, 302].includes(first.status)) {
+      // ✅ Resolve relative redirects properly
+      const resolvedLocation = new URL(locationHeader, inputUrl).href;
+      redirect301 = resolvedLocation;
 
       const fromHost = normalizeHost(inputUrl);
-      const toHost = normalizeHost(location);
+      const toHost = normalizeHost(resolvedLocation);
 
       if (fromHost === toHost) {
-        // ✅ INTERNAL redirect → follow
+        // INTERNAL redirect → follow
         redirectType = "internal";
-        finalUrl = location;
+        finalUrl = resolvedLocation;
       } else {
-        // ❌ EXTERNAL redirect → stop
+        // EXTERNAL redirect → stop
         redirectType = "external";
       }
     }
 
-    // If external redirect, do NOT fetch HTML
+    /* ---------- EXTERNAL REDIRECT: DO NOT FETCH HTML ---------- */
     if (redirectType === "external") {
       return {
         statusCode: 200,
@@ -47,7 +49,7 @@ export async function handler(event) {
       };
     }
 
-    // Fetch final page (original or internal redirect)
+    /* ---------- FETCH FINAL URL (original or internal redirect) ---------- */
     const response = await fetch(finalUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (SEO Meta Checker)" }
     });
@@ -73,7 +75,7 @@ export async function handler(event) {
       })
     };
 
-  } catch {
+  } catch (err) {
     return {
       statusCode: 200,
       body: JSON.stringify({ error: "Domain not active" })
