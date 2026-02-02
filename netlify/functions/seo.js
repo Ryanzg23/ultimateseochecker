@@ -6,7 +6,7 @@ export async function handler(event) {
   }
 
   try {
-    // Follow redirects automatically
+    // Follow redirects automatically (final URL mode)
     const response = await fetch(inputUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (SEO Meta Checker)"
@@ -16,31 +16,31 @@ export async function handler(event) {
     const finalUrl = response.url;
     const html = await response.text();
 
+    /* ---------- ROBUST TAG PARSERS ---------- */
+
     const getTitle = () => {
       const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       return m ? m[1].trim() : "";
     };
 
     const getDescription = () => {
-      const m = html.match(
-        /<meta[^>]+name\s*=\s*["']description["'][^>]*content\s*=\s*["']([^"']+)["'][^>]*>/i
-      ) || html.match(
-        /<meta[^>]+content\s*=\s*["']([^"']+)["'][^>]*name\s*=\s*["']description["'][^>]*>/i
-      );
+      const m =
+        html.match(/<meta[^>]*name\s*=\s*["']description["'][^>]*content\s*=\s*["']([^"']+)["'][^>]*>/i) ||
+        html.match(/<meta[^>]*content\s*=\s*["']([^"']+)["'][^>]*name\s*=\s*["']description["'][^>]*>/i);
       return m ? m[1].trim() : "";
     };
 
     const getCanonical = () => {
-      const m = html.match(
-        /<link[^>]+rel\s*=\s*["']canonical["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i
-      );
+      const m =
+        html.match(/<link[^>]*rel\s*=\s*["']canonical["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i) ||
+        html.match(/<link[^>]*href\s*=\s*["']([^"']+)["'][^>]*rel\s*=\s*["']canonical["'][^>]*>/i);
       return m ? m[1].trim() : "";
     };
 
     const getAmp = () => {
-      const m = html.match(
-        /<link[^>]+rel\s*=\s*["']amphtml["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i
-      );
+      const m =
+        html.match(/<link[^>]*rel\s*=\s*["']amphtml["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i) ||
+        html.match(/<link[^>]*href\s*=\s*["']([^"']+)["'][^>]*rel\s*=\s*["']amphtml["'][^>]*>/i);
       return m ? m[1].trim() : "";
     };
 
