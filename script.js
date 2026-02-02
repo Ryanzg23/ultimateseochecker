@@ -44,7 +44,6 @@ async function run() {
   }
 
   await Promise.all(workers);
-
   setLoading(false);
 }
 
@@ -62,7 +61,7 @@ async function processDomain(domain) {
       <h3>${domain}</h3>
       <span class="badge blue">LOADING</span>
     </div>
-    <div class="muted">Fetching data…</div>
+    <div class="muted">Checking domain…</div>
   `;
   results.appendChild(card);
 
@@ -70,13 +69,18 @@ async function processDomain(domain) {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
 
+    /* -------- DOMAIN NOT ACTIVE -------- */
+    if (!res.ok || data.error) {
+      throw new Error("inactive");
+    }
+
     const titleCount = data.title ? data.title.length : 0;
     const descCount = data.description ? data.description.length : 0;
 
     card.innerHTML = `
       <div class="card-header">
         <h3>${data.url}</h3>
-        <span class="badge green">OK</span>
+        <span class="badge green ok-badge">OK</span>
       </div>
 
       ${data.redirect301 ? `
@@ -97,13 +101,20 @@ async function processDomain(domain) {
       <div class="label">AMP HTML</div>
       <div class="value">${data.amphtml || "—"}</div>
     `;
+
+    /* -------- AUTO-HIDE OK BADGE -------- */
+    const okBadge = card.querySelector(".ok-badge");
+    if (okBadge) {
+      setTimeout(() => okBadge.remove(), 3000);
+    }
+
   } catch (err) {
     card.innerHTML = `
       <div class="card-header">
         <h3>${domain}</h3>
         <span class="badge red">ERROR</span>
       </div>
-      <div class="value">Failed to fetch data</div>
+      <div class="value">Domain not active</div>
       <button class="retry" onclick="retry('${domain}', this)">Retry</button>
     `;
   }
