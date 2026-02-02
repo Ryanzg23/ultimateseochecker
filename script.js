@@ -99,18 +99,18 @@ async function processDomain(domain) {
     }
 
     /* -------- EXTERNAL REDIRECT ONLY -------- */
-    if (data.redirect301 && normalizeHost(domain) !== normalizeHost(data.redirect301)) {
-      card.innerHTML = `
-        <div class="card-header">
-          <h3>${data.url}</h3>
-        </div>
-        <div class="redirect">
-          301 Redirect → ${data.redirect301}
-        </div>
-      `;
-      return;
-    }
-
+    // EXTERNAL redirect → hide meta
+if (data.redirectType === "external") {
+  card.innerHTML = `
+    <div class="card-header">
+      <h3>${data.url}</h3>
+    </div>
+    <div class="redirect">
+      301 Redirect → ${data.redirect301}
+    </div>
+  `;
+  return;
+}
     /* -------- ACTIVE (INTERNAL REDIRECT OK) -------- */
     const titleCount = data.title ? data.title.length : 0;
     const descCount = data.description ? data.description.length : 0;
@@ -194,4 +194,5 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
