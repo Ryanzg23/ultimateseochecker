@@ -1,32 +1,63 @@
+@charset "utf-8";
+
+/* ================================
+   THEME VARIABLES
+================================ */
+
 :root {
   --bg: #0f0f0f;
   --card: #151515;
   --border: #2a2a2a;
   --text: #ffffff;
   --muted: #9ca3af;
+  --primary: #2563eb;
+  --success: #22c55e;
+  --error: #dc2626;
 }
 
 [data-theme="light"] {
-  --bg: #f5f5f5;
+  --bg: #f4f4f5;
   --card: #ffffff;
-  --border: #ddd;
-  --text: #111;
-  --muted: #555;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #4b5563;
+}
+
+/* ================================
+   BASE
+================================ */
+
+* {
+  box-sizing: border-box;
 }
 
 body {
+  margin: 0;
+  padding: 20px;
+  font-family: Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
-  font-family: Arial, sans-serif;
-  padding: 20px;
 }
 
-.container { max-width: 1400px; margin: auto; }
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ================================
+   TOP BAR
+================================ */
 
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.top-bar h1 {
+  margin: 0;
+  font-size: 28px;
 }
 
 .top-actions {
@@ -37,10 +68,29 @@ body {
 .toggle {
   background: transparent;
   border: 1px solid var(--border);
+  color: var(--text);
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 18px;
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggle:hover {
+  background: var(--border);
+}
+
+/* ================================
+   INPUT PANEL
+================================ */
+
+.input-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
 textarea {
@@ -56,21 +106,44 @@ textarea {
   resize: vertical;
 }
 
-textarea:focus {
-  outline: none;
-  border-color: #2563eb;
+textarea::placeholder {
+  color: var(--muted);
 }
 
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ================================
+   ACTION ROW
+================================ */
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.action-left {
+  display: flex;
+  gap: 10px;
+}
+
+/* ================================
+   BUTTONS
+================================ */
 
 button {
-  margin: 15px auto;
-  padding: 10px 20px;
-  font-size: 16px;
-  background: #2563eb;
-  color: white;
+  padding: 10px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 10px;
   border: none;
-  border-radius: 6px;
   cursor: pointer;
+  background: var(--primary);
+  color: #fff;
   transition: background 0.2s ease, opacity 0.2s ease;
 }
 
@@ -84,20 +157,6 @@ button:disabled {
 }
 
 button.secondary {
-  background: #374151;
-}
-
-button.secondary:hover:not(:disabled) {
-  background: #4b5563;
-}
-
-button {
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-weight: 500;
-}
-
-button.secondary {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text);
@@ -107,48 +166,9 @@ button.secondary:hover:not(:disabled) {
   background: var(--border);
 }
 
-
-#results {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 15px;
-}
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 12px;
-  border-radius: 10px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.card h3 {
-  color: #38bdf8;
-  word-break: break-all;
-}
-
-.label { font-weight: bold; margin-top: 10px; }
-.value { font-size: 14px; color: var(--muted); }
-
-.badge {
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 6px;
-}
-
-.green { background: #16a34a; }
-.red { background: #dc2626; }
-.blue { background: #2563eb; }
-
-.retry {
-  margin-top: 10px;
-  background: #dc2626;
-}
+/* ================================
+   PROGRESS BAR
+================================ */
 
 .progress {
   flex: 1;
@@ -156,6 +176,10 @@ button.secondary:hover:not(:disabled) {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .bar {
@@ -163,8 +187,8 @@ button.secondary:hover:not(:disabled) {
   left: 0;
   top: 0;
   bottom: 0;
-  background: #22c55e;
   width: 0%;
+  background: var(--success);
   transition: width 0.3s ease;
 }
 
@@ -174,44 +198,103 @@ button.secondary:hover:not(:disabled) {
   width: 100%;
   text-align: center;
   font-size: 13px;
+  color: var(--text);
 }
 
-
-.hidden { display: none; }
-.muted { color: var(--muted); }
-
-.action-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-top: 16px;
+.hidden {
+  display: none;
 }
 
+/* ================================
+   RESULTS GRID
+================================ */
 
-.action-row button {
-  margin: 0;
-  white-space: nowrap;
+#results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 16px;
+  margin-top: 10px;
 }
 
-.action-left {
-  display: flex;
-  gap: 10px;
-}
+/* ================================
+   CARDS
+================================ */
 
-
-
-.input-panel {
+.card {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 18px;
-  margin-bottom: 25px;
+  padding: 16px;
 }
 
-#results {
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #38bdf8;
+  word-break: break-all;
+}
+
+/* ================================
+   BADGES
+================================ */
+
+.badge {
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.green {
+  background: var(--success);
+}
+
+.red {
+  background: var(--error);
+}
+
+.blue {
+  background: var(--primary);
+}
+
+/* ================================
+   META CONTENT
+================================ */
+
+.label {
+  font-weight: bold;
   margin-top: 10px;
-}
-.input-panel {
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  font-size: 14px;
 }
 
+.value {
+  font-size: 14px;
+  color: var(--muted);
+  word-break: break-word;
+  margin-top: 2px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* ================================
+   RETRY BUTTON
+================================ */
+
+.retry {
+  margin-top: 12px;
+  background: var(--error);
+}
+
+.retry:hover:not(:disabled) {
+  background: #b91c1c;
+}
