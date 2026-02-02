@@ -6,21 +6,42 @@ export async function handler(event) {
   }
 
   try {
-    // ✅ Fetch with automatic redirect following
+    // Follow redirects automatically
     const response = await fetch(inputUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (SEO Meta Checker)"
       }
     });
 
-    // ✅ Final URL after ALL redirects
     const finalUrl = response.url;
-
     const html = await response.text();
 
-    const getTag = (regex) => {
-      const match = html.match(regex);
-      return match ? match[1].trim() : "";
+    const getTitle = () => {
+      const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      return m ? m[1].trim() : "";
+    };
+
+    const getDescription = () => {
+      const m = html.match(
+        /<meta[^>]+name\s*=\s*["']description["'][^>]*content\s*=\s*["']([^"']+)["'][^>]*>/i
+      ) || html.match(
+        /<meta[^>]+content\s*=\s*["']([^"']+)["'][^>]*name\s*=\s*["']description["'][^>]*>/i
+      );
+      return m ? m[1].trim() : "";
+    };
+
+    const getCanonical = () => {
+      const m = html.match(
+        /<link[^>]+rel\s*=\s*["']canonical["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i
+      );
+      return m ? m[1].trim() : "";
+    };
+
+    const getAmp = () => {
+      const m = html.match(
+        /<link[^>]+rel\s*=\s*["']amphtml["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i
+      );
+      return m ? m[1].trim() : "";
     };
 
     return {
@@ -31,10 +52,10 @@ export async function handler(event) {
       body: JSON.stringify({
         inputUrl,
         finalUrl,
-        title: getTag(/<title[^>]*>([^<]+)<\/title>/i),
-        description: getTag(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i),
-        canonical: getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i),
-        amphtml: getTag(/<link\s+rel=["']amphtml["']\s+href=["']([^"']+)["']/i)
+        title: getTitle(),
+        description: getDescription(),
+        canonical: getCanonical(),
+        amphtml: getAmp()
       })
     };
 
