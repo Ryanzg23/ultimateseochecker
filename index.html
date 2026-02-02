@@ -2,47 +2,60 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bulk SEO Meta Viewer</title>
+
   <link rel="stylesheet" href="style.css" />
   <link href="favicon.png" rel="shortcut icon" type="image/x-icon">
 </head>
 <body>
 
-<div class="container">
-  <div class="top-bar">
-    <h1>Bulk SEO Meta Viewer</h1>
-    <div class="top-actions">
-      <button class="toggle" id="themeToggle" onclick="toggleTheme()">🌙</button>
-    </div>
-  </div>
+  <div class="container">
 
-  
-  <div class="input-panel">
-    <textarea id="domains" placeholder="example.com
-  https://example.com/page
-  example.org"></textarea>
-  
-    <div class="action-row">
-      <div class="action-left">
-        <button id="runBtn" onclick="run()">Check SEO</button>
-        <button id="clearBtn" class="secondary" onclick="clearDomains()">Clear</button>
-      </div>
-  
-      <div id="progress" class="progress hidden">
-        <div class="bar" id="progressBar"></div>
-        <span id="progressText"></span>
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <h1>Bulk SEO Meta Viewer</h1>
+      <div class="top-actions">
+        <button
+          class="toggle"
+          id="themeToggle"
+          onclick="toggleTheme()"
+          title="Toggle light / dark mode"
+        >
+          🌙
+        </button>
       </div>
     </div>
+
+    <!-- INPUT PANEL -->
+    <div class="input-panel">
+
+      <textarea
+        id="domains"
+        placeholder="Enter one domain per line&#10;example.com&#10;https://example.com/page"
+      ></textarea>
+
+      <!-- ACTIONS -->
+      <div class="action-row">
+        <div class="action-left">
+          <button id="runBtn" onclick="run()">Check SEO</button>
+          <button id="clearBtn" class="secondary" onclick="clearDomains()">Clear</button>
+        </div>
+
+        <!-- PROGRESS -->
+        <div id="progress" class="progress hidden">
+          <div class="bar" id="progressBar"></div>
+          <span id="progressText"></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results"></div>
+
   </div>
 
-  
-  <div id="results"></div>
-
-</div>
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
-
-
-
