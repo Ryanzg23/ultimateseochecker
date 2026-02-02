@@ -100,12 +100,19 @@ function updateProgress(done, total) {
 
 function toggleTheme() {
   const html = document.documentElement;
+  const btn = document.getElementById("themeToggle");
+
   const next = html.dataset.theme === "dark" ? "light" : "dark";
   html.dataset.theme = next;
   localStorage.setItem("theme", next);
+
+  btn.textContent = next === "dark" ? "🌙" : "☀️";
 }
 
 (function () {
-  const saved = localStorage.getItem("theme");
-  if (saved) document.documentElement.dataset.theme = saved;
+  const saved = localStorage.getItem("theme") || "dark";
+  document.documentElement.dataset.theme = saved;
+  document.getElementById("themeToggle").textContent =
+    saved === "dark" ? "🌙" : "☀️";
 })();
+
