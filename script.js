@@ -11,6 +11,12 @@ function setLoading(state) {
 
 function clearDomains() {
   document.getElementById("domains").value = "";
+  document.getElementById("results").innerHTML = "";
+
+  const progress = document.getElementById("progress");
+  progress.classList.add("hidden");
+  document.getElementById("progressBar").style.width = "0%";
+  document.getElementById("progressText").textContent = "";
 }
 
 /* ================================
@@ -74,6 +80,20 @@ async function processDomain(domain) {
       throw new Error("inactive");
     }
 
+    /* -------- 301 / 302 REDIRECT -------- */
+    if (data.redirect301) {
+      card.innerHTML = `
+        <div class="card-header">
+          <h3>${data.url}</h3>
+        </div>
+        <div class="redirect">
+          301 Redirect → ${data.redirect301}
+        </div>
+      `;
+      return;
+    }
+
+    /* -------- ACTIVE DOMAIN -------- */
     const titleCount = data.title ? data.title.length : 0;
     const descCount = data.description ? data.description.length : 0;
 
@@ -82,12 +102,6 @@ async function processDomain(domain) {
         <h3>${data.url}</h3>
         <span class="badge green ok-badge">OK</span>
       </div>
-
-      ${data.redirect301 ? `
-        <div class="redirect">
-          301 Redirect → ${data.redirect301}
-        </div>
-      ` : ""}
 
       <div class="label">Title (${titleCount} characters)</div>
       <div class="value">${data.title || "—"}</div>
@@ -102,10 +116,10 @@ async function processDomain(domain) {
       <div class="value">${data.amphtml || "—"}</div>
     `;
 
-    /* -------- AUTO-HIDE OK BADGE -------- */
+    /* -------- AUTO-HIDE OK BADGE (2s) -------- */
     const okBadge = card.querySelector(".ok-badge");
     if (okBadge) {
-      setTimeout(() => okBadge.remove(), 3000);
+      setTimeout(() => okBadge.remove(), 2000);
     }
 
   } catch (err) {
