@@ -1,5 +1,9 @@
 const CONCURRENCY = 5;
 
+/* ================================
+   UI HELPERS
+================================ */
+
 function setLoading(state) {
   document.getElementById("runBtn").disabled = state;
   document.getElementById("clearBtn").disabled = state;
@@ -8,6 +12,10 @@ function setLoading(state) {
 function clearDomains() {
   document.getElementById("domains").value = "";
 }
+
+/* ================================
+   MAIN RUN
+================================ */
 
 async function run() {
   const input = document.getElementById("domains").value;
@@ -39,17 +47,22 @@ async function run() {
 
   setLoading(false);
 }
+
+/* ================================
+   PROCESS DOMAIN
+================================ */
+
 async function processDomain(domain) {
   const results = document.getElementById("results");
 
   const card = document.createElement("div");
-  card.className = "card loading";
+  card.className = "card";
   card.innerHTML = `
     <div class="card-header">
       <h3>${domain}</h3>
       <span class="badge blue">LOADING</span>
     </div>
-    <div class="value muted">Fetching data…</div>
+    <div class="muted">Fetching data…</div>
   `;
   results.appendChild(card);
 
@@ -57,15 +70,20 @@ async function processDomain(domain) {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
 
-    const titleCount = data.title.length;
-    const descCount = data.description.length;
+    const titleCount = data.title ? data.title.length : 0;
+    const descCount = data.description ? data.description.length : 0;
 
-    card.className = "card success";
     card.innerHTML = `
       <div class="card-header">
         <h3>${data.url}</h3>
         <span class="badge green">OK</span>
       </div>
+
+      ${data.redirect301 ? `
+        <div class="redirect">
+          301 Redirect → ${data.redirect301}
+        </div>
+      ` : ""}
 
       <div class="label">Title (${titleCount} characters)</div>
       <div class="value">${data.title || "—"}</div>
@@ -79,8 +97,7 @@ async function processDomain(domain) {
       <div class="label">AMP HTML</div>
       <div class="value">${data.amphtml || "—"}</div>
     `;
-  } catch {
-    card.className = "card error";
+  } catch (err) {
     card.innerHTML = `
       <div class="card-header">
         <h3>${domain}</h3>
@@ -97,20 +114,27 @@ function retry(domain, btn) {
   processDomain(domain);
 }
 
-/* ---------- PROGRESS ---------- */
+/* ================================
+   PROGRESS BAR
+================================ */
 
 function initProgress(total) {
-  document.getElementById("progress").classList.remove("hidden");
+  const progress = document.getElementById("progress");
+  progress.classList.remove("hidden");
   updateProgress(0, total);
 }
 
 function updateProgress(done, total) {
   const percent = Math.round((done / total) * 100);
   document.getElementById("progressBar").style.width = percent + "%";
-  document.getElementById("progressText").textContent = `${done} / ${total}`;
+
+  document.getElementById("progressText").textContent =
+    done === total ? `${total} Done` : `${done} / ${total}`;
 }
 
-/* ---------- THEME ---------- */
+/* ================================
+   THEME TOGGLE
+================================ */
 
 function toggleTheme() {
   const html = document.documentElement;
@@ -126,8 +150,6 @@ function toggleTheme() {
 (function () {
   const saved = localStorage.getItem("theme") || "dark";
   document.documentElement.dataset.theme = saved;
-  document.getElementById("themeToggle").textContent =
-    saved === "dark" ? "🌙" : "☀️";
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
