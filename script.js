@@ -129,14 +129,8 @@ async function processDomain(domain) {
         <span class="badge red">ERROR</span>
       </div>
       <div class="value">Domain not active</div>
-      <button class="retry" onclick="retry('${domain}', this)">Retry</button>
     `;
   }
-}
-
-function retry(domain, btn) {
-  btn.remove();
-  processDomain(domain);
 }
 
 /* ================================
