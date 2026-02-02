@@ -10,52 +10,60 @@
 </head>
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <!-- TOP BAR -->
-    <div class="top-bar">
-      <h1>Bulk SEO Meta Viewer</h1>
-      <div class="top-actions">
-        <button
-          class="toggle"
-          id="themeToggle"
-          onclick="toggleTheme()"
-          title="Toggle light / dark mode"
-        >
-          🌙
-        </button>
-      </div>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <h1>Bulk SEO Meta Viewer</h1>
+    <div class="top-actions">
+      <button id="themeToggle" class="toggle" onclick="toggleTheme()">🌙</button>
     </div>
-
-    <!-- INPUT PANEL -->
-    <div class="input-panel">
-
-      <textarea
-        id="domains"
-        placeholder="Enter one domain per line&#10;example.com&#10;https://example.com/page"
-      ></textarea>
-
-      <!-- ACTIONS -->
-      <div class="action-row">
-        <div class="action-left">
-          <button id="runBtn" onclick="run()">Check SEO</button>
-          <button id="clearBtn" class="secondary" onclick="clearDomains()">Clear</button>
-        </div>
-
-        <!-- PROGRESS -->
-        <div id="progress" class="progress hidden">
-          <div class="bar" id="progressBar"></div>
-          <span id="progressText"></span>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RESULTS -->
-    <div id="results"></div>
-
   </div>
 
-  <script src="script.js"></script>
+  <!-- INPUT PANEL -->
+  <div class="input-panel">
+
+    <textarea
+      id="domains"
+      placeholder="Enter one URL per line
+example.com
+https://example.com/page"
+    ></textarea>
+
+    <!-- ACTION ROW -->
+    <div class="action-row">
+
+      <!-- LEFT ACTIONS -->
+      <div class="action-left">
+        <button id="runBtn" onclick="run()">Check SEO</button>
+        <button id="clearBtn" class="secondary" onclick="clearDomains()">Clear</button>
+      </div>
+
+      <!-- PROGRESS (CENTER) -->
+      <div id="progress" class="progress hidden">
+        <div class="bar" id="progressBar"></div>
+        <span id="progressText"></span>
+      </div>
+
+      <!-- RIGHT ACTION -->
+      <div class="action-right">
+        <button
+          id="openBulkBtn"
+          class="secondary"
+          onclick="openBulk()"
+        >
+          Open Bulk
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results"></div>
+
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
