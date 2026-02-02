@@ -1,21 +1,22 @@
 const CONCURRENCY = 5;
 
 /* ================================
-   UTIL: ROOT DOMAIN CHECK
+   UTIL: HOSTNAME NORMALIZATION
 ================================ */
 
-function getRootDomain(url) {
+function normalizeHost(url) {
   try {
-    const host = new URL(url).hostname.replace(/^www\./, "");
-    const parts = host.split(".");
-    return parts.slice(-2).join(".");
+    return new URL(url)
+      .hostname
+      .replace(/^www\./, "")
+      .toLowerCase();
   } catch {
     return "";
   }
 }
 
-function isSameRootDomain(a, b) {
-  return getRootDomain(a) === getRootDomain(b);
+function isSameSite(a, b) {
+  return normalizeHost(a) === normalizeHost(b);
 }
 
 /* ================================
@@ -97,8 +98,8 @@ async function processDomain(domain) {
       throw new Error("inactive");
     }
 
-    /* -------- REDIRECT HANDLING -------- */
-    if (data.redirect301 && !isSameRootDomain(domain, data.redirect301)) {
+    /* -------- EXTERNAL REDIRECT ONLY -------- */
+    if (data.redirect301 && !isSameSite(domain, data.redirect301)) {
       card.innerHTML = `
         <div class="card-header">
           <h3>${data.url}</h3>
@@ -110,7 +111,7 @@ async function processDomain(domain) {
       return;
     }
 
-    /* -------- ACTIVE DOMAIN -------- */
+    /* -------- ACTIVE (INTERNAL REDIRECT OK) -------- */
     const titleCount = data.title ? data.title.length : 0;
     const descCount = data.description ? data.description.length : 0;
 
@@ -139,13 +140,13 @@ async function processDomain(domain) {
       <div class="value">${data.amphtml || "—"}</div>
     `;
 
-    /* -------- AUTO-HIDE OK BADGE (2s) -------- */
+    /* -------- AUTO-HIDE OK BADGE -------- */
     const okBadge = card.querySelector(".ok-badge");
     if (okBadge) {
       setTimeout(() => okBadge.remove(), 2000);
     }
 
-  } catch (err) {
+  } catch {
     card.innerHTML = `
       <div class="card-header">
         <h3>${domain}</h3>
