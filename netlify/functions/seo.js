@@ -19,6 +19,10 @@ export async function handler(event) {
       redirect301 = response.headers.get("location") || "";
     }
 
+    if (![200, 301, 302].includes(response.status)) {
+      throw new Error("inactive");
+    }
+
     const html = response.status === 200 ? await response.text() : "";
 
     const getTag = (regex) => {
@@ -26,30 +30,23 @@ export async function handler(event) {
       return match ? match[1].trim() : "";
     };
 
-    const title = getTag(/<title[^>]*>([^<]+)<\/title>/i);
-    const description = getTag(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
-    const canonical = getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i);
-    const amphtml = getTag(/<link\s+rel=["']amphtml["']\s+href=["']([^"']+)["']/i);
-
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      },
+      headers: { "Access-Control-Allow-Origin": "*" },
       body: JSON.stringify({
         url,
-        title,
-        description,
-        canonical,
-        amphtml,
+        title: getTag(/<title[^>]*>([^<]+)<\/title>/i),
+        description: getTag(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i),
+        canonical: getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']+)["']/i),
+        amphtml: getTag(/<link\s+rel=["']amphtml["']\s+href=["']([^"']+)["']/i),
         redirect301
       })
     };
 
   } catch (err) {
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Failed to fetch page" })
+      statusCode: 200,
+      body: JSON.stringify({ error: "Domain not active" })
     };
   }
 }
