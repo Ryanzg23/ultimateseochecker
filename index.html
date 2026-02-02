@@ -1,23 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <title>Bulk SEO Meta Viewer</title>
   <link rel="stylesheet" href="style.css" />
-	<link href="favicon.png" rel="shortcut icon" type="image/x-icon">
+  <link href="favicon.png" rel="shortcut icon" type="image/x-icon">
 </head>
 <body>
-<div class="container">
-<h1>Bulk SEO Meta Viewer</h1>
 
-<textarea id="domains" placeholder="example.com
+<div class="container">
+  <div class="top-bar">
+    <h1>Bulk SEO Meta Viewer</h1>
+    <button class="toggle" onclick="toggleTheme()">🌙 / ☀️</button>
+  </div>
+
+  <textarea id="domains" placeholder="example.com
 https://example.com/page
 example.org"></textarea>
 
-<button onclick="run()">Check SEO</button>
+  <button onclick="run()">Check SEO</button>
 
-<div id="results"></div>
+  <div id="progress" class="progress hidden">
+    <div class="bar" id="progressBar"></div>
+    <span id="progressText"></span>
+  </div>
 
+  <div id="results"></div>
 </div>
 
 <script src="script.js"></script>
