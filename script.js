@@ -99,7 +99,7 @@ async function processDomain(domain) {
     }
 
     /* -------- EXTERNAL REDIRECT ONLY -------- */
-    if (data.redirect301 && !isSameSite(domain, data.redirect301)) {
+    if (data.redirect301 && normalizeHost(domain) !== normalizeHost(data.redirect301)) {
       card.innerHTML = `
         <div class="card-header">
           <h3>${data.url}</h3>
@@ -194,3 +194,4 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
