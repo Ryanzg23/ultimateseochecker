@@ -298,3 +298,11 @@ button.secondary:hover:not(:disabled) {
 .retry:hover:not(:disabled) {
   background: #b91c1c;
 }
+
+.redirect {
+  margin: 6px 0 10px;
+  font-size: 13px;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
