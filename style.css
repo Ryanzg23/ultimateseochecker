@@ -27,7 +27,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+}
+
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .toggle {
@@ -58,7 +62,26 @@ button {
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
 }
+
+button:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #374151;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #4b5563;
+}
+
 
 #results {
   display: grid;
@@ -138,13 +161,14 @@ button {
 .action-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 15px 0;
+  gap: 10px;
 }
+
 
 .action-row button {
   margin: 0;
   white-space: nowrap;
 }
+
 
 
