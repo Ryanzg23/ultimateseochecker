@@ -284,8 +284,9 @@ async function showHttpStatus(btn, domain) {
 
 function restoreCard(btn) {
   const card = btn.closest(".card");
-  card.innerHTML = card.dataset.original;
+  card.innerHTML = card.dataset.ready || card.dataset.original;
 }
+
 
 /* ================================
    PROGRESS
@@ -327,5 +328,6 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
