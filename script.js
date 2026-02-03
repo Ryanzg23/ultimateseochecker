@@ -173,13 +173,20 @@ async function processDomain(domain, options = {}) {
 
     const okBadge = card.querySelector(".ok-badge");
     const httpBtn = card.querySelector(".http-btn");
-
+    
     if (okBadge) {
       setTimeout(() => {
         okBadge.remove();
         if (httpBtn) httpBtn.classList.remove("hidden");
+    
+        // ✅ Save the POST-OK state for Back button
+        card.dataset.ready = card.innerHTML;
       }, 2000);
+    } else {
+      // No OK badge case (redirected / AMP)
+      card.dataset.ready = card.innerHTML;
     }
+
 
   } catch {
     card.innerHTML = `
@@ -320,4 +327,5 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
