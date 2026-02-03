@@ -117,6 +117,10 @@ async function processDomain(domain, options = {}) {
             : data.amphtml || "—"
         }
       </div>
+      
+<button class="secondary small" onclick="showHttpStatus(this, '${data.inputUrl}')">
+  See HTTP Status
+</button>
 
       <div class="label">Robots</div>
       <div class="value">
@@ -184,6 +188,65 @@ function updateProgress(done, total) {
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
 
+
+async function showHttpStatus(btn, domain) {
+  const card = btn.closest(".card");
+  const originalHtml = card.innerHTML;
+
+  card.dataset.original = originalHtml;
+  card.innerHTML = `<div class="muted">Checking HTTP status…</div>`;
+
+  const cleanDomain = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+
+  try {
+    const res = await fetch(`/.netlify/functions/httpstatus?domain=${cleanDomain}`);
+    const data = await res.json();
+
+    const rows = data.map(row => {
+      const badges = row.statusChain.map(code => {
+        const cls = code === 200 ? "green" : "blue";
+        return `<span class="badge ${cls}">${code}</span>`;
+      }).join(" ");
+
+      return `
+        <div class="http-row">
+          <div class="http-url">${row.requestUrl}</div>
+          <div class="http-status">${badges}</div>
+          <div class="http-count">${row.redirects}</div>
+        </div>
+      `;
+    }).join("");
+
+    card.innerHTML = `
+      <div class="card-header">
+        <h3>HTTP Status</h3>
+        <button class="secondary small" onclick="restoreCard(this)">Back</button>
+      </div>
+
+      <div class="http-table">
+        <div class="http-row head">
+          <div>Request URL</div>
+          <div>Status</div>
+          <div>Redirects</div>
+        </div>
+        ${rows}
+      </div>
+    `;
+
+  } catch {
+    card.innerHTML = `
+      <div>Error loading HTTP status</div>
+      <button class="secondary small" onclick="restoreCard(this)">Back</button>
+    `;
+  }
+}
+
+function restoreCard(btn) {
+  const card = btn.closest(".card");
+  card.innerHTML = card.dataset.original;
+}
+
+
 /* ================================
    THEME TOGGLE (KEEP)
 ================================ */
@@ -205,3 +268,4 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
