@@ -16,15 +16,30 @@
   <div class="top-bar">
     <h1>Bulk SEO Meta Viewer</h1>
     <div class="top-actions">
-      <button id="themeToggle" class="toggle" onclick="toggleTheme()">🌙</button>
+
+      <a href="https://majormaintenancestarterpack.netlify.app/bulkamptester" target="_blank" class="tool-link bulk-amp">
+        Bulk AMP
+      </a>
+    
+      <a href="https://bulkrobots-sitemap.netlify.app/" target="_blank" class="tool-link bulk-robots">
+        Bulk Robots & Sitemap
+      </a>
+    
+      <a href="https://cpanelandcfdetector.netlify.app/" target="_blank" class="tool-link bulk-cf">
+        Bulk CF Detector
+      </a>
+    
+      <button id="themeToggle" class="toggle" onclick="toggleTheme()" title="Toggle light / dark mode" >
+        🌙
+      </button>
+    
     </div>
   </div>
 
   <!-- INPUT PANEL -->
   <div class="input-panel">
 
-    <textarea
-      id="domains"
+    <textarea id="domains"
       placeholder="Enter one URL per line
 example.com
 https://example.com/page"
@@ -68,4 +83,5 @@ https://example.com/page"
 <script src="script.js"></script>
 </body>
 </html>
+
 
