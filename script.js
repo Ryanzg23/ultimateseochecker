@@ -55,7 +55,7 @@ async function run() {
 ================================ */
 
 async function processDomain(domain, options = {}) {
-  const { isAmp = false } = options;
+  const { isAmp = false, insertAfter = null } = options;
   const results = document.getElementById("results");
 
   const card = document.createElement("div");
@@ -69,7 +69,13 @@ async function processDomain(domain, options = {}) {
     </div>
     <div class="muted">Checking domain…</div>
   `;
-  results.appendChild(card);
+
+  // ✅ Insert AMP card right after parent card
+  if (insertAfter && insertAfter.nextSibling) {
+    results.insertBefore(card, insertAfter.nextSibling);
+  } else {
+    results.appendChild(card);
+  }
 
   try {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
@@ -106,7 +112,8 @@ async function processDomain(domain, options = {}) {
       <div class="value">
         ${
           data.amphtml && !isAmp
-            ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">Open AMP</a>`
+            ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">` +
+              `${data.amphtml}</a>`
             : data.amphtml || "—"
         }
       </div>
@@ -141,14 +148,22 @@ async function processDomain(domain, options = {}) {
 }
 
 /* ================================
-   AMP CARD HANDLER (NEW)
+   AMP HANDLER
 ================================ */
 
-function openAmp(url, el) {
-  el.textContent = "Loading AMP…";
-  el.style.pointerEvents = "none";
+function openAmp(url, linkEl) {
+  const parentCard = linkEl.closest(".card");
 
-  processDomain(url, { isAmp: true });
+  // Prevent duplicate AMP cards
+  if (parentCard.nextSibling?.classList?.contains("amp-card")) return;
+
+  linkEl.style.pointerEvents = "none";
+  linkEl.style.opacity = "0.6";
+
+  processDomain(url, {
+    isAmp: true,
+    insertAfter: parentCard
+  });
 }
 
 /* ================================
@@ -170,7 +185,7 @@ function updateProgress(done, total) {
 }
 
 /* ================================
-   THEME TOGGLE (KEEP THIS)
+   THEME TOGGLE (KEEP)
 ================================ */
 
 function toggleTheme() {
