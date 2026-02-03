@@ -51,18 +51,21 @@ async function run() {
 }
 
 /* ================================
-   PROCESS DOMAIN
+   PROCESS DOMAIN (MAIN + AMP)
 ================================ */
 
-async function processDomain(domain) {
+async function processDomain(domain, options = {}) {
+  const { isAmp = false } = options;
   const results = document.getElementById("results");
 
   const card = document.createElement("div");
   card.className = "card";
+  if (isAmp) card.classList.add("amp-card");
+
   card.innerHTML = `
     <div class="card-header">
       <h3>${domain}</h3>
-      <span class="badge blue">LOADING</span>
+      ${isAmp ? `<span class="badge purple">AMP</span>` : `<span class="badge blue">LOADING</span>`}
     </div>
     <div class="muted">Checking domain…</div>
   `;
@@ -74,14 +77,14 @@ async function processDomain(domain) {
     if (!res.ok || data.error) throw new Error();
 
     const redirected = data.finalUrl !== data.inputUrl;
-
     const titleCount = data.title.length;
     const descCount = data.description.length;
 
     card.innerHTML = `
       <div class="card-header">
         <h3>${data.inputUrl}</h3>
-        ${!redirected ? `<span class="badge green ok-badge">OK</span>` : ``}
+        ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
+        ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
       </div>
 
       ${redirected ? `
@@ -100,7 +103,13 @@ async function processDomain(domain) {
       <div class="value">${data.canonical || "—"}</div>
 
       <div class="label">AMP HTML</div>
-      <div class="value">${data.amphtml || "—"}</div>
+      <div class="value">
+        ${
+          data.amphtml && !isAmp
+            ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">Open AMP</a>`
+            : data.amphtml || "—"
+        }
+      </div>
 
       <div class="label">Robots</div>
       <div class="value">
@@ -132,6 +141,17 @@ async function processDomain(domain) {
 }
 
 /* ================================
+   AMP CARD HANDLER (NEW)
+================================ */
+
+function openAmp(url, el) {
+  el.textContent = "Loading AMP…";
+  el.style.pointerEvents = "none";
+
+  processDomain(url, { isAmp: true });
+}
+
+/* ================================
    PROGRESS
 ================================ */
 
@@ -148,8 +168,9 @@ function updateProgress(done, total) {
   document.getElementById("progressText").textContent =
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
+
 /* ================================
-   THEME TOGGLE (FINAL)
+   THEME TOGGLE (KEEP THIS)
 ================================ */
 
 function toggleTheme() {
@@ -160,19 +181,12 @@ function toggleTheme() {
   html.dataset.theme = next;
   localStorage.setItem("theme", next);
 
-  if (btn) {
-    btn.textContent = next === "dark" ? "🌙" : "☀️";
-  }
+  if (btn) btn.textContent = next === "dark" ? "🌙" : "☀️";
 }
 
-// Restore saved theme on load
 (function () {
   const saved = localStorage.getItem("theme") || "dark";
   document.documentElement.dataset.theme = saved;
-
   const btn = document.getElementById("themeToggle");
-  if (btn) {
-    btn.textContent = saved === "dark" ? "🌙" : "☀️";
-  }
+  if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
