@@ -64,9 +64,22 @@ async function processDomain(domain, options = {}) {
 
   card.innerHTML = `
     <div class="card-header">
-      <h3>${domain}</h3>
-      ${isAmp ? `<span class="badge purple">AMP</span>` : `<span class="badge blue">LOADING</span>`}
-    </div>
+        <h3>${data.inputUrl}</h3>
+      
+        <div class="card-actions">
+          ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
+      
+          <button
+            class="secondary small http-btn hidden"
+            onclick="showHttpStatus(this, '${data.inputUrl}')"
+          >
+            See HTTP Status
+          </button>
+      
+          ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
+        </div>
+      </div>
+
     <div class="muted">Checking domain…</div>
   `;
 
@@ -117,10 +130,6 @@ async function processDomain(domain, options = {}) {
             : data.amphtml || "—"
         }
       </div>
-      
-<button class="secondary small" onclick="showHttpStatus(this, '${data.inputUrl}')">
-  See HTTP Status
-</button>
 
       <div class="label">Robots</div>
       <div class="value">
@@ -277,6 +286,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
