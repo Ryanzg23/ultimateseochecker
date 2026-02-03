@@ -6,7 +6,7 @@ export async function handler(event) {
   }
 
   try {
-    // Follow redirects automatically (final URL mode)
+    // Follow redirects automatically
     const response = await fetch(inputUrl, {
       headers: {
         "User-Agent": "Mozilla/5.0 (SEO Meta Checker)"
@@ -16,7 +16,9 @@ export async function handler(event) {
     const finalUrl = response.url;
     const html = await response.text();
 
-    /* ---------- ROBUST TAG PARSERS ---------- */
+    const origin = new URL(finalUrl).origin;
+
+    /* ---------- META PARSERS ---------- */
 
     const getTitle = () => {
       const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
@@ -44,6 +46,25 @@ export async function handler(event) {
       return m ? m[1].trim() : "";
     };
 
+    /* ---------- ROBOTS & SITEMAP CHECK ---------- */
+
+    async function exists(url) {
+      try {
+        const r = await fetch(url, { method: "HEAD" });
+        return r.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    const robotsUrl = `${origin}/robots.txt`;
+    const sitemapUrl = `${origin}/sitemap.xml`;
+
+    const [hasRobots, hasSitemap] = await Promise.all([
+      exists(robotsUrl),
+      exists(sitemapUrl)
+    ]);
+
     return {
       statusCode: 200,
       headers: {
@@ -55,7 +76,9 @@ export async function handler(event) {
         title: getTitle(),
         description: getDescription(),
         canonical: getCanonical(),
-        amphtml: getAmp()
+        amphtml: getAmp(),
+        robots: hasRobots ? robotsUrl : "",
+        sitemap: hasSitemap ? sitemapUrl : ""
       })
     };
 
