@@ -376,6 +376,18 @@ button.open-bulk:hover:not(:disabled) {
   text-decoration: underline;
 }
 
+/* ================================
+   AMP CARD
+================================ */
+
+.amp-card {
+  border: 1px dashed #a855f7;
+}
+
+.badge.purple {
+  background: #a855f7;
+  color: #fff;
+}
 
 
 
