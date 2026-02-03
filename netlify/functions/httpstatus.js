@@ -8,14 +8,18 @@ export async function handler(event) {
     };
   }
 
-  base = base.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+base = base
+  .replace(/^https?:\/\//, "")
+  .replace(/^www\./, "")
+  .replace(/\/.*$/, "");
 
-  const variants = [
-    `http://${base}`,
-    `http://www.${base}`,
-    `https://${base}`,
-    `https://www.${base}`
-  ];
+
+const variants = Array.from(new Set([
+  `http://${base}`,
+  `http://www.${base}`,
+  `https://${base}`,
+  `https://www.${base}`
+]));
 
   async function check(url) {
     let redirects = 0;
