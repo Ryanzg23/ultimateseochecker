@@ -62,10 +62,45 @@ body {
   font-size: 28px;
 }
 
+/* ================================
+   TOOL LINK BUTTONS (TOP BAR)
+================================ */
+
 .top-actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
+
+.tool-link {
+  text-decoration: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.tool-link:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* Individual tool colors */
+.tool-link.bulk-amp {
+  background: #455a64;
+}
+
+.tool-link.bulk-robots {
+  background: #0080A0;
+}
+
+.tool-link.bulk-cf {
+  background: #f6821f;
+}
+
 
 .toggle {
   background: transparent;
@@ -319,6 +354,7 @@ button.open-bulk {
 button.open-bulk:hover:not(:disabled) {
   background: var(--open-bulk-hover);
 }
+
 
 
 
