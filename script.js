@@ -1,5 +1,14 @@
 const CONCURRENCY = 5;
 
+function getRootDomain(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return host.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
 /* ================================
    UI HELPERS
 ================================ */
@@ -97,7 +106,10 @@ async function processDomain(domain, options = {}) {
     const data = await res.json();
     if (!res.ok || data.error) throw new Error();
 
-    const redirected = data.finalUrl !== data.inputUrl;
+    const inputDomain = getRootDomain(data.inputUrl);
+      const finalDomain = getRootDomain(data.finalUrl);
+      
+      const redirected = inputDomain && finalDomain && inputDomain !== finalDomain;
     const titleCount = data.title.length;
     const descCount = data.description.length;
 
@@ -308,3 +320,4 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
