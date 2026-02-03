@@ -203,19 +203,29 @@ async function showHttpStatus(btn, domain) {
     const data = await res.json();
 
     const rows = data.map(row => {
-      const badges = row.statusChain.map(code => {
-        const cls = code === 200 ? "green" : "blue";
-        return `<span class="badge ${cls}">${code}</span>`;
-      }).join(" ");
+     const badges = row.statusChain.map(code => {
+       if (code === 301 || code === 302 || code === 307 || code === 308) {
+         return `
+           <span class="badge blue has-tooltip">
+             ${code}
+             <span class="tooltip">
+               Redirect → ${row.finalUrl}
+             </span>
+           </span>
+         `;
+       }
+   
+       return `<span class="badge green">200</span>`;
+     }).join(" ");
+   
+     return `
+       <div class="http-row">
+         <div class="http-url">${row.requestUrl}</div>
+         <div class="http-status">${badges}</div>
+       </div>
+     `;
+   }).join("");
 
-      return `
-        <div class="http-row">
-          <div class="http-url">${row.requestUrl}</div>
-          <div class="http-status">${badges}</div>
-          <div class="http-count">${row.redirects}</div>
-        </div>
-      `;
-    }).join("");
 
     card.innerHTML = `
       <div class="card-header">
@@ -268,4 +278,5 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
