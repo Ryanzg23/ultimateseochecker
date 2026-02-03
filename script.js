@@ -21,22 +21,6 @@ function clearDomains() {
 }
 
 /* ================================
-   OPEN BULK
-================================ */
-
-function openBulk() {
-  const input = document.getElementById("domains").value;
-  const domains = input.split("\n").map(d => d.trim()).filter(Boolean);
-
-  if (!domains.length) return;
-
-  domains.forEach(url => {
-    const finalUrl = url.startsWith("http") ? url : "https://" + url;
-    window.open(finalUrl, "_blank", "noopener");
-  });
-}
-
-/* ================================
    MAIN RUN
 ================================ */
 
@@ -51,7 +35,6 @@ async function run() {
 
   let completed = 0;
   const queue = [...domains];
-
   const workers = Array.from({ length: CONCURRENCY }, () => worker());
 
   async function worker() {
@@ -90,7 +73,7 @@ async function processDomain(domain) {
     const data = await res.json();
     if (!res.ok || data.error) throw new Error();
 
-    const redirected = data.finalUrl && data.finalUrl !== data.inputUrl;
+    const redirected = data.finalUrl !== data.inputUrl;
 
     const titleCount = data.title.length;
     const descCount = data.description.length;
@@ -118,6 +101,20 @@ async function processDomain(domain) {
 
       <div class="label">AMP HTML</div>
       <div class="value">${data.amphtml || "—"}</div>
+
+      <div class="label">Robots</div>
+      <div class="value">
+        ${data.robots
+          ? `<a href="${data.robots}" target="_blank">${data.robots}</a>`
+          : "No Robots detected"}
+      </div>
+
+      <div class="label">Sitemap</div>
+      <div class="value">
+        ${data.sitemap
+          ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>`
+          : "No Sitemap detected"}
+      </div>
     `;
 
     const okBadge = card.querySelector(".ok-badge");
@@ -151,24 +148,3 @@ function updateProgress(done, total) {
   document.getElementById("progressText").textContent =
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
-
-/* ================================
-   THEME TOGGLE
-================================ */
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const btn = document.getElementById("themeToggle");
-
-  const next = html.dataset.theme === "dark" ? "light" : "dark";
-  html.dataset.theme = next;
-  localStorage.setItem("theme", next);
-  btn.textContent = next === "dark" ? "🌙" : "☀️";
-}
-
-(function () {
-  const saved = localStorage.getItem("theme") || "dark";
-  document.documentElement.dataset.theme = saved;
-  const btn = document.getElementById("themeToggle");
-  if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
-})();
