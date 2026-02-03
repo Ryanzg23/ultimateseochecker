@@ -235,10 +235,9 @@ async function showHttpStatus(btn, domain) {
 
       <div class="http-table">
         <div class="http-row head">
-          <div>Request URL</div>
-          <div>Status</div>
-          <div>Redirects</div>
-        </div>
+           <div>Request URL</div>
+           <div>Status</div>
+         </div>
         ${rows}
       </div>
     `;
@@ -278,5 +277,6 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
