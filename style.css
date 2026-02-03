@@ -69,18 +69,21 @@ body {
 .top-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .tool-link {
   text-decoration: none;
   color: #fff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 8px 16px;       
+  border-radius: 10px;   
+  font-size: 14px;      
+  font-weight: 600;
   white-space: nowrap;
-  transition: opacity 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;          
+  transition: opacity 0.2s ease, transform 0.12s ease;
 }
 
 .tool-link:hover {
@@ -100,6 +103,7 @@ body {
 .tool-link.bulk-cf {
   background: #f6821f;
 }
+
 
 
 .toggle {
@@ -354,6 +358,7 @@ button.open-bulk {
 button.open-bulk:hover:not(:disabled) {
   background: var(--open-bulk-hover);
 }
+
 
 
 
