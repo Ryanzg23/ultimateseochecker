@@ -181,7 +181,7 @@ async function processDomain(domain, options = {}) {
     
         // ✅ Save the POST-OK state for Back button
         card.dataset.ready = card.innerHTML;
-      }, 2000);
+      }, 1000);
     } else {
       // No OK badge case (redirected / AMP)
       card.dataset.ready = card.innerHTML;
@@ -328,6 +328,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
