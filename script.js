@@ -146,8 +146,15 @@ async function processDomain(domain, options = {}) {
       </div>
     `;
 
-    const okBadge = card.querySelector(".ok-badge");
-    if (okBadge) setTimeout(() => okBadge.remove(), 2000);
+   const okBadge = card.querySelector(".ok-badge");
+   const httpBtn = card.querySelector(".http-btn");
+   
+   if (okBadge) {
+     setTimeout(() => {
+       okBadge.remove();
+       if (httpBtn) httpBtn.classList.remove("hidden");
+     }, 2000);
+   }
 
   } catch {
     card.innerHTML = `
@@ -239,8 +246,11 @@ async function showHttpStatus(btn, domain) {
     card.innerHTML = `
       <div class="card-header">
         <h3>HTTP Status</h3>
-        <button class="secondary small" onclick="restoreCard(this)">Back</button>
+        <div class="card-actions">
+          <button class="secondary small" onclick="restoreCard(this)">Back</button>
+        </div>
       </div>
+
 
       <div class="http-table">
         <div class="http-row head">
@@ -286,6 +296,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
