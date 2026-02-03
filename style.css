@@ -361,6 +361,21 @@ button.open-bulk:hover:not(:disabled) {
 
 
 
+/* ================================
+   CARD LINKS (PROFESSIONAL)
+================================ */
+
+.card a {
+  color: #60a5fa;            /* soft blue */
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.card a:hover {
+  color: #93c5fd;            /* lighter on hover */
+  text-decoration: underline;
+}
+
 
 
 
