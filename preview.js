@@ -1,0 +1,73 @@
+const input = sessionStorage.getItem("previewDomains") || "";
+const domains = input.split("\n").map(d => d.trim()).filter(Boolean);
+
+const grid = document.getElementById("previewGrid");
+
+async function checkDomain(domain) {
+  const url = domain.startsWith("http") ? domain : "https://" + domain;
+
+  try {
+    const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(url)}`);
+    const data = await res.json();
+
+    const inputRoot = getRootDomain(data.inputUrl);
+    const finalRoot = getRootDomain(data.finalUrl);
+
+    return {
+      domain: data.inputUrl,
+      finalUrl: data.finalUrl,
+      redirected: inputRoot !== finalRoot
+    };
+
+  } catch {
+    return { domain, error: true };
+  }
+}
+
+function getRootDomain(url) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+async function render() {
+  for (const domain of domains) {
+    const card = document.createElement("div");
+    card.className = "preview-card";
+    card.innerHTML = `<div class="muted">Loading…</div>`;
+    grid.appendChild(card);
+
+    const result = await checkDomain(domain);
+
+    if (result.error) {
+      card.innerHTML = `
+        <h3>${domain}</h3>
+        <div class="error">Domain not active</div>
+      `;
+      continue;
+    }
+
+    if (result.redirected) {
+      card.innerHTML = `
+        <h3>${result.domain}</h3>
+        <div class="redirect">
+          301 Domain → ${result.finalUrl}
+        </div>
+      `;
+      continue;
+    }
+
+    card.innerHTML = `
+      <h3>${result.domain}</h3>
+      <iframe
+        src="${result.domain}"
+        loading="lazy"
+        referrerpolicy="no-referrer"
+      ></iframe>
+    `;
+  }
+}
+
+render();
