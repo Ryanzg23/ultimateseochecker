@@ -330,5 +330,12 @@ function toggleTheme() {
 })();
 
 
+function openPreview() {
+  const domains = document.getElementById("domains").value.trim();
+  if (!domains) return;
+
+  sessionStorage.setItem("previewDomains", domains);
+  window.open("preview.html", "_blank");
+}
 
 
