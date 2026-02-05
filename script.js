@@ -4,21 +4,6 @@ const CONCURRENCY = 5;
    HELPERS
 ================================ */
 
-function setLoading(state) {
-  document.getElementById("runBtn").disabled = state;
-  document.getElementById("clearBtn").disabled = state;
-  document.getElementById("openBulkBtn").disabled = state;
-}
-
-function clearDomains() {
-  document.getElementById("domains").value = "";
-  document.getElementById("results").innerHTML = "";
-
-  document.getElementById("progress").classList.add("hidden");
-  document.getElementById("progressBar").style.width = "0%";
-  document.getElementById("progressText").textContent = "";
-}
-
 function getRootDomain(url) {
   try {
     return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
@@ -27,20 +12,19 @@ function getRootDomain(url) {
   }
 }
 
-/* ================================
-   OPEN BULK
-================================ */
+function isHomepageRedirect(inputUrl, finalUrl) {
+  try {
+    const input = new URL(inputUrl);
+    const final = new URL(finalUrl);
 
-function openBulk() {
-  const input = document.getElementById("domains").value;
-  input
-    .split("\n")
-    .map(d => d.trim())
-    .filter(Boolean)
-    .forEach(d => {
-      const url = d.startsWith("http") ? d : "https://" + d;
-      window.open(url, "_blank", "noopener");
-    });
+    return (
+      input.pathname !== "/" &&
+      final.pathname === "/" &&
+      input.hostname === final.hostname
+    );
+  } catch {
+    return false;
+  }
 }
 
 /* ================================
@@ -48,57 +32,32 @@ function openBulk() {
 ================================ */
 
 async function run() {
-  const input = document.getElementById("domains").value;
-  const domains = input.split("\n").map(d => d.trim()).filter(Boolean);
+  const domains = document
+    .getElementById("domains")
+    .value.split("\n")
+    .map(d => d.trim())
+    .filter(Boolean);
+
   if (!domains.length) return;
 
-  setLoading(true);
   document.getElementById("results").innerHTML = "";
-  initProgress(domains.length);
 
-  let completed = 0;
-  const queue = [...domains];
-
-  const workers = Array.from({ length: CONCURRENCY }, async () => {
-    while (queue.length) {
-      const domain = queue.shift();
-      await processDomain(domain);
-      completed++;
-      updateProgress(completed, domains.length);
-    }
-  });
-
-  await Promise.all(workers);
-  setLoading(false);
+  for (const domain of domains) {
+    await processDomain(domain);
+  }
 }
 
 /* ================================
    PROCESS DOMAIN
 ================================ */
 
-async function processDomain(domain, options = {}) {
-  const { isAmp = false, insertAfter = null } = options;
+async function processDomain(domain) {
   const results = document.getElementById("results");
 
   const card = document.createElement("div");
   card.className = "card";
-  if (isAmp) card.classList.add("amp-card");
-
-  card.innerHTML = `
-    <div class="card-header">
-      <h3>${domain}</h3>
-      <div class="card-actions">
-        ${isAmp ? `<span class="badge purple">AMP</span>` : `<span class="badge blue">LOADING</span>`}
-      </div>
-    </div>
-    <div class="muted">Checking domain…</div>
-  `;
-
-  if (insertAfter?.nextSibling) {
-    results.insertBefore(card, insertAfter.nextSibling);
-  } else {
-    results.appendChild(card);
-  }
+  card.innerHTML = `<div class="muted">Checking…</div>`;
+  results.appendChild(card);
 
   try {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
@@ -107,47 +66,37 @@ async function processDomain(domain, options = {}) {
 
     const inputRoot = getRootDomain(data.inputUrl);
     const finalRoot = getRootDomain(data.finalUrl);
+
     const redirected = inputRoot && finalRoot && inputRoot !== finalRoot;
+    const is301ToHomepage = isHomepageRedirect(data.inputUrl, data.finalUrl);
+    const is404 = data.status === 404 || data.status === 410;
 
-    const titleCount = data.title.length;
-    const descCount = data.description.length;
+    card.innerHTML = `
+      <h3>${data.inputUrl}</h3>
 
-    card.dataset.original = `
-      <div class="card-header">
-        <h3>${data.inputUrl}</h3>
-        <div class="card-actions">
-          ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
+      ${is301ToHomepage ? `
+        <div class="status-label green">301 to homepage</div>
+      ` : ``}
 
-          <button
-            class="secondary small http-btn hidden"
-            onclick="showHttpStatus(this, '${data.inputUrl}')"
-          >
-            See HTTP Status
-          </button>
+      ${is404 ? `
+        <div class="status-label red">404 not found</div>
+      ` : ``}
 
-          ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
-        </div>
-      </div>
+      ${redirected ? `
+        <div class="redirect">301 Redirect → ${data.finalUrl}</div>
+      ` : ``}
 
-      ${redirected ? `<div class="redirect">301 Redirect → ${data.finalUrl}</div>` : ``}
-
-      <div class="label">Title (${titleCount} characters)</div>
+      <div class="label">Title (${data.title.length} characters)</div>
       <div class="value">${data.title || "—"}</div>
 
-      <div class="label">Meta Description (${descCount} characters)</div>
+      <div class="label">Meta Description (${data.description.length} characters)</div>
       <div class="value">${data.description || "—"}</div>
 
       <div class="label">Canonical</div>
       <div class="value">${data.canonical || "—"}</div>
 
       <div class="label">AMP HTML</div>
-      <div class="value">
-        ${
-          data.amphtml && !isAmp
-            ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
-            : data.amphtml || "—"
-        }
-      </div>
+      <div class="value">${data.amphtml || "—"}</div>
 
       <div class="label">Robots</div>
       <div class="value">
@@ -160,165 +109,10 @@ async function processDomain(domain, options = {}) {
       </div>
     `;
 
-    card.innerHTML = card.dataset.original;
-
-    const okBadge = card.querySelector(".ok-badge");
-    const httpBtn = card.querySelector(".http-btn");
-
-    if (okBadge) {
-      setTimeout(() => {
-        okBadge.remove();
-        httpBtn?.classList.remove("hidden");
-        card.dataset.ready = card.innerHTML;
-      }, 1000);
-    } else {
-      card.dataset.ready = card.innerHTML;
-    }
-
   } catch {
     card.innerHTML = `
-      <div class="card-header">
-        <h3>${domain}</h3>
-        <div class="card-actions">
-          <span class="badge red">ERROR</span>
-        </div>
-      </div>
-      <div class="value">Domain not active</div>
+      <h3>${domain}</h3>
+      <div class="status-label red">Domain not active</div>
     `;
   }
 }
-
-/* ================================
-   AMP
-================================ */
-
-function openAmp(url, el) {
-  const parent = el.closest(".card");
-  if (parent.nextSibling?.classList.contains("amp-card")) return;
-
-  el.style.pointerEvents = "none";
-  el.style.opacity = "0.6";
-
-  processDomain(url, { isAmp: true, insertAfter: parent });
-}
-
-/* ================================
-   HTTP STATUS VIEW
-================================ */
-
-async function showHttpStatus(btn, domain) {
-  const card = btn.closest(".card");
-  card.innerHTML = `<div class="muted">Checking HTTP status…</div>`;
-
-  const clean = domain.replace(/^https?:\/\//, "");
-
-  try {
-    const res = await fetch(`/.netlify/functions/httpstatus?domain=${clean}`);
-    const data = await res.json();
-
-    const rows = data.map(row => {
-      let badges = "";
-      const finalStatus = row.statusChain[row.statusChain.length - 1];
-
-      let meaningfulRedirect = false;
-      try {
-        const req = new URL(row.requestUrl);
-        const fin = new URL(row.finalUrl);
-        meaningfulRedirect = req.protocol !== fin.protocol || req.hostname !== fin.hostname;
-      } catch {}
-
-      if (meaningfulRedirect) {
-        const redirectCode = row.statusChain.find(code =>
-          [301, 302, 307, 308].includes(code)
-        );
-        if (redirectCode) {
-          badges += `
-            <span class="badge blue has-tooltip">
-              ${redirectCode}
-              <span class="tooltip">
-                Redirect → ${row.finalUrl}
-              </span>
-            </span>
-          `;
-        }
-      }
-
-      if (finalStatus === 200) {
-        badges += `<span class="badge green">200</span>`;
-      }
-
-      return `
-        <div class="http-row">
-          <div class="http-url">${row.requestUrl}</div>
-          <div class="http-status">${badges}</div>
-        </div>
-      `;
-    }).join("");
-
-    card.innerHTML = `
-      <div class="card-header">
-        <h3>HTTP Status</h3>
-        <div class="card-actions">
-          <button class="secondary small" onclick="restoreCard(this)">Back</button>
-        </div>
-      </div>
-
-      <div class="http-table">
-        <div class="http-row head">
-          <div>Request URL</div>
-          <div>Status</div>
-        </div>
-        ${rows}
-      </div>
-    `;
-
-  } catch {
-    card.innerHTML = `
-      <div>Error loading HTTP status</div>
-      <button class="secondary small" onclick="restoreCard(this)">Back</button>
-    `;
-  }
-}
-
-function restoreCard(btn) {
-  const card = btn.closest(".card");
-  card.innerHTML = card.dataset.ready || card.dataset.original;
-}
-
-/* ================================
-   PROGRESS
-================================ */
-
-function initProgress(total) {
-  document.getElementById("progress").classList.remove("hidden");
-  updateProgress(0, total);
-}
-
-function updateProgress(done, total) {
-  document.getElementById("progressBar").style.width =
-    Math.round((done / total) * 100) + "%";
-  document.getElementById("progressText").textContent =
-    done === total ? `${total} Done` : `${done} / ${total}`;
-}
-
-/* ================================
-   THEME TOGGLE
-================================ */
-
-function toggleTheme() {
-  const html = document.documentElement;
-  const next = html.dataset.theme === "dark" ? "light" : "dark";
-  html.dataset.theme = next;
-  localStorage.setItem("theme", next);
-
-  const btn = document.getElementById("themeToggle");
-  if (btn) btn.textContent = next === "dark" ? "🌙" : "☀️";
-}
-
-(function () {
-  const saved = localStorage.getItem("theme") || "dark";
-  document.documentElement.dataset.theme = saved;
-
-  const btn = document.getElementById("themeToggle");
-  if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
-})();
