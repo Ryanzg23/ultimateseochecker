@@ -611,6 +611,49 @@ button.small {
   color: #dc2626;
   border: 1px solid rgba(220,38,38,0.35);
 }
+.preview-url {
+  color: #7dd3fc; /* soft cyan */
+  font-size: 14px;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.preview-url:hover {
+  color: #bae6fd;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.open-site-btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.open-site-btn:hover {
+  background: #1d4ed8;
+}
+
+.reload-btn {
+  background: #374151;
+  color: #e5e7eb;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.reload-btn:hover {
+  background: #4b5563;
+}
+
 
 
 
