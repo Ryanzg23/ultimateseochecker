@@ -235,19 +235,29 @@ async function showHttpStatus(btn, domain) {
     const data = await res.json();
 
     const rows = data.map(row => {
-      const badges = row.statusChain.map(code => {
-        if ([301, 302, 307, 308].includes(code)) {
-          return `
-            <span class="badge blue has-tooltip">
-              ${code}
-              <span class="tooltip">
-                Redirect → ${row.finalUrl}
-              </span>
-            </span>
-          `;
-        }
-        return `<span class="badge green">200</span>`;
-      }).join(" ");
+      let badges = "";
+
+    // first redirect only
+    const firstRedirect = row.statusChain.find(code =>
+      [301, 302, 307, 308].includes(code)
+    );
+    
+    const finalStatus = row.statusChain[row.statusChain.length - 1];
+    
+    if (firstRedirect) {
+      badges += `
+        <span class="badge blue has-tooltip">
+          ${firstRedirect}
+          <span class="tooltip">
+            Redirect → ${row.finalUrl}
+          </span>
+        </span>
+      `;
+    }
+    
+    if (finalStatus === 200) {
+      badges += `<span class="badge green">200</span>`;
+    }
 
       return `
         <div class="http-row">
@@ -337,6 +347,7 @@ function openPreview() {
   sessionStorage.setItem("previewDomains", domains);
   window.open("preview.html", "_blank");
 }
+
 
 
 
