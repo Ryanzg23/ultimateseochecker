@@ -554,5 +554,42 @@ button.small {
   background: #4b5563;
 }
 
+/* ================================
+   IFRAME FALLBACK
+================================ */
+
+.iframe-wrapper {
+  position: relative;
+}
+
+.iframe-fallback {
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #000;
+  color: #ccc;
+  border-radius: 8px;
+}
+
+.open-site-btn {
+  background: #2563eb;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.open-site-btn:hover {
+  background: #1d4ed8;
+}
+
+.hidden {
+  display: none;
+}
+
 
 
