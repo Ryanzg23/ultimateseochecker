@@ -29,6 +29,16 @@ function clearDomains() {
   document.getElementById("progressText").textContent = "";
 }
 
+function normalizeUrlForCompare(url) {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.hostname}${u.pathname.replace(/\/$/, "")}`;
+  } catch {
+    return url;
+  }
+}
+
+
 /* ================================
    OPEN BULK
 ================================ */
@@ -244,7 +254,18 @@ async function showHttpStatus(btn, domain) {
     
     const finalStatus = row.statusChain[row.statusChain.length - 1];
     
-    if (firstRedirect) {
+    const normalizedRequest = normalizeUrlForCompare(row.requestUrl);
+    const normalizedFinal = normalizeUrlForCompare(row.finalUrl);
+    
+    // Only show redirect if protocol or hostname changed
+    const requestURL = new URL(row.requestUrl);
+    const finalURL = new URL(row.finalUrl);
+    
+    const meaningfulRedirect =
+      requestURL.protocol !== finalURL.protocol ||
+      requestURL.hostname !== finalURL.hostname;
+    
+    if (firstRedirect && meaningfulRedirect) {
       badges += `
         <span class="badge blue has-tooltip">
           ${firstRedirect}
@@ -254,6 +275,11 @@ async function showHttpStatus(btn, domain) {
         </span>
       `;
     }
+    
+    if (finalStatus === 200) {
+      badges += `<span class="badge green">200</span>`;
+    }
+
     
     if (finalStatus === 200) {
       badges += `<span class="badge green">200</span>`;
@@ -347,6 +373,7 @@ function openPreview() {
   sessionStorage.setItem("previewDomains", domains);
   window.open("preview.html", "_blank");
 }
+
 
 
 
