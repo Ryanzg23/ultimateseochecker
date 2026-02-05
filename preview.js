@@ -1,13 +1,8 @@
-const input = sessionStorage.getItem("previewDomains") || "";
-const domains = input.split("\n").map(d => d.trim()).filter(Boolean);
-
-const grid = document.getElementById("previewGrid");
-
 /* ================================
    HELPERS
 ================================ */
 
-function normalizeBase(url) {
+function getRootDomain(url) {
   try {
     return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
   } catch {
@@ -15,146 +10,158 @@ function normalizeBase(url) {
   }
 }
 
-/* ================================
-   CHECK DOMAIN (301 ROOT)
-================================ */
-
-async function checkDomain(domain) {
-  const url = domain.startsWith("http") ? domain : "https://" + domain;
-
+function isHomepageRedirect(inputUrl, finalUrl) {
   try {
-    const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(url)}`);
-    const data = await res.json();
+    const input = new URL(inputUrl);
+    const final = new URL(finalUrl);
 
-    const inputRoot = normalizeBase(data.inputUrl);
-    const finalRoot = normalizeBase(data.finalUrl);
-
-    return {
-      inputUrl: data.inputUrl,
-      finalUrl: data.finalUrl,
-      redirected: inputRoot && finalRoot && inputRoot !== finalRoot
-    };
-
+    return (
+      input.pathname !== "/" &&
+      final.pathname === "/" &&
+      input.hostname === final.hostname
+    );
   } catch {
-    return { inputUrl: domain, error: true };
+    return false;
   }
+}
+
+function getQueryUrls() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("urls");
+  if (!raw) return [];
+
+  return decodeURIComponent(raw)
+    .split(",")
+    .map(u => u.trim())
+    .filter(Boolean);
 }
 
 /* ================================
    RENDER
 ================================ */
 
-async function render() {
-  for (const domain of domains) {
-    const card = document.createElement("div");
-    card.className = "preview-card";
-    card.innerHTML = `<div class="muted">Loading…</div>`;
-    grid.appendChild(card);
+function createCard(title) {
+  const card = document.createElement("div");
+  card.className = "preview-card";
 
-    const result = await checkDomain(domain);
+  card.innerHTML = `
+    <div class="preview-header">
+      <a href="${title}" target="_blank" rel="noopener">${title}</a>
+      <button class="reload-btn">Reload</button>
+    </div>
+    <div class="preview-body loading">Loading…</div>
+  `;
 
-    if (result.error) {
-      card.innerHTML = `
-        <div class="preview-header">
-          <span>${domain}</span>
-        </div>
-        <div class="error">Domain not active</div>
-      `;
-      continue;
-    }
+  return card;
+}
 
-    if (result.redirected) {
-      card.innerHTML = `
-        <div class="preview-header">
-          <a href="${result.inputUrl}" target="_blank" class="preview-link">
-            ${result.inputUrl}
-          </a>
-        </div>
-        <div class="redirect">
-          301 Domain → ${result.finalUrl}
-        </div>
-      `;
-      continue;
-    }
+function setStatus(card, type, text, url) {
+  const body = card.querySelector(".preview-body");
 
-    card.innerHTML = `
-      <div class="preview-header">
-        <a href="${result.inputUrl}" target="_blank" class="preview-link">
-          ${result.inputUrl}
-        </a>
+  body.className = "preview-body blocked";
+  body.innerHTML = `
+    <div class="preview-status ${type}">
+      ${text}
+    </div>
+    <button class="open-site" onclick="window.open('${url}', '_blank')">
+      Open Site
+    </button>
+  `;
+}
 
-        <button class="reload-btn" onclick="reloadIframe(this)">
-          Reload
-        </button>
-      </div>
+function setIframe(card, url) {
+  const body = card.querySelector(".preview-body");
 
-      <div class="iframe-wrapper">
-        <iframe
-          src="${result.inputUrl}"
-          loading="lazy"
-          referrerpolicy="no-referrer"
-        ></iframe>
-
-        <div class="iframe-fallback hidden">
-          <div>Preview blocked by site</div>
-          <a href="${result.inputUrl}" target="_blank" class="open-site-btn">
-            Open Site
-          </a>
-        </div>
-      </div>
-    `;
-
-    detectIframeBlocked(card);
-  }
+  body.className = "preview-body";
+  body.innerHTML = `
+    <iframe
+      src="${url}"
+      loading="lazy"
+      referrerpolicy="no-referrer"
+    ></iframe>
+  `;
 }
 
 /* ================================
-   IFRAME FALLBACK DETECTION
+   MAIN
 ================================ */
 
-function detectIframeBlocked(card) {
-  setTimeout(() => {
+async function loadPreview(url, card) {
+  const body = card.querySelector(".preview-body");
+
+  try {
+    const res = await fetch(
+      `/.netlify/functions/seo?url=${encodeURIComponent(url)}`
+    );
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      setStatus(card, "danger", "Failed to load preview", url);
+      return;
+    }
+
+    const inputRoot = getRootDomain(data.inputUrl);
+    const finalRoot = getRootDomain(data.finalUrl);
+
+    // 404 / 410
+    if (data.status === 404 || data.status === 410) {
+      setStatus(card, "danger", "404 – page not found", url);
+      return;
+    }
+
+    // 301 to homepage
+    if (isHomepageRedirect(data.inputUrl, data.finalUrl)) {
+      setStatus(card, "success", "301 → homepage (preview skipped)", data.finalUrl);
+      return;
+    }
+
+    // Redirect to different root domain
+    if (inputRoot && finalRoot && inputRoot !== finalRoot) {
+      setStatus(
+        card,
+        "warning",
+        `301 → ${finalRoot} (preview skipped)`,
+        data.finalUrl
+      );
+      return;
+    }
+
+    // Try iframe
+    setIframe(card, data.inputUrl);
+
+    // Detect iframe block
     const iframe = card.querySelector("iframe");
-    const fallback = card.querySelector(".iframe-fallback");
+    iframe.onerror = () => {
+      setStatus(card, "warning", "Preview blocked by site", data.inputUrl);
+    };
 
-    if (!iframe || !fallback) return;
-
-    try {
-      if (iframe.contentDocument?.body?.childElementCount === 0) {
-        iframe.style.display = "none";
-        fallback.classList.remove("hidden");
-      }
-    } catch {
-      iframe.style.display = "none";
-      fallback.classList.remove("hidden");
-    }
-  }, 2500);
-}
-
-/* ================================
-   RELOAD IFRAME
-================================ */
-
-function reloadIframe(btn) {
-  const card = btn.closest(".preview-card");
-  const iframe = card.querySelector("iframe");
-  const fallback = card.querySelector(".iframe-fallback");
-
-  if (!iframe) return;
-
-  iframe.style.display = "block";
-  if (fallback) fallback.classList.add("hidden");
-
-  const src = iframe.src;
-  iframe.src = "";
-  setTimeout(() => {
-    iframe.src = src;
-    detectIframeBlocked(card);
-  }, 50);
+  } catch {
+    setStatus(card, "danger", "Preview failed", url);
+  }
 }
 
 /* ================================
    INIT
 ================================ */
 
-render();
+(function init() {
+  const urls = getQueryUrls();
+  const grid = document.getElementById("previewGrid");
+
+  if (!urls.length) {
+    grid.innerHTML = `<div class="muted">No URLs provided</div>`;
+    return;
+  }
+
+  urls.forEach(url => {
+    const normalized = url.startsWith("http") ? url : "https://" + url;
+    const card = createCard(normalized);
+
+    grid.appendChild(card);
+
+    const reloadBtn = card.querySelector(".reload-btn");
+    reloadBtn.onclick = () => loadPreview(normalized, card);
+
+    loadPreview(normalized, card);
+  });
+})();
