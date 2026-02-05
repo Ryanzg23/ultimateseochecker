@@ -57,6 +57,11 @@ function openBulk() {
     });
 }
 
+function openPreview(url) {
+  const encoded = encodeURIComponent(url);
+  window.open(`/preview.html?urls=${encoded}`, "_blank");
+}
+
 /* ================================
    MAIN RUN
 ================================ */
@@ -137,7 +142,7 @@ async function processDomain(domain, options = {}) {
       <div class="card-header">
         <h3>${data.inputUrl}</h3>
         <div class="card-actions">
-          ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
+          ${!redirected && !isAmp && !is404 ? `<span class="badge green ok-badge">OK</span>` : ``}
 
           <button
             class="secondary small http-btn hidden"
@@ -146,31 +151,52 @@ async function processDomain(domain, options = {}) {
             See HTTP Status
           </button>
 
+          <button
+            class="secondary small preview-btn"
+            onclick="openPreview('${data.inputUrl}')"
+          >
+            Preview
+          </button>
+
           ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
         </div>
       </div>
 
-      ${is301Home ? `<div class="status-label green">301 to homepage</div>` : ``}
-      ${is404 ? `<div class="status-label red">404 not found</div>` : ``}
-      ${redirected ? `<div class="redirect">301 Redirect → ${data.finalUrl}</div>` : ``}
+      ${is301Home ? `
+        <div class="issue-pill success">
+          301 redirect to homepage
+        </div>
+      ` : ``}
 
-      <div class="label">Title (${titleCount} characters)</div>
-      <div class="value">${data.title || "—"}</div>
+      ${is404 ? `
+        <div class="issue-pill danger">
+          404 – page not found
+        </div>
+      ` : ``}
 
-      <div class="label">Meta Description (${descCount} characters)</div>
-      <div class="value">${data.description || "—"}</div>
+      ${redirected && !is301Home ? `
+        <div class="redirect">301 Redirect → ${data.finalUrl}</div>
+      ` : ``}
 
-      <div class="label">Canonical</div>
-      <div class="value">${data.canonical || "—"}</div>
+      ${!is404 ? `
+        <div class="label">Title (${titleCount} characters)</div>
+        <div class="value">${data.title || "—"}</div>
 
-      <div class="label">AMP HTML</div>
-      <div class="value">
-        ${
-          data.amphtml && !isAmp
-            ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
-            : data.amphtml || "—"
-        }
-      </div>
+        <div class="label">Meta Description (${descCount} characters)</div>
+        <div class="value">${data.description || "—"}</div>
+
+        <div class="label">Canonical</div>
+        <div class="value">${data.canonical || "—"}</div>
+
+        <div class="label">AMP HTML</div>
+        <div class="value">
+          ${
+            data.amphtml && !isAmp
+              ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
+              : data.amphtml || "—"
+          }
+        </div>
+      ` : ``}
 
       <div class="label">Robots</div>
       <div class="value">
@@ -195,6 +221,7 @@ async function processDomain(domain, options = {}) {
         card.dataset.ready = card.innerHTML;
       }, 1000);
     } else {
+      httpBtn?.classList.remove("hidden");
       card.dataset.ready = card.innerHTML;
     }
 
@@ -206,7 +233,7 @@ async function processDomain(domain, options = {}) {
           <span class="badge red">ERROR</span>
         </div>
       </div>
-      <div class="status-label red">Domain not active</div>
+      <div class="issue-pill danger">Domain not active</div>
     `;
   }
 }
