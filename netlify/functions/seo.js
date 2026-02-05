@@ -1,69 +1,48 @@
 export async function handler(event) {
-  let inputUrl = event.queryStringParameters.url;
+  let url = event.queryStringParameters.url;
 
-  if (!inputUrl.startsWith("http")) {
-    inputUrl = "https://" + inputUrl;
+  if (!url) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Missing URL" })
+    };
+  }
+
+  if (!url.startsWith("http")) {
+    url = "https://" + url;
   }
 
   try {
-    // Follow redirects automatically
-    const response = await fetch(inputUrl, {
+    const response = await fetch(url, {
+      redirect: "follow",
       headers: {
-        "User-Agent": "Mozilla/5.0 (SEO Meta Checker)"
+        "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
       }
     });
 
+    const status = response.status;
     const finalUrl = response.url;
     const html = await response.text();
 
+    const getTag = (regex) => {
+      const match = html.match(regex);
+      return match ? match[1].trim() : "";
+    };
+
+    const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
+    const description = getTag(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i);
+    const canonical = getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']*)["']/i);
+    const amphtml = getTag(/<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i);
+
     const origin = new URL(finalUrl).origin;
 
-    /* ---------- META PARSERS ---------- */
+    const robots = await fetch(`${origin}/robots.txt`, { redirect: "manual" })
+      .then(r => r.ok ? r.url : "")
+      .catch(() => "");
 
-    const getTitle = () => {
-      const m = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-      return m ? m[1].trim() : "";
-    };
-
-    const getDescription = () => {
-      const m =
-        html.match(/<meta[^>]*name\s*=\s*["']description["'][^>]*content\s*=\s*["']([^"']+)["'][^>]*>/i) ||
-        html.match(/<meta[^>]*content\s*=\s*["']([^"']+)["'][^>]*name\s*=\s*["']description["'][^>]*>/i);
-      return m ? m[1].trim() : "";
-    };
-
-    const getCanonical = () => {
-      const m =
-        html.match(/<link[^>]*rel\s*=\s*["']canonical["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i) ||
-        html.match(/<link[^>]*href\s*=\s*["']([^"']+)["'][^>]*rel\s*=\s*["']canonical["'][^>]*>/i);
-      return m ? m[1].trim() : "";
-    };
-
-    const getAmp = () => {
-      const m =
-        html.match(/<link[^>]*rel\s*=\s*["']amphtml["'][^>]*href\s*=\s*["']([^"']+)["'][^>]*>/i) ||
-        html.match(/<link[^>]*href\s*=\s*["']([^"']+)["'][^>]*rel\s*=\s*["']amphtml["'][^>]*>/i);
-      return m ? m[1].trim() : "";
-    };
-
-    /* ---------- ROBOTS & SITEMAP CHECK ---------- */
-
-    async function exists(url) {
-      try {
-        const r = await fetch(url, { method: "HEAD" });
-        return r.ok;
-      } catch {
-        return false;
-      }
-    }
-
-    const robotsUrl = `${origin}/robots.txt`;
-    const sitemapUrl = `${origin}/sitemap.xml`;
-
-    const [hasRobots, hasSitemap] = await Promise.all([
-      exists(robotsUrl),
-      exists(sitemapUrl)
-    ]);
+    const sitemap = await fetch(`${origin}/sitemap.xml`, { redirect: "manual" })
+      .then(r => r.ok ? r.url : "")
+      .catch(() => "");
 
     return {
       statusCode: 200,
@@ -71,21 +50,28 @@ export async function handler(event) {
         "Access-Control-Allow-Origin": "*"
       },
       body: JSON.stringify({
-        inputUrl,
+        inputUrl: url,
         finalUrl,
-        title: getTitle(),
-        description: getDescription(),
-        canonical: getCanonical(),
-        amphtml: getAmp(),
-        robots: hasRobots ? robotsUrl : "",
-        sitemap: hasSitemap ? sitemapUrl : ""
+        status,
+        title,
+        description,
+        canonical,
+        amphtml,
+        robots,
+        sitemap
       })
     };
 
   } catch (err) {
     return {
-      statusCode: 200,
-      body: JSON.stringify({ error: "Domain not active" })
+      statusCode: 500,
+      headers: {
+        "Access-Control-Allow-Origin": "*"
+      },
+      body: JSON.stringify({
+        inputUrl: url,
+        error: "Failed to fetch page"
+      })
     };
   }
 }
