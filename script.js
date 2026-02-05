@@ -153,12 +153,14 @@ async function processDomain(domain, options = {}) {
         <div class="card-actions">
           ${!redirected && !isAmp && !is404 ? `<span class="badge green ok-badge">OK</span>` : ``}
 
-          <button
-            class="secondary small http-btn hidden"
-            onclick="showHttpStatus(this, '${data.inputUrl}')"
-          >
-            See HTTP Status
-          </button>
+          ${!is404 && !is301Home ? `
+              <button
+                class="secondary small http-btn hidden"
+                onclick="showHttpStatus(this, '${data.inputUrl}')"
+              >
+                See HTTP Status
+              </button>
+            ` : ``}
 
           ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
         </div>
@@ -177,7 +179,7 @@ async function processDomain(domain, options = {}) {
       ` : ``}
 
       ${redirected && !is301Home ? `
-        <div class="redirect">301 Redirect → ${data.finalUrl}</div>
+        <div class="redirect">301 → ${data.finalUrl}</div>
       ` : ``}
 
       ${!is404 ? `
@@ -200,15 +202,36 @@ async function processDomain(domain, options = {}) {
         </div>
       ` : ``}
 
-      <div class="label">Robots</div>
-      <div class="value">
-        ${data.robots ? `<a href="${data.robots}" target="_blank">${data.robots}</a>` : "No Robots detected"}
-      </div>
+      ${!is404 && !is301Home ? `
+  <!-- META -->
+  <div class="label">Title (${titleCount} characters)</div>
+  <div class="value">${data.title || "—"}</div>
 
-      <div class="label">Sitemap</div>
-      <div class="value">
-        ${data.sitemap ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>` : "No Sitemap detected"}
-      </div>
+  <div class="label">Meta Description (${descCount} characters)</div>
+  <div class="value">${data.description || "—"}</div>
+
+  <div class="label">Canonical</div>
+  <div class="value">${data.canonical || "—"}</div>
+
+  <div class="label">AMP HTML</div>
+  <div class="value">
+    ${
+      data.amphtml && !isAmp
+        ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
+        : data.amphtml || "—"
+    }
+  </div>
+
+  <div class="label">Robots</div>
+  <div class="value">
+    ${data.robots ? `<a href="${data.robots}" target="_blank">${data.robots}</a>` : "No Robots detected"}
+  </div>
+
+  <div class="label">Sitemap</div>
+  <div class="value">
+    ${data.sitemap ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>` : "No Sitemap detected"}
+  </div>
+` : ``}
     `;
 
     card.innerHTML = card.dataset.original;
@@ -374,4 +397,5 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
