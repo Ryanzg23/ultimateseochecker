@@ -57,6 +57,10 @@ function openBulk() {
     });
 }
 
+/* ================================
+   SITE PREVIEW (TOP BUTTON ONLY)
+================================ */
+
 function openPreview() {
   const input = document.getElementById("domains").value;
 
@@ -151,16 +155,16 @@ async function processDomain(domain, options = {}) {
       <div class="card-header">
         <h3>${data.inputUrl}</h3>
         <div class="card-actions">
-          ${!redirected && !isAmp && !is404 ? `<span class="badge green ok-badge">OK</span>` : ``}
+          ${!redirected && !isAmp && !is404 && !is301Home ? `<span class="badge green ok-badge">OK</span>` : ``}
 
           ${!is404 && !is301Home ? `
-              <button
-                class="secondary small http-btn hidden"
-                onclick="showHttpStatus(this, '${data.inputUrl}')"
-              >
-                See HTTP Status
-              </button>
-            ` : ``}
+            <button
+              class="secondary small http-btn hidden"
+              onclick="showHttpStatus(this, '${data.inputUrl}')"
+            >
+              See HTTP Status
+            </button>
+          ` : ``}
 
           ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
         </div>
@@ -168,7 +172,7 @@ async function processDomain(domain, options = {}) {
 
       ${is301Home ? `
         <div class="issue-pill success">
-          301 redirect to homepage
+          301 → homepage
         </div>
       ` : ``}
 
@@ -182,7 +186,7 @@ async function processDomain(domain, options = {}) {
         <div class="redirect">301 → ${data.finalUrl}</div>
       ` : ``}
 
-      ${!is404 ? `
+      ${!is404 && !is301Home ? `
         <div class="label">Title (${titleCount} characters)</div>
         <div class="value">${data.title || "—"}</div>
 
@@ -200,38 +204,17 @@ async function processDomain(domain, options = {}) {
               : data.amphtml || "—"
           }
         </div>
+
+        <div class="label">Robots</div>
+        <div class="value">
+          ${data.robots ? `<a href="${data.robots}" target="_blank">${data.robots}</a>` : "No Robots detected"}
+        </div>
+
+        <div class="label">Sitemap</div>
+        <div class="value">
+          ${data.sitemap ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>` : "No Sitemap detected"}
+        </div>
       ` : ``}
-
-      ${!is404 && !is301Home ? `
-  <!-- META -->
-  <div class="label">Title (${titleCount} characters)</div>
-  <div class="value">${data.title || "—"}</div>
-
-  <div class="label">Meta Description (${descCount} characters)</div>
-  <div class="value">${data.description || "—"}</div>
-
-  <div class="label">Canonical</div>
-  <div class="value">${data.canonical || "—"}</div>
-
-  <div class="label">AMP HTML</div>
-  <div class="value">
-    ${
-      data.amphtml && !isAmp
-        ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
-        : data.amphtml || "—"
-    }
-  </div>
-
-  <div class="label">Robots</div>
-  <div class="value">
-    ${data.robots ? `<a href="${data.robots}" target="_blank">${data.robots}</a>` : "No Robots detected"}
-  </div>
-
-  <div class="label">Sitemap</div>
-  <div class="value">
-    ${data.sitemap ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>` : "No Sitemap detected"}
-  </div>
-` : ``}
     `;
 
     card.innerHTML = card.dataset.original;
@@ -254,9 +237,6 @@ async function processDomain(domain, options = {}) {
     card.innerHTML = `
       <div class="card-header">
         <h3>${domain}</h3>
-        <div class="card-actions">
-          <span class="badge red">ERROR</span>
-        </div>
       </div>
       <div class="issue-pill danger">Domain not active</div>
     `;
@@ -397,5 +377,3 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
