@@ -37,35 +37,46 @@ function getQueryUrls() {
 }
 
 /* ================================
-   RENDER
+   RENDER HELPERS
 ================================ */
 
-function createCard(title) {
+function createCard(url) {
   const card = document.createElement("div");
   card.className = "preview-card";
 
   card.innerHTML = `
     <div class="preview-header">
-      <a href="${title}" target="_blank" rel="noopener">${title}</a>
-      <button class="reload-btn">Reload</button>
+      <a class="preview-url" href="${url}" target="_blank" rel="noopener">
+        ${url}
+      </a>
+      <button class="reload-btn" title="Reload preview">Reload</button>
     </div>
-    <div class="preview-body loading">Loading…</div>
+
+    <div class="preview-body loading">
+      Loading…
+    </div>
   `;
 
   return card;
 }
 
-function setStatus(card, type, text, url) {
+function setBlocked(card, type, message, openUrl) {
   const body = card.querySelector(".preview-body");
 
   body.className = "preview-body blocked";
   body.innerHTML = `
     <div class="preview-status ${type}">
-      ${text}
+      ${message}
     </div>
-    <button class="open-site" onclick="window.open('${url}', '_blank')">
-      Open Site
-    </button>
+
+    <div class="preview-actions">
+      <button
+        class="open-site-btn"
+        onclick="window.open('${openUrl}', '_blank')"
+      >
+        Open Site
+      </button>
+    </div>
   `;
 }
 
@@ -83,11 +94,13 @@ function setIframe(card, url) {
 }
 
 /* ================================
-   MAIN
+   PREVIEW LOADER
 ================================ */
 
 async function loadPreview(url, card) {
   const body = card.querySelector(".preview-body");
+  body.className = "preview-body loading";
+  body.textContent = "Loading…";
 
   try {
     const res = await fetch(
@@ -96,7 +109,7 @@ async function loadPreview(url, card) {
     const data = await res.json();
 
     if (!res.ok || data.error) {
-      setStatus(card, "danger", "Failed to load preview", url);
+      setBlocked(card, "danger", "Failed to load preview", url);
       return;
     }
 
@@ -105,19 +118,24 @@ async function loadPreview(url, card) {
 
     // 404 / 410
     if (data.status === 404 || data.status === 410) {
-      setStatus(card, "danger", "404 – page not found", url);
+      setBlocked(card, "danger", "404 – page not found", url);
       return;
     }
 
     // 301 to homepage
     if (isHomepageRedirect(data.inputUrl, data.finalUrl)) {
-      setStatus(card, "success", "301 → homepage (preview skipped)", data.finalUrl);
+      setBlocked(
+        card,
+        "success",
+        "301 → homepage (preview skipped)",
+        data.finalUrl
+      );
       return;
     }
 
     // Redirect to different root domain
     if (inputRoot && finalRoot && inputRoot !== finalRoot) {
-      setStatus(
+      setBlocked(
         card,
         "warning",
         `301 → ${finalRoot} (preview skipped)`,
@@ -129,14 +147,13 @@ async function loadPreview(url, card) {
     // Try iframe
     setIframe(card, data.inputUrl);
 
-    // Detect iframe block
     const iframe = card.querySelector("iframe");
     iframe.onerror = () => {
-      setStatus(card, "warning", "Preview blocked by site", data.inputUrl);
+      setBlocked(card, "warning", "Preview blocked by site", data.inputUrl);
     };
 
   } catch {
-    setStatus(card, "danger", "Preview failed", url);
+    setBlocked(card, "danger", "Preview failed", url);
   }
 }
 
@@ -153,15 +170,15 @@ async function loadPreview(url, card) {
     return;
   }
 
-  urls.forEach(url => {
-    const normalized = url.startsWith("http") ? url : "https://" + url;
-    const card = createCard(normalized);
+  urls.forEach(raw => {
+    const url = raw.startsWith("http") ? raw : "https://" + raw;
 
+    const card = createCard(url);
     grid.appendChild(card);
 
     const reloadBtn = card.querySelector(".reload-btn");
-    reloadBtn.onclick = () => loadPreview(normalized, card);
+    reloadBtn.onclick = () => loadPreview(url, card);
 
-    loadPreview(normalized, card);
+    loadPreview(url, card);
   });
 })();
