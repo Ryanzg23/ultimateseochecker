@@ -1,16 +1,7 @@
 const CONCURRENCY = 5;
 
-function getRootDomain(url) {
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, "");
-    return host.toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
 /* ================================
-   UI HELPERS
+   HELPERS
 ================================ */
 
 function setLoading(state) {
@@ -23,21 +14,18 @@ function clearDomains() {
   document.getElementById("domains").value = "";
   document.getElementById("results").innerHTML = "";
 
-  const progress = document.getElementById("progress");
-  progress.classList.add("hidden");
+  document.getElementById("progress").classList.add("hidden");
   document.getElementById("progressBar").style.width = "0%";
   document.getElementById("progressText").textContent = "";
 }
 
-function normalizeUrlForCompare(url) {
+function getRootDomain(url) {
   try {
-    const u = new URL(url);
-    return `${u.protocol}//${u.hostname}${u.pathname.replace(/\/$/, "")}`;
+    return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
   } catch {
-    return url;
+    return "";
   }
 }
-
 
 /* ================================
    OPEN BULK
@@ -45,12 +33,14 @@ function normalizeUrlForCompare(url) {
 
 function openBulk() {
   const input = document.getElementById("domains").value;
-  const domains = input.split("\n").map(d => d.trim()).filter(Boolean);
-
-  domains.forEach(d => {
-    const url = d.startsWith("http") ? d : "https://" + d;
-    window.open(url, "_blank", "noopener");
-  });
+  input
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean)
+    .forEach(d => {
+      const url = d.startsWith("http") ? d : "https://" + d;
+      window.open(url, "_blank", "noopener");
+    });
 }
 
 /* ================================
@@ -68,23 +58,22 @@ async function run() {
 
   let completed = 0;
   const queue = [...domains];
-  const workers = Array.from({ length: CONCURRENCY }, () => worker());
 
-  async function worker() {
+  const workers = Array.from({ length: CONCURRENCY }, async () => {
     while (queue.length) {
       const domain = queue.shift();
       await processDomain(domain);
       completed++;
       updateProgress(completed, domains.length);
     }
-  }
+  });
 
   await Promise.all(workers);
   setLoading(false);
 }
 
 /* ================================
-   PROCESS DOMAIN (SEO + AMP)
+   PROCESS DOMAIN
 ================================ */
 
 async function processDomain(domain, options = {}) {
@@ -105,7 +94,7 @@ async function processDomain(domain, options = {}) {
     <div class="muted">Checking domain…</div>
   `;
 
-  if (insertAfter && insertAfter.nextSibling) {
+  if (insertAfter?.nextSibling) {
     results.insertBefore(card, insertAfter.nextSibling);
   } else {
     results.appendChild(card);
@@ -116,10 +105,10 @@ async function processDomain(domain, options = {}) {
     const data = await res.json();
     if (!res.ok || data.error) throw new Error();
 
-    const inputDomain = getRootDomain(data.inputUrl);
-      const finalDomain = getRootDomain(data.finalUrl);
-      
-      const redirected = inputDomain && finalDomain && inputDomain !== finalDomain;
+    const inputRoot = getRootDomain(data.inputUrl);
+    const finalRoot = getRootDomain(data.finalUrl);
+    const redirected = inputRoot && finalRoot && inputRoot !== finalRoot;
+
     const titleCount = data.title.length;
     const descCount = data.description.length;
 
@@ -140,11 +129,7 @@ async function processDomain(domain, options = {}) {
         </div>
       </div>
 
-      ${redirected ? `
-        <div class="redirect">
-          301 Redirect → ${data.finalUrl}
-        </div>
-      ` : ``}
+      ${redirected ? `<div class="redirect">301 Redirect → ${data.finalUrl}</div>` : ``}
 
       <div class="label">Title (${titleCount} characters)</div>
       <div class="value">${data.title || "—"}</div>
@@ -166,16 +151,12 @@ async function processDomain(domain, options = {}) {
 
       <div class="label">Robots</div>
       <div class="value">
-        ${data.robots
-          ? `<a href="${data.robots}" target="_blank">${data.robots}</a>`
-          : "No Robots detected"}
+        ${data.robots ? `<a href="${data.robots}" target="_blank">${data.robots}</a>` : "No Robots detected"}
       </div>
 
       <div class="label">Sitemap</div>
       <div class="value">
-        ${data.sitemap
-          ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>`
-          : "No Sitemap detected"}
+        ${data.sitemap ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>` : "No Sitemap detected"}
       </div>
     `;
 
@@ -183,20 +164,16 @@ async function processDomain(domain, options = {}) {
 
     const okBadge = card.querySelector(".ok-badge");
     const httpBtn = card.querySelector(".http-btn");
-    
+
     if (okBadge) {
       setTimeout(() => {
         okBadge.remove();
-        if (httpBtn) httpBtn.classList.remove("hidden");
-    
-        // ✅ Save the POST-OK state for Back button
+        httpBtn?.classList.remove("hidden");
         card.dataset.ready = card.innerHTML;
       }, 1000);
     } else {
-      // No OK badge case (redirected / AMP)
       card.dataset.ready = card.innerHTML;
     }
-
 
   } catch {
     card.innerHTML = `
@@ -212,20 +189,17 @@ async function processDomain(domain, options = {}) {
 }
 
 /* ================================
-   AMP HANDLER
+   AMP
 ================================ */
 
 function openAmp(url, el) {
-  const parentCard = el.closest(".card");
-  if (parentCard.nextSibling?.classList?.contains("amp-card")) return;
+  const parent = el.closest(".card");
+  if (parent.nextSibling?.classList.contains("amp-card")) return;
 
   el.style.pointerEvents = "none";
   el.style.opacity = "0.6";
 
-  processDomain(url, {
-    isAmp: true,
-    insertAfter: parentCard
-  });
+  processDomain(url, { isAmp: true, insertAfter: parent });
 }
 
 /* ================================
@@ -234,8 +208,6 @@ function openAmp(url, el) {
 
 async function showHttpStatus(btn, domain) {
   const card = btn.closest(".card");
-  const original = card.dataset.original;
-
   card.innerHTML = `<div class="muted">Checking HTTP status…</div>`;
 
   const clean = domain.replace(/^https?:\/\//, "");
@@ -246,44 +218,34 @@ async function showHttpStatus(btn, domain) {
 
     const rows = data.map(row => {
       let badges = "";
+      const finalStatus = row.statusChain[row.statusChain.length - 1];
 
-    // first redirect only
-    const firstRedirect = row.statusChain.find(code =>
-      [301, 302, 307, 308].includes(code)
-    );
-    
-    const finalStatus = row.statusChain[row.statusChain.length - 1];
-    
-    const normalizedRequest = normalizeUrlForCompare(row.requestUrl);
-    const normalizedFinal = normalizeUrlForCompare(row.finalUrl);
-    
-    // Only show redirect if protocol or hostname changed
-    const requestURL = new URL(row.requestUrl);
-    const finalURL = new URL(row.finalUrl);
-    
-    const meaningfulRedirect =
-      requestURL.protocol !== finalURL.protocol ||
-      requestURL.hostname !== finalURL.hostname;
-    
-    if (firstRedirect && meaningfulRedirect) {
-      badges += `
-        <span class="badge blue has-tooltip">
-          ${firstRedirect}
-          <span class="tooltip">
-            Redirect → ${row.finalUrl}
-          </span>
-        </span>
-      `;
-    }
-    
-    if (finalStatus === 200) {
-      badges += `<span class="badge green">200</span>`;
-    }
+      let meaningfulRedirect = false;
+      try {
+        const req = new URL(row.requestUrl);
+        const fin = new URL(row.finalUrl);
+        meaningfulRedirect = req.protocol !== fin.protocol || req.hostname !== fin.hostname;
+      } catch {}
 
-    
-    if (finalStatus === 200) {
-      badges += `<span class="badge green">200</span>`;
-    }
+      if (meaningfulRedirect) {
+        const redirectCode = row.statusChain.find(code =>
+          [301, 302, 307, 308].includes(code)
+        );
+        if (redirectCode) {
+          badges += `
+            <span class="badge blue has-tooltip">
+              ${redirectCode}
+              <span class="tooltip">
+                Redirect → ${row.finalUrl}
+              </span>
+            </span>
+          `;
+        }
+      }
+
+      if (finalStatus === 200) {
+        badges += `<span class="badge green">200</span>`;
+      }
 
       return `
         <div class="http-row">
@@ -323,37 +285,33 @@ function restoreCard(btn) {
   card.innerHTML = card.dataset.ready || card.dataset.original;
 }
 
-
 /* ================================
    PROGRESS
 ================================ */
 
 function initProgress(total) {
-  const p = document.getElementById("progress");
-  p.classList.remove("hidden");
+  document.getElementById("progress").classList.remove("hidden");
   updateProgress(0, total);
 }
 
 function updateProgress(done, total) {
   document.getElementById("progressBar").style.width =
     Math.round((done / total) * 100) + "%";
-
   document.getElementById("progressText").textContent =
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
 
 /* ================================
-   THEME TOGGLE (STABLE)
+   THEME TOGGLE
 ================================ */
 
 function toggleTheme() {
   const html = document.documentElement;
-  const btn = document.getElementById("themeToggle");
-
   const next = html.dataset.theme === "dark" ? "light" : "dark";
   html.dataset.theme = next;
   localStorage.setItem("theme", next);
 
+  const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = next === "dark" ? "🌙" : "☀️";
 }
 
@@ -364,17 +322,3 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
-function openPreview() {
-  const domains = document.getElementById("domains").value.trim();
-  if (!domains) return;
-
-  sessionStorage.setItem("previewDomains", domains);
-  window.open("preview.html", "_blank");
-}
-
-
-
-
-
