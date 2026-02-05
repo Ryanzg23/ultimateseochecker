@@ -228,7 +228,7 @@ async function showHttpStatus(btn, domain) {
 
   card.innerHTML = `<div class="muted">Checking HTTP status…</div>`;
 
-  const clean = domain.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  const clean = domain.replace(/^https?:\/\//, "");
 
   try {
     const res = await fetch(`/.netlify/functions/httpstatus?domain=${clean}`);
@@ -337,5 +337,6 @@ function openPreview() {
   sessionStorage.setItem("previewDomains", domains);
   window.open("preview.html", "_blank");
 }
+
 
 
