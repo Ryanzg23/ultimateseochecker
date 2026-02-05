@@ -57,8 +57,17 @@ function openBulk() {
     });
 }
 
-function openPreview(url) {
-  const encoded = encodeURIComponent(url);
+function openPreview() {
+  const input = document.getElementById("domains").value;
+
+  const urls = input
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean);
+
+  if (!urls.length) return;
+
+  const encoded = encodeURIComponent(urls.join(","));
   window.open(`/preview.html?urls=${encoded}`, "_blank");
 }
 
@@ -149,13 +158,6 @@ async function processDomain(domain, options = {}) {
             onclick="showHttpStatus(this, '${data.inputUrl}')"
           >
             See HTTP Status
-          </button>
-
-          <button
-            class="secondary small preview-btn"
-            onclick="openPreview('${data.inputUrl}')"
-          >
-            Preview
           </button>
 
           ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
@@ -372,3 +374,4 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
