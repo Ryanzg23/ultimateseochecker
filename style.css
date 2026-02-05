@@ -516,3 +516,43 @@ button.small {
   color: #ef4444;
 }
 
+/* ================================
+   PREVIEW CARD HEADER
+================================ */
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+.preview-link {
+  color: #38bdf8;
+  text-decoration: none;   /* ❌ no underline */
+  font-size: 14px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.preview-link:hover {
+  opacity: 0.85;           /* subtle hover only */
+}
+
+.reload-btn {
+  background: #374151;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.reload-btn:hover {
+  background: #4b5563;
+}
+
+
+
