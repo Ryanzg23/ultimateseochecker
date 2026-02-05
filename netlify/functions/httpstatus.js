@@ -1,74 +1,89 @@
 export async function handler(event) {
-  let base = event.queryStringParameters.domain;
-
-  if (!base) {
+  const input = event.queryStringParameters.domain;
+  if (!input) {
     return {
       statusCode: 400,
       body: JSON.stringify({ error: "Missing domain" })
     };
   }
 
-base = base
-  .replace(/^https?:\/\//, "")
-  .replace(/^www\./, "")
-  .replace(/\/.*$/, "");
+  // Normalize input
+  let cleaned = input.replace(/^https?:\/\//, "").trim();
 
+  // Extract host + path (keep subfolder)
+  let host = cleaned;
+  let path = "";
 
-const variants = Array.from(new Set([
-  `http://${base}`,
-  `http://www.${base}`,
-  `https://${base}`,
-  `https://www.${base}`
-]));
+  const slashIndex = cleaned.indexOf("/");
+  if (slashIndex !== -1) {
+    host = cleaned.slice(0, slashIndex);
+    path = cleaned.slice(slashIndex);
+  }
 
-  async function check(url) {
-    let redirects = 0;
-    let currentUrl = url;
-    let statusChain = [];
+  // Remove duplicate www
+  host = host.replace(/^www\./, "");
 
+  const variants = Array.from(new Set([
+    `http://${host}${path}`,
+    `http://www.${host}${path}`,
+    `https://${host}${path}`,
+    `https://www.${host}${path}`
+  ]));
+
+  const results = [];
+
+  for (const url of variants) {
     try {
+      let currentUrl = url;
+      let statusChain = [];
+      let redirects = 0;
+
       for (let i = 0; i < 5; i++) {
         const res = await fetch(currentUrl, {
           redirect: "manual",
-          headers: { "User-Agent": "Mozilla/5.0 (HTTP Status Checker)" }
+          headers: {
+            "User-Agent": "SEO HTTP Status Checker"
+          }
         });
 
         statusChain.push(res.status);
 
         if ([301, 302, 307, 308].includes(res.status)) {
-          const loc = res.headers.get("location");
-          if (!loc) break;
+          const location = res.headers.get("location");
+          if (!location) break;
 
-          currentUrl = new URL(loc, currentUrl).href;
+          currentUrl = location.startsWith("http")
+            ? location
+            : new URL(location, currentUrl).href;
+
           redirects++;
         } else {
           break;
         }
       }
 
-      return {
+      results.push({
         requestUrl: url,
         statusChain,
         finalUrl: currentUrl,
         redirects
-      };
+      });
 
     } catch {
-      return {
+      results.push({
         requestUrl: url,
-        statusChain: [],
+        statusChain: ["ERR"],
         finalUrl: "",
-        redirects: 0,
-        error: true
-      };
+        redirects: 0
+      });
     }
   }
 
-  const results = await Promise.all(variants.map(check));
-
   return {
     statusCode: 200,
-    headers: { "Access-Control-Allow-Origin": "*" },
+    headers: {
+      "Access-Control-Allow-Origin": "*"
+    },
     body: JSON.stringify(results)
   };
 }
