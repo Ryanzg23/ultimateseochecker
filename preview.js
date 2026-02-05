@@ -60,14 +60,36 @@ async function render() {
     }
 
     card.innerHTML = `
-      <h3>${result.domain}</h3>
-      <iframe
-        src="${result.domain}"
-        loading="lazy"
-        referrerpolicy="no-referrer"
-      ></iframe>
-    `;
+  <div class="preview-header">
+    <a href="${result.domain}" target="_blank" class="preview-link">
+      ${result.domain}
+    </a>
+
+    <button class="reload-btn" onclick="reloadIframe(this)">
+      Reload
+    </button>
+  </div>
+
+  <iframe
+      src="${result.domain}"
+      loading="lazy"
+      referrerpolicy="no-referrer"
+    ></iframe>
+  `;
   }
 }
 
 render();
+
+
+function reloadIframe(btn) {
+  const card = btn.closest(".preview-card");
+  const iframe = card.querySelector("iframe");
+  if (!iframe) return;
+
+  const src = iframe.src;
+  iframe.src = "";
+  setTimeout(() => {
+    iframe.src = src;
+  }, 50);
+}
