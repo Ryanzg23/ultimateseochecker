@@ -190,6 +190,13 @@ async function processDomain(domain, options = {}) {
       <div class="label">Meta Description (${descCount} characters)</div>
       <div class="value">${data.description || "—"}</div>
 
+      <div class="label">
+        Meta Keywords (${data.keywords ? data.keywords.split(",").length : 0})
+      </div>
+      <div class="value">
+        ${data.keywords || "—"}
+      </div>
+
       <div class="label inline">
         Meta Robots:
         <span class="robots ${robotsInfo.status}">
@@ -391,6 +398,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
