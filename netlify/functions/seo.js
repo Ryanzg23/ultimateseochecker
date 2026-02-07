@@ -43,10 +43,12 @@ export async function handler(event) {
     getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
 
   const canonical =
-    getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i);
+  getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i) ||
+  getTag(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']canonical["']/i);
 
   const amphtml =
-    getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i);
+  getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i) ||
+  getTag(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']amphtml["']/i);
 
   const robotsMeta =
     getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
@@ -98,3 +100,4 @@ export async function handler(event) {
     })
   };
 }
+
