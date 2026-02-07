@@ -684,8 +684,18 @@ button.small {
 
 .robots-note {
   margin-left: 6px;
-  font-size: 12px;
   color: #9ca3af;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+
+.label.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-weight: 600;
 }
 
 
