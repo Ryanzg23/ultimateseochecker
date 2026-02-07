@@ -48,9 +48,34 @@ export async function handler(event) {
   const amphtml =
     getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i);
 
-  const robots =
+  const robotsMeta =
     getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
     getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
+
+  /* ================================
+     ROBOTS.TXT & SITEMAP (SERVER)
+  ================================ */
+
+  const origin = new URL(response.url).origin;
+
+  async function exists(url) {
+    try {
+      let r = await fetch(url, { method: "HEAD" });
+      if (r.ok) return true;
+      r = await fetch(url, { method: "GET" });
+      return r.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  const robotsTxtUrl = `${origin}/robots.txt`;
+  const sitemapUrl = `${origin}/sitemap.xml`;
+
+  const [hasRobotsTxt, hasSitemap] = await Promise.all([
+    exists(robotsTxtUrl),
+    exists(sitemapUrl)
+  ]);
 
   return {
     statusCode: 200,
@@ -65,7 +90,11 @@ export async function handler(event) {
       description,
       canonical,
       amphtml,
-      robots
+      robotsMeta,
+      hasRobotsTxt,
+      robotsTxtUrl,
+      hasSitemap,
+      sitemapUrl
     })
   };
 }
