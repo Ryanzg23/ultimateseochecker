@@ -36,20 +36,40 @@ export async function handler(event) {
     };
 
     /* ================================
-       META EXTRACTION (STABLE)
+       META EXTRACTION
     ================================ */
+
     const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
 
     const description =
       getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
 
-    const canonical =
-      getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i);
+    /* ---------- CANONICAL (HARDENED) ---------- */
+    const rawCanonical =
+      getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i) ||
+      getTag(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']canonical["']/i);
 
+    let canonical = "";
+
+    if (rawCanonical) {
+      const trimmed = rawCanonical.trim();
+
+      // ignore empty or placeholder canonicals
+      if (trimmed !== "" && trimmed !== "#") {
+        try {
+          canonical = new URL(trimmed, finalUrl).href;
+        } catch {
+          canonical = "";
+        }
+      }
+    }
+
+    /* ---------- AMP ---------- */
     const amphtml =
       getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i);
 
+    /* ---------- META ROBOTS ---------- */
     const robotsMeta =
       getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
@@ -68,24 +88,24 @@ export async function handler(event) {
           }
         });
 
-        // Explicitly missing
+        // explicitly missing
         if (res.status === 404 || res.status === 410) {
           return { status: "missing" };
         }
 
         const final = new URL(res.url);
 
-        // Redirected to homepage or root
+        // redirected to homepage
         if (final.pathname === "/" || final.pathname === "") {
           return { status: "missing" };
         }
 
-        // Redirected to something else (not the same file)
+        // redirected to something else (not same file)
         if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) {
           return { status: "missing" };
         }
 
-        // Accessible
+        // accessible
         if (res.status === 200) {
           return {
             status: "exists",
@@ -93,7 +113,6 @@ export async function handler(event) {
           };
         }
 
-        // Blocked or unknown
         return { status: "unknown" };
       } catch {
         return { status: "unknown" };
