@@ -57,37 +57,65 @@ export async function handler(event) {
    /* ================================
    ROBOTS.TXT & SITEMAP.XML (REAL-WORLD SAFE)
 ================================ */
-
 const origin = new URL(finalUrl).origin;
 
 let robots = null;
-let sitemap = null;
+let robotsStatus = "not_detected";
 
-// ---- robots.txt ----
+let sitemap = null;
+let sitemapStatus = "not_detected";
+
+/* ---------- robots.txt ---------- */
 try {
   const robotsRes = await fetch(`${origin}/robots.txt`, {
     redirect: "follow",
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
+      "User-Agent": "Mozilla/5.0"
     }
   });
 
   if (robotsRes.status === 200) {
-    const finalRobotsUrl = new URL(robotsRes.url);
     const text = await robotsRes.text();
 
-    const looksLikeRobots =
-      /user-agent\s*:|disallow\s*:|allow\s*:/i.test(text);
-
-    const stillRobots =
-      finalRobotsUrl.pathname.toLowerCase().includes("robots");
-
-    if (looksLikeRobots && stillRobots) {
-      robots = finalRobotsUrl.href;
+    if (/user-agent\s*:|disallow\s*:|allow\s*:/i.test(text)) {
+      robots = `${origin}/robots.txt`;
+      robotsStatus = "detected";
+    } else {
+      // 200 but HTML / blocked
+      robotsStatus = "blocked";
     }
+  } else if (robotsRes.status === 403) {
+    robotsStatus = "blocked";
   }
-} catch {}
+} catch {
+  robotsStatus = "blocked";
+}
+
+/* ---------- sitemap.xml ---------- */
+try {
+  const sitemapRes = await fetch(`${origin}/sitemap.xml`, {
+    redirect: "follow",
+    headers: {
+      "User-Agent": "Mozilla/5.0"
+    }
+  });
+
+  if (sitemapRes.status === 200) {
+    const text = await sitemapRes.text();
+
+    if (/<urlset|<sitemapindex/i.test(text)) {
+      sitemap = `${origin}/sitemap.xml`;
+      sitemapStatus = "detected";
+    } else {
+      sitemapStatus = "blocked";
+    }
+  } else if (sitemapRes.status === 403) {
+    sitemapStatus = "blocked";
+  }
+} catch {
+  sitemapStatus = "blocked";
+}
+
 
 // ---- sitemap.xml ----
 try {
@@ -165,4 +193,5 @@ try {
     };
   }
 }
+
 
