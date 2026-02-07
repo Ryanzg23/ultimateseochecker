@@ -45,6 +45,10 @@ export async function handler(event) {
       getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
 
+    const keywords =
+  getTag(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']*)["']/i) ||
+  getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']keywords["']/i);
+
     /* ---------- CANONICAL (HARDENED) ---------- */
     const rawCanonical =
       getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i) ||
@@ -137,6 +141,7 @@ export async function handler(event) {
         status,
         title,
         description,
+        keywords,  
         canonical,
         amphtml,
         robotsMeta,
@@ -154,3 +159,4 @@ export async function handler(event) {
     };
   }
 }
+
