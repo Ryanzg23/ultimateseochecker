@@ -210,15 +210,27 @@ async function processDomain(domain, options = {}) {
         }
       </div>
 
-      <div class="label">robots.txt</div>
-      <div class="value">
-        <a href="${data.robots}" target="_blank">${data.robots}</a>
-      </div>
+<div class="label">robots.txt</div>
+<div class="value">
+  ${
+    data.robots.status === "exists"
+      ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
+      : data.robots.status === "missing"
+        ? "Not detected"
+        : "Unable to verify"
+  }
+</div>
       
-      <div class="label">Sitemap</div>
-      <div class="value">
-        <a href="${data.sitemap}" target="_blank">${data.sitemap}</a>
-      </div>
+<div class="label">Sitemap</div>
+<div class="value">
+  ${
+    data.sitemap.status === "exists"
+      ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
+      : data.sitemap.status === "missing"
+        ? "No Sitemap detected"
+        : "Unable to verify"
+  }
+</div>
     `;
 
     card.innerHTML = card.dataset.original;
@@ -379,6 +391,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
