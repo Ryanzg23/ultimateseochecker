@@ -49,12 +49,18 @@ function isHomepageRedirect(inputUrl, finalUrl) {
 
 async function checkFile(url) {
   try {
-    const res = await fetch(url, { method: "HEAD" });
+    // Try HEAD first (fast)
+    let res = await fetch(url, { method: "HEAD" });
+    if (res.ok) return true;
+
+    // Fallback to GET (many servers block HEAD)
+    res = await fetch(url, { method: "GET" });
     return res.ok;
   } catch {
     return false;
   }
 }
+
 
 /* ================================
    UI CONTROLS
@@ -319,3 +325,4 @@ function toggleTheme() {
   const saved = localStorage.getItem("theme") || "dark";
   document.documentElement.dataset.theme = saved;
 })();
+
