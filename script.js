@@ -256,35 +256,92 @@ function openAmp(url, el) {
 /* ================================
    HTTP STATUS
 ================================ */
-
 async function showHttpStatus(btn, domain) {
   const card = btn.closest(".card");
   card.dataset.ready = card.innerHTML;
   card.innerHTML = `<div class="muted">Checking HTTP status…</div>`;
 
+  const clean = domain.replace(/^https?:\/\//, "");
+
   try {
-    const res = await fetch(`/.netlify/functions/httpstatus?domain=${domain.replace(/^https?:\/\//, "")}`);
+    const res = await fetch(`/.netlify/functions/httpstatus?domain=${clean}`);
     const data = await res.json();
+
+    const rows = data.map(row => {
+      let badges = "";
+      const finalStatus = row.statusChain[row.statusChain.length - 1];
+
+      let meaningfulRedirect = false;
+      try {
+        const req = new URL(row.requestUrl);
+        const fin = new URL(row.finalUrl);
+
+        // Ignore trailing slash / same protocol changes
+        meaningfulRedirect =
+          req.hostname !== fin.hostname ||
+          req.protocol !== fin.protocol;
+      } catch {}
+
+      // Redirect badge + tooltip
+      if (meaningfulRedirect) {
+        const redirectCode = row.statusChain.find(code =>
+          [301, 302, 307, 308].includes(code)
+        );
+
+        if (redirectCode) {
+          badges += `
+            <span class="badge blue has-tooltip">
+              ${redirectCode}
+              <span class="tooltip">
+                Redirect → ${row.finalUrl}
+              </span>
+            </span>
+          `;
+        }
+      }
+
+      // Final status badge
+      if (finalStatus === 200) {
+        badges += `<span class="badge green">200</span>`;
+      } else if (finalStatus === 404) {
+        badges += `<span class="badge red">404</span>`;
+      }
+
+      return `
+        <div class="http-row">
+          <div class="http-url">${row.requestUrl}</div>
+          <div class="http-status">${badges}</div>
+        </div>
+      `;
+    }).join("");
 
     card.innerHTML = `
       <div class="card-header">
         <h3>HTTP Status</h3>
-        <button class="secondary small" onclick="restoreCard(this)">Back</button>
-      </div>
-      ${data.map(r => `
-        <div class="http-row">
-          <div>${r.requestUrl}</div>
-          <div>${r.statusChain.join(" → ")}</div>
+        <div class="card-actions">
+          <button class="secondary small" onclick="restoreCard(this)">Back</button>
         </div>
-      `).join("")}
+      </div>
+
+      <div class="http-table">
+        <div class="http-row head">
+          <div>Request URL</div>
+          <div>Status</div>
+        </div>
+        ${rows}
+      </div>
     `;
   } catch {
-    restoreCard(btn);
+    card.innerHTML = `
+      <div class="issue-pill danger">Failed to load HTTP status</div>
+      <button class="secondary small" onclick="restoreCard(this)">Back</button>
+    `;
   }
 }
 
 function restoreCard(btn) {
-  btn.closest(".card").innerHTML = btn.closest(".card").dataset.ready;
+  const card = btn.closest(".card");
+  card.innerHTML = card.dataset.ready;
 }
 
 /* ================================
@@ -324,3 +381,4 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
