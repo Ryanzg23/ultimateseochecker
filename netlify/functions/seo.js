@@ -1,5 +1,6 @@
 export async function handler(event) {
   let inputUrl = event.queryStringParameters?.url;
+
   if (!inputUrl) {
     return {
       statusCode: 400,
@@ -18,8 +19,7 @@ export async function handler(event) {
     const response = await fetch(inputUrl, {
       redirect: "follow",
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; BulkSEOChecker/1.0; +https://example.com)"
+        "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
       }
     });
 
@@ -27,9 +27,6 @@ export async function handler(event) {
     const finalUrl = response.url;
     const html = await response.text();
 
-    /* ================================
-       HELPER
-    ================================ */
     const getTag = (regex) => {
       const match = html.match(regex);
       return match ? match[1].trim() : "";
@@ -54,112 +51,43 @@ export async function handler(event) {
       getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
-   /* ================================
-   ROBOTS.TXT & SITEMAP.XML (REAL-WORLD SAFE)
-================================ */
-const origin = new URL(finalUrl).origin;
+    /* ================================
+       SIMPLE ROBOTS / SITEMAP CHECK
+    ================================ */
+    const origin = new URL(finalUrl).origin;
 
-let robots = null;
-let robotsStatus = "not_detected";
+    async function checkFile(path) {
+      try {
+        const res = await fetch(origin + path, {
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+          }
+        });
 
-let sitemap = null;
-let sitemapStatus = "not_detected";
+        // 404 / 410 → not detected
+        if (res.status === 404 || res.status === 410) return null;
 
-/* ---------- robots.txt ---------- */
-try {
-  const robotsRes = await fetch(`${origin}/robots.txt`, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": "Mozilla/5.0"
-    }
-  });
+        // Final URL
+        const final = new URL(res.url);
 
-  if (robotsRes.status === 200) {
-    const text = await robotsRes.text();
+        // Redirected to homepage → not detected
+        if (final.pathname === "/" || final.pathname === "") return null;
 
-    if (/user-agent\s*:|disallow\s*:|allow\s*:/i.test(text)) {
-      robots = `${origin}/robots.txt`;
-      robotsStatus = "detected";
-    } else {
-      // 200 but HTML / blocked
-      robotsStatus = "blocked";
-    }
-  } else if (robotsRes.status === 403) {
-    robotsStatus = "blocked";
-  }
-} catch {
-  robotsStatus = "blocked";
-}
-
-/* ---------- sitemap.xml ---------- */
-try {
-  const sitemapRes = await fetch(`${origin}/sitemap.xml`, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": "Mozilla/5.0"
-    }
-  });
-
-  if (sitemapRes.status === 200) {
-    const text = await sitemapRes.text();
-
-    if (/<urlset|<sitemapindex/i.test(text)) {
-      sitemap = `${origin}/sitemap.xml`;
-      sitemapStatus = "detected";
-    } else {
-      sitemapStatus = "blocked";
-    }
-  } else if (sitemapRes.status === 403) {
-    sitemapStatus = "blocked";
-  }
-} catch {
-  sitemapStatus = "blocked";
-}
-
-
-// ---- sitemap.xml ----
-try {
-  const sitemapRes = await fetch(`${origin}/sitemap.xml`, {
-    redirect: "follow",
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
-    }
-  });
-
-  if (sitemapRes.status === 200) {
-    const finalSitemapUrl = new URL(sitemapRes.url);
-    const text = await sitemapRes.text();
-
-    const looksLikeSitemap =
-      /<urlset|<sitemapindex/i.test(text);
-
-    const stillSitemap =
-      finalSitemapUrl.pathname.toLowerCase().includes("sitemap");
-
-    if (looksLikeSitemap && stillSitemap) {
-      sitemap = finalSitemapUrl.href;
-    }
-  }
-} catch {}
-
-    // ---- sitemap.xml ----
-    try {
-      const sitemapRes = await fetch(`${origin}/sitemap.xml`, {
-        redirect: "manual",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
+        // Must still be the same file
+        if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) {
+          return null;
         }
-      });
 
-      if (sitemapRes.status === 200) {
-        const text = await sitemapRes.text();
-        if (/<urlset|<sitemapindex/i.test(text)) {
-          sitemap = `${origin}/sitemap.xml`;
-        }
+        // Accessible
+        return final.href;
+      } catch {
+        return null;
       }
-    } catch {}
+    }
+
+    const robots = await checkFile("/robots.txt");
+    const sitemap = await checkFile("/sitemap.xml");
 
     /* ================================
        RESPONSE
@@ -183,15 +111,11 @@ try {
         sitemap
       })
     };
-  } catch (err) {
+  } catch {
     return {
       statusCode: 500,
       headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({
-        error: "Failed to fetch page"
-      })
+      body: JSON.stringify({ error: "Failed to fetch page" })
     };
   }
 }
-
-
