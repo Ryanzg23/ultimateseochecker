@@ -3,6 +3,51 @@ const CONCURRENCY = 5;
 /* ================================
    HELPERS
 ================================ */
+function interpretRobots(content) {
+  if (!content) {
+    return {
+      label: "not set",
+      status: "neutral",
+      note: "Default is index, follow"
+    };
+  }
+
+  const value = content.toLowerCase();
+
+  const hasIndex = value.includes("index");
+  const hasNoindex = value.includes("noindex");
+  const hasFollow = value.includes("follow");
+  const hasNofollow = value.includes("nofollow");
+
+  if (hasNoindex && hasNofollow) {
+    return { label: "noindex, nofollow", status: "danger" };
+  }
+
+  if (hasNoindex) {
+    return { label: "noindex", status: "danger" };
+  }
+
+  if (hasNofollow) {
+    return { label: "nofollow", status: "warning" };
+  }
+
+  if (hasIndex && hasFollow) {
+    return { label: "index, follow", status: "success" };
+  }
+
+  if (hasIndex) {
+    return { label: "index only", status: "warning" };
+  }
+
+  if (hasFollow) {
+    return { label: "follow only", status: "warning" };
+  }
+
+  return {
+    label: content,
+    status: "neutral"
+  };
+}
 
 function getRootDomain(url) {
   try {
@@ -115,6 +160,7 @@ async function run() {
 async function processDomain(domain, options = {}) {
   const { isAmp = false, insertAfter = null } = options;
   const results = document.getElementById("results");
+   const robotsInfo = interpretRobots(data.robots);
 
   const card = document.createElement("div");
   card.className = "card";
@@ -192,6 +238,15 @@ async function processDomain(domain, options = {}) {
 
         <div class="label">Meta Description (${descCount} characters)</div>
         <div class="value">${data.description || "—"}</div>
+
+          <div class="label">Robots</div>
+            <div class="value">
+              <span class="robots ${robotsInfo.status}">
+                ${robotsInfo.label}
+              </span>
+              ${robotsInfo.note ? `<span class="robots-note">(${robotsInfo.note})</span>` : ``}
+            </div>
+
 
         <div class="label">Canonical</div>
         <div class="value">${data.canonical || "—"}</div>
@@ -377,3 +432,4 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
