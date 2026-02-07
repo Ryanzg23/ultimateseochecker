@@ -56,35 +56,39 @@ export async function handler(event) {
     ================================ */
     const origin = new URL(finalUrl).origin;
 
-    async function checkFile(path) {
-      try {
-        const res = await fetch(origin + path, {
-          redirect: "follow",
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
-          }
-        });
+async function checkFile(path) {
+  const bases = [
+    origin,
+    origin.replace("https://", "http://")
+  ];
 
-        // 404 / 410 → not detected
-        if (res.status === 404 || res.status === 410) return null;
-
-        // Final URL
-        const final = new URL(res.url);
-
-        // Redirected to homepage → not detected
-        if (final.pathname === "/" || final.pathname === "") return null;
-
-        // Must still be the same file
-        if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) {
-          return null;
+  for (const base of bases) {
+    try {
+      const res = await fetch(base + path, {
+        redirect: "follow",
+        headers: {
+          "User-Agent": "Mozilla/5.0"
         }
+      });
 
-        // Accessible
-        return final.href;
-      } catch {
-        return null;
-      }
+      if (res.status === 404 || res.status === 410) continue;
+
+      const final = new URL(res.url);
+
+      // homepage redirect = not detected
+      if (final.pathname === "/" || final.pathname === "") continue;
+
+      // must still be same file
+      if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) continue;
+
+      return final.href;
+    } catch {
+      continue;
     }
+  }
+
+  return null;
+}
 
     const robots = await checkFile("/robots.txt");
     const sitemap = await checkFile("/sitemap.xml");
@@ -119,3 +123,4 @@ export async function handler(event) {
     };
   }
 }
+
