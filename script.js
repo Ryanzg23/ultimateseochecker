@@ -190,10 +190,12 @@ async function processDomain(domain, options = {}) {
       <div class="label">Meta Description (${descCount} characters)</div>
       <div class="value">${data.description || "—"}</div>
 
-      <div class="label">Meta Robots</div>
-      <div class="value">
-        <span class="robots ${robotsInfo.status}">${robotsInfo.label}</span>
-        ${robotsInfo.note ? `<span class="robots-note">(${robotsInfo.note})</span>` : ""}
+      <div class="label inline">
+        Meta Robots:
+        <span class="robots ${robotsInfo.status}">
+          ${robotsInfo.label}
+        </span>
+        ${robotsInfo.note ? `<span class="robots-note">${robotsInfo.note}</span>` : ""}
       </div>
 
       <div class="label">Canonical</div>
@@ -381,4 +383,5 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
