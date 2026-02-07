@@ -212,16 +212,12 @@ async function processDomain(domain, options = {}) {
 
       <div class="label">robots.txt</div>
       <div class="value">
-        ${data.hasRobotsTxt
-          ? `<a href="${data.robotsTxtUrl}" target="_blank">${data.robotsTxtUrl}</a>`
-          : "Not detected"}
+        <a href="${data.robots}" target="_blank">${data.robots}</a>
       </div>
-
+      
       <div class="label">Sitemap</div>
       <div class="value">
-        ${data.hasSitemap
-          ? `<a href="${data.sitemapUrl}" target="_blank">${data.sitemapUrl}</a>`
-          : "No Sitemap detected"}
+        <a href="${data.sitemap}" target="_blank">${data.sitemap}</a>
       </div>
     `;
 
@@ -383,5 +379,6 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
