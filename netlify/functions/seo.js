@@ -1,81 +1,71 @@
 export async function handler(event) {
-  let url = event.queryStringParameters.url;
+  let inputUrl = event.queryStringParameters.url;
 
-  if (!url) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: "Missing URL" })
-    };
+  if (!inputUrl.startsWith("http")) {
+    inputUrl = "https://" + inputUrl;
   }
 
-  if (!url.startsWith("http")) {
-    url = "https://" + url;
-  }
+  let response, html, status;
 
   try {
-    const response = await fetch(url, {
-      redirect: "follow",
+    response = await fetch(inputUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
-      }
+        "User-Agent": "Mozilla/5.0 (compatible; SEOChecker/1.0)",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "en-US,en;q=0.9"
+      },
+      redirect: "follow"
     });
 
-    const status = response.status;
-    const finalUrl = response.url;
-    const html = await response.text();
-
-    const getTag = (regex) => {
-      const match = html.match(regex);
-      return match ? match[1].trim() : "";
-    };
-
-    const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
-    const description = getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) || getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
-    const canonical = getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']*)["']/i);
-    const amphtml = getTag(/<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i);
-    const robots = getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) || getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
-
-    const origin = new URL(finalUrl).origin;
-
-    const robots = await fetch(`${origin}/robots.txt`, { redirect: "manual" })
-      .then(r => r.ok ? r.url : "")
-      .catch(() => "");
-
-    const sitemap = await fetch(`${origin}/sitemap.xml`, { redirect: "manual" })
-      .then(r => r.ok ? r.url : "")
-      .catch(() => "");
-
+    status = response.status;
+    html = await response.text();
+  } catch {
     return {
       statusCode: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      },
       body: JSON.stringify({
-        inputUrl: url,
-        finalUrl,
-        status,
-        title,
-        description,
-        canonical,
-        amphtml,
-        robots,
-        sitemap,
-        robots
-      })
-    };
-
-  } catch (err) {
-    return {
-      statusCode: 500,
-      headers: {
-        "Access-Control-Allow-Origin": "*"
-      },
-      body: JSON.stringify({
-        inputUrl: url,
-        error: "Failed to fetch page"
+        inputUrl,
+        finalUrl: inputUrl,
+        status: 0,
+        error: "fetch_failed"
       })
     };
   }
+
+  const getTag = (regex) => {
+    const match = html.match(regex);
+    return match ? match[1].trim() : "";
+  };
+
+  const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
+
+  const description =
+    getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
+    getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+
+  const canonical =
+    getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i);
+
+  const amphtml =
+    getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i);
+
+  const robots =
+    getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
+    getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
+
+  return {
+    statusCode: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*"
+    },
+    body: JSON.stringify({
+      inputUrl,
+      finalUrl: response.url,
+      status,
+      title,
+      description,
+      canonical,
+      amphtml,
+      robots
+    })
+  };
 }
-
-
