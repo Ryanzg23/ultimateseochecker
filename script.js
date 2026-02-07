@@ -13,11 +13,11 @@ function interpretRobots(content) {
     };
   }
 
-  const value = content.toLowerCase();
-  const hasIndex = value.includes("index");
-  const hasNoindex = value.includes("noindex");
-  const hasFollow = value.includes("follow");
-  const hasNofollow = value.includes("nofollow");
+  const v = content.toLowerCase();
+  const hasIndex = v.includes("index");
+  const hasNoindex = v.includes("noindex");
+  const hasFollow = v.includes("follow");
+  const hasNofollow = v.includes("nofollow");
 
   if (hasNoindex && hasNofollow) return { label: "noindex, nofollow", status: "danger" };
   if (hasNoindex) return { label: "noindex", status: "danger" };
@@ -47,14 +47,24 @@ function isHomepageRedirect(inputUrl, finalUrl) {
   }
 }
 
+async function checkFile(url) {
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /* ================================
    UI CONTROLS
 ================================ */
 
 function setLoading(state) {
-  document.getElementById("runBtn").disabled = state;
-  document.getElementById("clearBtn").disabled = state;
-  document.getElementById("openBulkBtn").disabled = state;
+  ["runBtn", "clearBtn", "openBulkBtn"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = state;
+  });
 }
 
 function clearDomains() {
@@ -66,11 +76,12 @@ function clearDomains() {
 }
 
 function openBulk() {
-  const input = document.getElementById("domains").value;
-  input.split("\n").map(d => d.trim()).filter(Boolean).forEach(d => {
-    const url = d.startsWith("http") ? d : "https://" + d;
-    window.open(url, "_blank", "noopener");
-  });
+  document.getElementById("domains").value
+    .split("\n").map(d => d.trim()).filter(Boolean)
+    .forEach(d => {
+      const url = d.startsWith("http") ? d : "https://" + d;
+      window.open(url, "_blank", "noopener");
+    });
 }
 
 function openPreview() {
@@ -142,10 +153,8 @@ async function processDomain(domain, options = {}) {
     const data = await res.json();
     if (!res.ok || data.error === "fetch_failed") throw new Error();
 
-    const robotsInfo = interpretRobots(data.robots);
     const inputRoot = getRootDomain(data.inputUrl);
     const finalRoot = getRootDomain(data.finalUrl);
-
     const redirected = inputRoot && finalRoot && inputRoot !== finalRoot;
     const is301Home = isHomepageRedirect(data.inputUrl, data.finalUrl);
     const is404 = data.status === 404 || data.status === 410;
@@ -160,8 +169,16 @@ async function processDomain(domain, options = {}) {
       return;
     }
 
-    const titleCount = data.title.length;
-    const descCount = data.description.length;
+    const robotsInfo = interpretRobots(data.robots);
+
+    const origin = new URL(data.finalUrl).origin;
+    const robotsTxt = origin + "/robots.txt";
+    const sitemapXml = origin + "/sitemap.xml";
+
+    const [hasRobots, hasSitemap] = await Promise.all([
+      checkFile(robotsTxt),
+      checkFile(sitemapXml)
+    ]);
 
     card.innerHTML = `
       <div class="card-header">
@@ -176,13 +193,13 @@ async function processDomain(domain, options = {}) {
 
       ${redirected ? `<div class="redirect">301 → ${data.finalUrl}</div>` : ""}
 
-      <div class="label">Title (${titleCount} characters)</div>
+      <div class="label">Title (${data.title.length} characters)</div>
       <div class="value">${data.title || "—"}</div>
 
-      <div class="label">Meta Description (${descCount} characters)</div>
+      <div class="label">Meta Description (${data.description.length} characters)</div>
       <div class="value">${data.description || "—"}</div>
 
-      <div class="label">Robots</div>
+      <div class="label">Meta Robots</div>
       <div class="value">
         <span class="robots ${robotsInfo.status}">${robotsInfo.label}</span>
         ${robotsInfo.note ? `<span class="robots-note">(${robotsInfo.note})</span>` : ""}
@@ -198,6 +215,16 @@ async function processDomain(domain, options = {}) {
             ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
             : data.amphtml || "—"
         }
+      </div>
+
+      <div class="label">robots.txt</div>
+      <div class="value">
+        ${hasRobots ? `<a href="${robotsTxt}" target="_blank">${robotsTxt}</a>` : "Not detected"}
+      </div>
+
+      <div class="label">Sitemap</div>
+      <div class="value">
+        ${hasSitemap ? `<a href="${sitemapXml}" target="_blank">${sitemapXml}</a>` : "No Sitemap detected"}
       </div>
     `;
 
@@ -224,7 +251,6 @@ function openAmp(url, el) {
 
   el.style.pointerEvents = "none";
   el.style.opacity = "0.6";
-
   processDomain(url, { isAmp: true, insertAfter: parent });
 }
 
@@ -259,8 +285,7 @@ async function showHttpStatus(btn, domain) {
 }
 
 function restoreCard(btn) {
-  const card = btn.closest(".card");
-  card.innerHTML = card.dataset.ready;
+  btn.closest(".card").innerHTML = btn.closest(".card").dataset.ready;
 }
 
 /* ================================
