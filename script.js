@@ -47,21 +47,6 @@ function isHomepageRedirect(inputUrl, finalUrl) {
   }
 }
 
-async function checkFile(url) {
-  try {
-    // Try HEAD first (fast)
-    let res = await fetch(url, { method: "HEAD" });
-    if (res.ok) return true;
-
-    // Fallback to GET (many servers block HEAD)
-    res = await fetch(url, { method: "GET" });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-
 /* ================================
    UI CONTROLS
 ================================ */
@@ -83,7 +68,9 @@ function clearDomains() {
 
 function openBulk() {
   document.getElementById("domains").value
-    .split("\n").map(d => d.trim()).filter(Boolean)
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean)
     .forEach(d => {
       const url = d.startsWith("http") ? d : "https://" + d;
       window.open(url, "_blank", "noopener");
@@ -92,7 +79,9 @@ function openBulk() {
 
 function openPreview() {
   const urls = document.getElementById("domains").value
-    .split("\n").map(d => d.trim()).filter(Boolean);
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean);
 
   if (!urls.length) return;
   window.open(`/preview.html?urls=${encodeURIComponent(urls.join(","))}`, "_blank");
@@ -104,7 +93,9 @@ function openPreview() {
 
 async function run() {
   const domains = document.getElementById("domains").value
-    .split("\n").map(d => d.trim()).filter(Boolean);
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean);
 
   if (!domains.length) return;
 
@@ -175,18 +166,12 @@ async function processDomain(domain, options = {}) {
       return;
     }
 
-    const robotsInfo = interpretRobots(data.robots);
+    const robotsInfo = interpretRobots(data.robotsMeta);
 
-    const origin = new URL(data.finalUrl).origin;
-    const robotsTxt = origin + "/robots.txt";
-    const sitemapXml = origin + "/sitemap.xml";
+    const titleCount = data.title.length;
+    const descCount = data.description.length;
 
-    const [hasRobots, hasSitemap] = await Promise.all([
-      checkFile(robotsTxt),
-      checkFile(sitemapXml)
-    ]);
-
-    card.innerHTML = `
+    card.dataset.original = `
       <div class="card-header">
         <h3>${data.inputUrl}</h3>
         <div class="card-actions">
@@ -199,10 +184,10 @@ async function processDomain(domain, options = {}) {
 
       ${redirected ? `<div class="redirect">301 → ${data.finalUrl}</div>` : ""}
 
-      <div class="label">Title (${data.title.length} characters)</div>
+      <div class="label">Title (${titleCount} characters)</div>
       <div class="value">${data.title || "—"}</div>
 
-      <div class="label">Meta Description (${data.description.length} characters)</div>
+      <div class="label">Meta Description (${descCount} characters)</div>
       <div class="value">${data.description || "—"}</div>
 
       <div class="label">Meta Robots</div>
@@ -225,18 +210,25 @@ async function processDomain(domain, options = {}) {
 
       <div class="label">robots.txt</div>
       <div class="value">
-        ${hasRobots ? `<a href="${robotsTxt}" target="_blank">${robotsTxt}</a>` : "Not detected"}
+        ${data.hasRobotsTxt
+          ? `<a href="${data.robotsTxtUrl}" target="_blank">${data.robotsTxtUrl}</a>`
+          : "Not detected"}
       </div>
 
       <div class="label">Sitemap</div>
       <div class="value">
-        ${hasSitemap ? `<a href="${sitemapXml}" target="_blank">${sitemapXml}</a>` : "No Sitemap detected"}
+        ${data.hasSitemap
+          ? `<a href="${data.sitemapUrl}" target="_blank">${data.sitemapUrl}</a>`
+          : "No Sitemap detected"}
       </div>
     `;
+
+    card.innerHTML = card.dataset.original;
 
     setTimeout(() => {
       card.querySelector(".ok-badge")?.remove();
       card.querySelector(".http-btn")?.classList.remove("hidden");
+      card.dataset.ready = card.innerHTML;
     }, 1000);
 
   } catch {
@@ -257,6 +249,7 @@ function openAmp(url, el) {
 
   el.style.pointerEvents = "none";
   el.style.opacity = "0.6";
+
   processDomain(url, { isAmp: true, insertAfter: parent });
 }
 
@@ -304,7 +297,8 @@ function initProgress(total) {
 }
 
 function updateProgress(done, total) {
-  document.getElementById("progressBar").style.width = `${(done / total) * 100}%`;
+  document.getElementById("progressBar").style.width =
+    Math.round((done / total) * 100) + "%";
   document.getElementById("progressText").textContent =
     done === total ? `${total} Done` : `${done} / ${total}`;
 }
@@ -318,11 +312,15 @@ function toggleTheme() {
   const next = html.dataset.theme === "dark" ? "light" : "dark";
   html.dataset.theme = next;
   localStorage.setItem("theme", next);
-  document.getElementById("themeToggle").textContent = next === "dark" ? "🌙" : "☀️";
+
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.textContent = next === "dark" ? "🌙" : "☀️";
 }
 
-(function () {
+(function restoreTheme() {
   const saved = localStorage.getItem("theme") || "dark";
   document.documentElement.dataset.theme = saved;
-})();
 
+  const btn = document.getElementById("themeToggle");
+  if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
+})();
