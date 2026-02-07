@@ -655,5 +655,38 @@ button.small {
 }
 
 
+.robots {
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.robots.success {
+  background: rgba(22,163,74,0.15);
+  color: #16a34a;
+}
+
+.robots.warning {
+  background: rgba(245,158,11,0.15);
+  color: #f59e0b;
+}
+
+.robots.danger {
+  background: rgba(220,38,38,0.15);
+  color: #dc2626;
+}
+
+.robots.neutral {
+  background: rgba(107,114,128,0.15);
+  color: #9ca3af;
+}
+
+.robots-note {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
 
 
