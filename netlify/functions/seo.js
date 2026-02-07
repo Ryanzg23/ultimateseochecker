@@ -54,31 +54,66 @@ export async function handler(event) {
       getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
-    /* ================================
-       ROBOTS.TXT & SITEMAP.XML (STRICT)
-    ================================ */
-    const origin = new URL(finalUrl).origin;
+   /* ================================
+   ROBOTS.TXT & SITEMAP.XML (REAL-WORLD SAFE)
+================================ */
 
-    let robots = null;
-    let sitemap = null;
+const origin = new URL(finalUrl).origin;
 
-    // ---- robots.txt ----
-    try {
-      const robotsRes = await fetch(`${origin}/robots.txt`, {
-        redirect: "manual",
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
-        }
-      });
+let robots = null;
+let sitemap = null;
 
-      if (robotsRes.status === 200) {
-        const text = await robotsRes.text();
-        if (/user-agent\s*:|disallow\s*:|allow\s*:/i.test(text)) {
-          robots = `${origin}/robots.txt`;
-        }
-      }
-    } catch {}
+// ---- robots.txt ----
+try {
+  const robotsRes = await fetch(`${origin}/robots.txt`, {
+    redirect: "follow",
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
+    }
+  });
+
+  if (robotsRes.status === 200) {
+    const finalRobotsUrl = new URL(robotsRes.url);
+    const text = await robotsRes.text();
+
+    const looksLikeRobots =
+      /user-agent\s*:|disallow\s*:|allow\s*:/i.test(text);
+
+    const stillRobots =
+      finalRobotsUrl.pathname.toLowerCase().includes("robots");
+
+    if (looksLikeRobots && stillRobots) {
+      robots = finalRobotsUrl.href;
+    }
+  }
+} catch {}
+
+// ---- sitemap.xml ----
+try {
+  const sitemapRes = await fetch(`${origin}/sitemap.xml`, {
+    redirect: "follow",
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
+    }
+  });
+
+  if (sitemapRes.status === 200) {
+    const finalSitemapUrl = new URL(sitemapRes.url);
+    const text = await sitemapRes.text();
+
+    const looksLikeSitemap =
+      /<urlset|<sitemapindex/i.test(text);
+
+    const stillSitemap =
+      finalSitemapUrl.pathname.toLowerCase().includes("sitemap");
+
+    if (looksLikeSitemap && stillSitemap) {
+      sitemap = finalSitemapUrl.href;
+    }
+  }
+} catch {}
 
     // ---- sitemap.xml ----
     try {
@@ -130,3 +165,4 @@ export async function handler(event) {
     };
   }
 }
+
