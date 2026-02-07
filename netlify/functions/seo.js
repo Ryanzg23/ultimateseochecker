@@ -30,7 +30,7 @@ export async function handler(event) {
     };
 
     const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
-    const description = getTag(/<meta\s+name=["']description["']\s+content=["']([^"']*)["']/i);
+    const description = getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) || getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
     const canonical = getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']*)["']/i);
     const amphtml = getTag(/<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i);
 
@@ -75,3 +75,4 @@ export async function handler(event) {
     };
   }
 }
+
