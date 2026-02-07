@@ -27,6 +27,9 @@ export async function handler(event) {
     const finalUrl = response.url;
     const html = await response.text();
 
+    /* ================================
+       HELPER
+    ================================ */
     const getTag = (regex) => {
       const match = html.match(regex);
       return match ? match[1].trim() : "";
@@ -52,46 +55,14 @@ export async function handler(event) {
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
     /* ================================
-       SIMPLE ROBOTS / SITEMAP CHECK
+       ROBOTS.TXT & SITEMAP (OPTIMISTIC)
+       - Always provide URLs
+       - Do NOT attempt verification
     ================================ */
     const origin = new URL(finalUrl).origin;
 
-async function checkFile(path) {
-  const bases = [
-    origin,
-    origin.replace("https://", "http://")
-  ];
-
-  for (const base of bases) {
-    try {
-      const res = await fetch(base + path, {
-        redirect: "follow",
-        headers: {
-          "User-Agent": "Mozilla/5.0"
-        }
-      });
-
-      if (res.status === 404 || res.status === 410) continue;
-
-      const final = new URL(res.url);
-
-      // homepage redirect = not detected
-      if (final.pathname === "/" || final.pathname === "") continue;
-
-      // must still be same file
-      if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) continue;
-
-      return final.href;
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
-}
-
-    const robots = await checkFile("/robots.txt");
-    const sitemap = await checkFile("/sitemap.xml");
+    const robots = `${origin}/robots.txt`;
+    const sitemap = `${origin}/sitemap.xml`;
 
     /* ================================
        RESPONSE
@@ -115,12 +86,13 @@ async function checkFile(path) {
         sitemap
       })
     };
-  } catch {
+  } catch (err) {
     return {
       statusCode: 500,
       headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: "Failed to fetch page" })
+      body: JSON.stringify({
+        error: "Failed to fetch page"
+      })
     };
   }
 }
-
