@@ -55,14 +55,53 @@ export async function handler(event) {
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
     /* ================================
-       ROBOTS.TXT & SITEMAP (OPTIMISTIC)
-       - Always provide URLs
-       - Do NOT attempt verification
+       ROBOTS.TXT / SITEMAP.XML (3-STATE)
     ================================ */
     const origin = new URL(finalUrl).origin;
 
-    const robots = `${origin}/robots.txt`;
-    const sitemap = `${origin}/sitemap.xml`;
+    async function detectFile(path) {
+      try {
+        const res = await fetch(origin + path, {
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+          }
+        });
+
+        // Explicitly missing
+        if (res.status === 404 || res.status === 410) {
+          return { status: "missing" };
+        }
+
+        const final = new URL(res.url);
+
+        // Redirected to homepage or root
+        if (final.pathname === "/" || final.pathname === "") {
+          return { status: "missing" };
+        }
+
+        // Redirected to something else (not the same file)
+        if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) {
+          return { status: "missing" };
+        }
+
+        // Accessible
+        if (res.status === 200) {
+          return {
+            status: "exists",
+            url: final.href
+          };
+        }
+
+        // Blocked or unknown
+        return { status: "unknown" };
+      } catch {
+        return { status: "unknown" };
+      }
+    }
+
+    const robots = await detectFile("/robots.txt");
+    const sitemap = await detectFile("/sitemap.xml");
 
     /* ================================
        RESPONSE
@@ -86,7 +125,7 @@ export async function handler(event) {
         sitemap
       })
     };
-  } catch (err) {
+  } catch {
     return {
       statusCode: 500,
       headers: { "Access-Control-Allow-Origin": "*" },
