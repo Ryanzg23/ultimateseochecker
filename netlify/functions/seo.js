@@ -1,105 +1,132 @@
 export async function handler(event) {
-  let inputUrl = event.queryStringParameters.url;
-
-  if (!inputUrl.startsWith("http")) {
-    inputUrl = "https://" + inputUrl;
-  }
-
-  let response, html, status;
-
-  try {
-    response = await fetch(inputUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; SEOChecker/1.0)",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9"
-      },
-      redirect: "follow"
-    });
-
-    status = response.status;
-    html = await response.text();
-  } catch {
+  let inputUrl = event.queryStringParameters?.url;
+  if (!inputUrl) {
     return {
-      statusCode: 200,
-      body: JSON.stringify({
-        inputUrl,
-        finalUrl: inputUrl,
-        status: 0,
-        error: "fetch_failed"
-      })
+      statusCode: 400,
+      body: JSON.stringify({ error: "Missing url parameter" })
     };
   }
 
-  const getTag = (regex) => {
-    const match = html.match(regex);
-    return match ? match[1].trim() : "";
-  };
-
-  const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
-
-  const description =
-    getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
-    getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
-
-  const canonical =
-  getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i) ||
-  "";
-
-const amphtml =
-  getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i) ||
-  "";
-
-  const robotsMeta =
-    getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
-    getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
-
-  /* ================================
-     ROBOTS.TXT & SITEMAP (SERVER)
-  ================================ */
-
-  const origin = new URL(response.url).origin;
-
-  async function exists(url) {
-    try {
-      let r = await fetch(url, { method: "HEAD" });
-      if (r.ok) return true;
-      r = await fetch(url, { method: "GET" });
-      return r.ok;
-    } catch {
-      return false;
-    }
+  if (!/^https?:\/\//i.test(inputUrl)) {
+    inputUrl = "https://" + inputUrl;
   }
 
-  const robotsTxtUrl = `${origin}/robots.txt`;
-  const sitemapUrl = `${origin}/sitemap.xml`;
+  try {
+    /* ================================
+       FETCH MAIN PAGE
+    ================================ */
+    const response = await fetch(inputUrl, {
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; BulkSEOChecker/1.0; +https://example.com)"
+      }
+    });
 
-  const [hasRobotsTxt, hasSitemap] = await Promise.all([
-    exists(robotsTxtUrl),
-    exists(sitemapUrl)
-  ]);
+    const status = response.status;
+    const finalUrl = response.url;
+    const html = await response.text();
 
-  return {
-    statusCode: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*"
-    },
-    body: JSON.stringify({
-      inputUrl,
-      finalUrl: response.url,
-      status,
-      title,
-      description,
-      canonical,
-      amphtml,
-      robotsMeta,
-      hasRobotsTxt,
-      robotsTxtUrl,
-      hasSitemap,
-      sitemapUrl
-    })
-  };
+    /* ================================
+       HELPER
+    ================================ */
+    const getTag = (regex) => {
+      const match = html.match(regex);
+      return match ? match[1].trim() : "";
+    };
+
+    /* ================================
+       META EXTRACTION (STABLE)
+    ================================ */
+    const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
+
+    const description =
+      getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
+      getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+
+    const canonical =
+      getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i);
+
+    const amphtml =
+      getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i);
+
+    const robotsMeta =
+      getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
+      getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
+
+    /* ================================
+       ROBOTS.TXT & SITEMAP.XML (STRICT)
+    ================================ */
+    const origin = new URL(finalUrl).origin;
+
+    let robots = null;
+    let sitemap = null;
+
+    // ---- robots.txt ----
+    try {
+      const robotsRes = await fetch(`${origin}/robots.txt`, {
+        redirect: "manual",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
+        }
+      });
+
+      if (robotsRes.status === 200) {
+        const text = await robotsRes.text();
+        if (/user-agent\s*:|disallow\s*:|allow\s*:/i.test(text)) {
+          robots = `${origin}/robots.txt`;
+        }
+      }
+    } catch {}
+
+    // ---- sitemap.xml ----
+    try {
+      const sitemapRes = await fetch(`${origin}/sitemap.xml`, {
+        redirect: "manual",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; BulkSEOChecker/1.0)"
+        }
+      });
+
+      if (sitemapRes.status === 200) {
+        const text = await sitemapRes.text();
+        if (/<urlset|<sitemapindex/i.test(text)) {
+          sitemap = `${origin}/sitemap.xml`;
+        }
+      }
+    } catch {}
+
+    /* ================================
+       RESPONSE
+    ================================ */
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        inputUrl,
+        finalUrl,
+        status,
+        title,
+        description,
+        canonical,
+        amphtml,
+        robotsMeta,
+        robots,
+        sitemap
+      })
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({
+        error: "Failed to fetch page"
+      })
+    };
+  }
 }
-
-
-
