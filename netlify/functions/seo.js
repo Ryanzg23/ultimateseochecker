@@ -33,6 +33,7 @@ export async function handler(event) {
     const description = getTag(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) || getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
     const canonical = getTag(/<link\s+rel=["']canonical["']\s+href=["']([^"']*)["']/i);
     const amphtml = getTag(/<link\s+rel=["']amphtml["']\s+href=["']([^"']*)["']/i);
+    const robots = getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) || getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
     const origin = new URL(finalUrl).origin;
 
@@ -58,7 +59,8 @@ export async function handler(event) {
         canonical,
         amphtml,
         robots,
-        sitemap
+        sitemap,
+        robots
       })
     };
 
@@ -75,4 +77,5 @@ export async function handler(event) {
     };
   }
 }
+
 
