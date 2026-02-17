@@ -131,8 +131,9 @@ export async function handler(event) {
    AUTH LINKS (DAFTAR / LOGIN)
 ================================ */
 
-function extractAuthLink(labels) {
+function extractAuthLinks(labels) {
   const targets = labels.map(t => t.toLowerCase());
+  const found = new Set();
 
   const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
   const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
@@ -149,7 +150,8 @@ function extractAuthLink(labels) {
 
     if (targets.some(t => text.includes(t))) {
       try {
-        return new URL(href, finalUrl).href;
+        const url = new URL(href, finalUrl).href;
+        found.add(url);
       } catch {}
     }
   }
@@ -165,24 +167,26 @@ function extractAuthLink(labels) {
       const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
       if (onclickMatch) {
         try {
-          return new URL(onclickMatch[1], finalUrl).href;
+          const url = new URL(onclickMatch[1], finalUrl).href;
+          found.add(url);
         } catch {}
       }
     }
   }
 
-  return null;
+  return found.size ? Array.from(found) : null;
 }
 
+
 const authLinks = {
-  daftar: extractAuthLink([
+  daftar: extractAuthLinks([
     "daftar",
     "register",
     "sign up",
     "signup",
     "join"
   ]),
-  login: extractAuthLink([
+  login: extractAuthLinks([
     "login",
     "masuk",
     "sign in",
@@ -225,6 +229,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
