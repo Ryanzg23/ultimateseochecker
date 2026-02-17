@@ -78,43 +78,6 @@ export async function handler(event) {
       getTag(/<meta[^>]*name=["']robots["'][^>]*content=["']([^"']*)["']/i) ||
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
-
-/* ================================
-   AUTH LINKS (DAFTAR / LOGIN)
-================================ */
-
-function extractAuthLink(label) {
-  const regexes = [
-    // <a>Daftar</a>
-    new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>\\s*${label}\\s*<\\/a>`, "i"),
-
-    // <button onclick="location.href='...'">Daftar</button>
-    new RegExp(`<button[^>]*onclick=["'][^"']*['"]([^"']+)['"][^>]*>\\s*${label}\\s*<\\/button>`, "i"),
-
-    // data-href
-    new RegExp(`<[^>]*data-href=["']([^"']+)["'][^>]*>\\s*${label}\\s*<`, "i")
-  ];
-
-  for (const rx of regexes) {
-    const match = html.match(rx);
-    if (match && match[1]) {
-      try {
-        return new URL(match[1], finalUrl).href;
-      } catch {
-        return null;
-      }
-    }
-  }
-
-  return null;
-}
-
-const authLinks = {
-  daftar: extractAuthLink("daftar"),
-  login: extractAuthLink("login")
-};
-
-
     /* ================================
        ROBOTS.TXT / SITEMAP.XML (3-STATE)
     ================================ */
@@ -163,6 +126,42 @@ const authLinks = {
     const robots = await detectFile("/robots.txt");
     const sitemap = await detectFile("/sitemap.xml");
 
+
+    /* ================================
+   AUTH LINKS (DAFTAR / LOGIN)
+================================ */
+
+function extractAuthLink(label) {
+  const regexes = [
+    // <a>Daftar</a>
+    new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>\\s*${label}\\s*<\\/a>`, "i"),
+
+    // <button onclick="location.href='...'">Daftar</button>
+    new RegExp(`<button[^>]*onclick=["'][^"']*['"]([^"']+)['"][^>]*>\\s*${label}\\s*<\\/button>`, "i"),
+
+    // data-href
+    new RegExp(`<[^>]*data-href=["']([^"']+)["'][^>]*>\\s*${label}\\s*<`, "i")
+  ];
+
+  for (const rx of regexes) {
+    const match = html.match(rx);
+    if (match && match[1]) {
+      try {
+        return new URL(match[1], finalUrl).href;
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  return null;
+}
+
+const authLinks = {
+  daftar: extractAuthLink("daftar"),
+  login: extractAuthLink("login")
+};
+
     /* ================================
        RESPONSE
     ================================ */
@@ -197,6 +196,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
