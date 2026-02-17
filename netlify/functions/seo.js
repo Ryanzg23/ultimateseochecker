@@ -132,30 +132,48 @@ export async function handler(event) {
 ================================ */
 
 function extractAuthLink(label) {
-  const regexes = [
-    // <a>Daftar</a>
-    new RegExp(`<a[^>]*href=["']([^"']+)["'][^>]*>\\s*${label}\\s*<\\/a>`, "i"),
+  const target = label.toLowerCase();
 
-    // <button onclick="location.href='...'">Daftar</button>
-    new RegExp(`<button[^>]*onclick=["'][^"']*['"]([^"']+)['"][^>]*>\\s*${label}\\s*<\\/button>`, "i"),
+  const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
+  const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
 
-    // data-href
-    new RegExp(`<[^>]*data-href=["']([^"']+)["'][^>]*>\\s*${label}\\s*<`, "i")
-  ];
+  let match;
 
-  for (const rx of regexes) {
-    const match = html.match(rx);
-    if (match && match[1]) {
+  // ----- scan <a> -----
+  while ((match = linkRegex.exec(html)) !== null) {
+    const href = match[1];
+    const text = match[2]
+      .replace(/<[^>]+>/g, "") // remove inner tags
+      .trim()
+      .toLowerCase();
+
+    if (text.includes(target)) {
       try {
-        return new URL(match[1], finalUrl).href;
-      } catch {
-        return null;
+        return new URL(href, finalUrl).href;
+      } catch {}
+    }
+  }
+
+  // ----- scan <button> -----
+  while ((match = buttonRegex.exec(html)) !== null) {
+    const inner = match[1]
+      .replace(/<[^>]+>/g, "")
+      .trim()
+      .toLowerCase();
+
+    if (inner.includes(target)) {
+      const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+      if (onclickMatch) {
+        try {
+          return new URL(onclickMatch[1], finalUrl).href;
+        } catch {}
       }
     }
   }
 
   return null;
 }
+
 
 const authLinks = {
   daftar: extractAuthLink("daftar"),
@@ -196,6 +214,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
