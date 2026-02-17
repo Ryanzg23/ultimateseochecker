@@ -269,14 +269,43 @@ function renderAuthLinks(list) {
     return `<a href="${list[0]}" target="_blank">${list[0]}</a>`;
   }
 
+  const id = "auth_" + Math.random().toString(36).slice(2);
+
+  const extraLinks = list
+    .slice(1)
+    .map(u => `<div><a href="${u}" target="_blank">${u}</a></div>`)
+    .join("");
+
   return `
-    <div>
-      <a href="${list[0]}" target="_blank">${list[0]}</a>
-      <div class="muted">+${list.length - 1} more</div>
+    <div class="auth-links">
+      <div>
+        <a href="${list[0]}" target="_blank">${list[0]}</a>
+      </div>
+      <div class="auth-toggle muted" onclick="toggleAuth('${id}', this)">
+        +${list.length - 1} more
+      </div>
+      <div id="${id}" class="auth-extra hidden">
+        ${extraLinks}
+      </div>
     </div>
   `;
 }
 
+
+function toggleAuth(id, el) {
+  const box = document.getElementById(id);
+  if (!box) return;
+
+  const expanded = !box.classList.contains("hidden");
+
+  if (expanded) {
+    box.classList.add("hidden");
+    el.textContent = el.textContent.replace("less", "more");
+  } else {
+    box.classList.remove("hidden");
+    el.textContent = el.textContent.replace("more", "less");
+  }
+}
 
 /* ================================
    AMP HANDLER
@@ -420,6 +449,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
