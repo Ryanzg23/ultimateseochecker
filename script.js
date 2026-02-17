@@ -173,7 +173,11 @@ async function processDomain(domain, options = {}) {
 
     card.dataset.original = `
       <div class="card-header">
-        <h3>${data.inputUrl}</h3>
+        <h3>
+           <a href="${data.finalUrl || data.inputUrl}" target="_blank" class="card-url">
+             ${data.inputUrl}
+           </a>
+         </h3>
         <div class="card-actions">
           ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
           <button class="secondary small http-btn hidden"
@@ -456,6 +460,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
