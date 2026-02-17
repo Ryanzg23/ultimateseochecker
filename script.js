@@ -197,6 +197,24 @@ async function processDomain(domain, options = {}) {
         ${data.keywords || "—"}
       </div>
 
+      <div class="label">Daftar</div>
+      <div class="value">
+        ${
+          data.authLinks?.daftar
+            ? `<a href="${data.authLinks.daftar}" target="_blank">${data.authLinks.daftar}</a>`
+            : "Not detected"
+        }
+      </div>
+      
+      <div class="label">Login</div>
+      <div class="value">
+        ${
+          data.authLinks?.login
+            ? `<a href="${data.authLinks.login}" target="_blank">${data.authLinks.login}</a>`
+            : "Not detected"
+        }
+      </div>
+
       <div class="label inline">
         Meta Robots:
         <span class="robots ${robotsInfo.status}">
@@ -398,6 +416,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
