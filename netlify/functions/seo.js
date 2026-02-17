@@ -131,8 +131,8 @@ export async function handler(event) {
    AUTH LINKS (DAFTAR / LOGIN)
 ================================ */
 
-function extractAuthLink(label) {
-  const target = label.toLowerCase();
+function extractAuthLink(labels) {
+  const targets = labels.map(t => t.toLowerCase());
 
   const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
   const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
@@ -143,11 +143,11 @@ function extractAuthLink(label) {
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
     const text = match[2]
-      .replace(/<[^>]+>/g, "") // remove inner tags
+      .replace(/<[^>]+>/g, "")
       .trim()
       .toLowerCase();
 
-    if (text.includes(target)) {
+    if (targets.some(t => text.includes(t))) {
       try {
         return new URL(href, finalUrl).href;
       } catch {}
@@ -161,7 +161,7 @@ function extractAuthLink(label) {
       .trim()
       .toLowerCase();
 
-    if (inner.includes(target)) {
+    if (targets.some(t => inner.includes(t))) {
       const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
       if (onclickMatch) {
         try {
@@ -214,6 +214,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
