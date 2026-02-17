@@ -280,34 +280,39 @@ function renderAuthLinks(list) {
     <div class="auth-links">
       <div><a href="${list[0]}" target="_blank">${list[0]}</a></div>
 
-      <div id="${id}" class="auth-extra hidden">
-        ${extraLinks}
-        <div class="auth-toggle muted" onclick="toggleAuth('${id}', this, ${list.length - 1})">
-          hide other links
-        </div>
+      <div class="auth-toggle muted" onclick="expandAuth('${id}', this)">
+        +${list.length - 1} more
       </div>
 
-      <div class="auth-toggle muted" onclick="toggleAuth('${id}', this, ${list.length - 1})">
-        +${list.length - 1} more
+      <div id="${id}" class="auth-extra hidden">
+        ${extraLinks}
+        <div class="auth-toggle muted" onclick="collapseAuth('${id}')">
+          hide other links
+        </div>
       </div>
     </div>
   `;
 }
 
-function toggleAuth(id, el, count) {
+function expandAuth(id, btn) {
   const box = document.getElementById(id);
   if (!box) return;
 
-  const expanded = !box.classList.contains("hidden");
-
-  if (expanded) {
-    box.classList.add("hidden");
-    el.textContent = `+${count} more`;
-  } else {
-    box.classList.remove("hidden");
-    el.textContent = "hide other links";
-  }
+  box.classList.remove("hidden");
+  btn.classList.add("hidden");
 }
+
+function collapseAuth(id) {
+  const box = document.getElementById(id);
+  if (!box) return;
+
+  const wrapper = box.closest(".auth-links");
+  const expandBtn = wrapper.querySelector(".auth-toggle");
+
+  box.classList.add("hidden");
+  expandBtn.classList.remove("hidden");
+}
+
 
 /* ================================
    AMP HANDLER
@@ -451,6 +456,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
