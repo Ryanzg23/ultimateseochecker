@@ -174,10 +174,21 @@ function extractAuthLink(labels) {
   return null;
 }
 
-
 const authLinks = {
-  daftar: extractAuthLink("daftar"),
-  login: extractAuthLink("login")
+  daftar: extractAuthLink([
+    "daftar",
+    "register",
+    "sign up",
+    "signup",
+    "join"
+  ]),
+  login: extractAuthLink([
+    "login",
+    "masuk",
+    "sign in",
+    "signin",
+    "log in"
+  ])
 };
 
     /* ================================
@@ -214,6 +225,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
