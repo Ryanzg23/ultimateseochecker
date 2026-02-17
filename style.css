@@ -694,7 +694,7 @@ button.small {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
   font-weight: 600;
 }
 
@@ -710,5 +710,6 @@ button.small {
 .auth-extra {
   margin-top: 4px;
 }
+
 
 
