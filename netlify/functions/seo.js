@@ -172,18 +172,19 @@ const authLinks = {
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
+     body: JSON.stringify({
         inputUrl,
         finalUrl,
         status,
         title,
         description,
-        keywords,  
+        keywords,
         canonical,
         amphtml,
         robotsMeta,
         robots,
-        sitemap
+        sitemap,
+        authLinks  
       })
     };
   } catch {
@@ -196,5 +197,6 @@ const authLinks = {
     };
   }
 }
+
 
 
