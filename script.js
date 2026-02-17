@@ -278,21 +278,23 @@ function renderAuthLinks(list) {
 
   return `
     <div class="auth-links">
-      <div>
-        <a href="${list[0]}" target="_blank">${list[0]}</a>
-      </div>
-      <div class="auth-toggle muted" onclick="toggleAuth('${id}', this)">
-        +${list.length - 1} more
-      </div>
+      <div><a href="${list[0]}" target="_blank">${list[0]}</a></div>
+
       <div id="${id}" class="auth-extra hidden">
         ${extraLinks}
+        <div class="auth-toggle muted" onclick="toggleAuth('${id}', this, ${list.length - 1})">
+          hide other links
+        </div>
+      </div>
+
+      <div class="auth-toggle muted" onclick="toggleAuth('${id}', this, ${list.length - 1})">
+        +${list.length - 1} more
       </div>
     </div>
   `;
 }
 
-
-function toggleAuth(id, el) {
+function toggleAuth(id, el, count) {
   const box = document.getElementById(id);
   if (!box) return;
 
@@ -300,10 +302,10 @@ function toggleAuth(id, el) {
 
   if (expanded) {
     box.classList.add("hidden");
-    el.textContent = el.textContent.replace("less", "more");
+    el.textContent = `+${count} more`;
   } else {
     box.classList.remove("hidden");
-    el.textContent = el.textContent.replace("more", "less");
+    el.textContent = "hide other links";
   }
 }
 
@@ -449,6 +451,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
