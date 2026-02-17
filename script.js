@@ -197,23 +197,11 @@ async function processDomain(domain, options = {}) {
         ${data.keywords || "—"}
       </div>
 
-      <div class="label">Daftar</div>
-      <div class="value">
-        ${
-          data.authLinks?.daftar
-            ? `<a href="${data.authLinks.daftar}" target="_blank">${data.authLinks.daftar}</a>`
-            : "Not detected"
-        }
-      </div>
-      
-      <div class="label">Login</div>
-      <div class="value">
-        ${
-          data.authLinks?.login
-            ? `<a href="${data.authLinks.login}" target="_blank">${data.authLinks.login}</a>`
-            : "Not detected"
-        }
-      </div>
+<div class="label">Daftar</div>
+<div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
+
+<div class="label">Login</div>
+<div class="value">${renderAuthLinks(data.authLinks?.login)}</div>
 
       <div class="label inline">
         Meta Robots:
@@ -273,6 +261,22 @@ async function processDomain(domain, options = {}) {
     `;
   }
 }
+
+function renderAuthLinks(list) {
+  if (!list || !list.length) return "Not detected";
+
+  if (list.length === 1) {
+    return `<a href="${list[0]}" target="_blank">${list[0]}</a>`;
+  }
+
+  return `
+    <div>
+      <a href="${list[0]}" target="_blank">${list[0]}</a>
+      <div class="muted">+${list.length - 1} more</div>
+    </div>
+  `;
+}
+
 
 /* ================================
    AMP HANDLER
@@ -416,6 +420,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
