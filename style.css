@@ -698,5 +698,17 @@ button.small {
   font-weight: 600;
 }
 
+.hidden {
+  display: none;
+}
+
+.auth-toggle {
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.auth-extra {
+  margin-top: 4px;
+}
 
 
