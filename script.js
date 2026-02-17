@@ -201,12 +201,6 @@ async function processDomain(domain, options = {}) {
         ${data.keywords || "—"}
       </div>
 
-<div class="label">Daftar</div>
-<div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
-
-<div class="label">Login</div>
-<div class="value">${renderAuthLinks(data.authLinks?.login)}</div>
-
       <div class="label inline">
         Meta Robots:
         <span class="robots ${robotsInfo.status}">
@@ -248,6 +242,13 @@ async function processDomain(domain, options = {}) {
         : "Unable to verify"
   }
 </div>
+
+<div class="label">Daftar</div>
+<div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
+
+<div class="label">Login</div>
+<div class="value">${renderAuthLinks(data.authLinks?.login)}</div>
+
     `;
 
     card.innerHTML = card.dataset.original;
@@ -460,6 +461,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
