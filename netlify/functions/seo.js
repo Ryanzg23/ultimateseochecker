@@ -148,7 +148,12 @@ function extractAuthLinks(labels) {
       .trim()
       .toLowerCase();
 
-    if (targets.some(t => text.includes(t))) {
+    const matched = targets.some(t => {
+      if (t === "masuk") return text === "masuk";
+      return text.includes(t);
+    });
+
+    if (matched) {
       try {
         const url = new URL(href, finalUrl).href;
         found.add(url);
@@ -163,7 +168,12 @@ function extractAuthLinks(labels) {
       .trim()
       .toLowerCase();
 
-    if (targets.some(t => inner.includes(t))) {
+    const matched = targets.some(t => {
+      if (t === "masuk") return inner === "masuk";
+      return inner.includes(t);
+    });
+
+    if (matched) {
       const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
       if (onclickMatch) {
         try {
@@ -176,6 +186,7 @@ function extractAuthLinks(labels) {
 
   return found.size ? Array.from(found) : null;
 }
+
 
 
 const authLinks = {
@@ -229,6 +240,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
