@@ -743,6 +743,13 @@ button.small {
   background: #6d28d9;
 }
 
+.tool-amp {
+  background: #f59e0b;
+}
+
+.tool-amp:hover {
+  background: #d97706;
+}
 
 
 
