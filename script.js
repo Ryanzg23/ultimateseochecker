@@ -77,6 +77,29 @@ function openBulk() {
     });
 }
 
+function openAmpTest() {
+  const input = document.getElementById("domains").value;
+
+  const urls = input
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean);
+
+  if (!urls.length) return;
+
+  urls.forEach(u => {
+    const url = u.startsWith("http") ? u : "https://" + u;
+
+    const ampTestUrl =
+      "https://search.google.com/test/amp?url=" +
+      encodeURIComponent(url);
+
+    window.open(ampTestUrl, "_blank", "noopener");
+  });
+}
+
+
+
 function openPreview() {
   const urls = document.getElementById("domains").value
     .split("\n")
@@ -461,6 +484,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
