@@ -720,6 +720,21 @@ button.small {
   text-decoration: underline;
 }
 
+.tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
 .tool-purple {
   background: #7c3aed;
 }
@@ -727,6 +742,7 @@ button.small {
 .tool-purple:hover {
   background: #6d28d9;
 }
+
 
 
 
