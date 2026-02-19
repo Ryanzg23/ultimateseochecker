@@ -98,7 +98,26 @@ function openAmpTest() {
   });
 }
 
+function openRichTest() {
+  const input = document.getElementById("domains").value;
 
+  const urls = input
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean);
+
+  if (!urls.length) return;
+
+  urls.forEach(u => {
+    const url = u.startsWith("http") ? u : "https://" + u;
+
+    const richUrl =
+      "https://search.google.com/test/rich-results?url=" +
+      encodeURIComponent(url);
+
+    window.open(richUrl, "_blank", "noopener");
+  });
+}
 
 function openPreview() {
   const urls = document.getElementById("domains").value
@@ -484,6 +503,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
