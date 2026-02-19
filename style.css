@@ -744,12 +744,15 @@ button.small {
 }
 
 .tool-amp {
-  background: #f59e0b;
+  background: #f97316; /* strong orange */
+  color: #fff;
 }
 
 .tool-amp:hover {
-  background: #d97706;
+  background: #ea580c;
 }
+
+
 
 
 
