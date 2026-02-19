@@ -720,5 +720,12 @@ button.small {
   text-decoration: underline;
 }
 
+.tool-btn.rich {
+  background: #7c3aed;
+}
+
+.tool-btn.rich:hover {
+  background: #5b21b6;
+}
 
 
