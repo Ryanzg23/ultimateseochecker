@@ -25,6 +25,38 @@ export async function handler(event) {
 
   const MAX_PAGES = 50;
 
+  const visited = new Set();
+const queue = [root];
+const urls = [];
+
+const MAX_PAGES = 50;
+
+/* ===== URL NORMALIZER ===== */
+function normalizeUrl(u) {
+  try {
+    const url = new URL(u);
+
+    // remove hash
+    url.hash = "";
+
+    // remove query (optional for sitemap)
+    url.search = "";
+
+    // normalize root slash
+    if (url.pathname === "") {
+      url.pathname = "/";
+    }
+
+    // remove trailing slash duplicates
+    url.pathname = url.pathname.replace(/\/+$/, "/");
+
+    return url.href;
+  } catch {
+    return u;
+  }
+}
+
+  
   async function crawl(url) {
     if (visited.has(url)) return;
     if (visited.size >= MAX_PAGES) return;
@@ -40,7 +72,10 @@ export async function handler(event) {
 
       if (!res.ok) return;
 
-      urls.push(url);
+      const normalized = normalizeUrl(url);
+      if (!urls.includes(normalized)) {
+        urls.push(normalized);
+      }
 
       const html = await res.text();
 
@@ -49,7 +84,7 @@ export async function handler(event) {
 
       while ((match = linkRegex.exec(html)) !== null) {
         try {
-          const link = new URL(match[1], root).href;
+          const link = normalizeUrl(new URL(match[1], root).href);
 
           if (
             link.startsWith(root) &&
