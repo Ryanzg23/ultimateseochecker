@@ -87,10 +87,7 @@ async function detectRobots(origin) {
       }
     });
 
-    if (!res) return null;
-
-    // must be successful
-    if (res.status !== 200) return null;
+    if (!res || res.status !== 200) return null;
 
     const text = (await res.text())
       .replace(/\r/g, "")
@@ -100,11 +97,15 @@ async function detectRobots(origin) {
 
     const lower = text.toLowerCase();
 
-    // filter AI placeholder robots (your hosting case)
-    if (
-      lower.includes("content signals") ||
-      lower.includes("ai-train")
-    ) {
+    // detect real crawler directives
+    const hasCrawlerDirective =
+      lower.includes("user-agent:") ||
+      lower.includes("disallow:") ||
+      lower.includes("allow:") ||
+      lower.includes("sitemap:");
+
+    if (!hasCrawlerDirective) {
+      // hosting placeholder / AI policy
       return null;
     }
 
@@ -273,6 +274,7 @@ const robots = await detectRobots(origin);
     };
   }
 }
+
 
 
 
