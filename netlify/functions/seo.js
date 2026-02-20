@@ -158,7 +158,6 @@ function extractAuthLinks(labels) {
   const targets = labels.map(t => t.toLowerCase());
   const found = new Set();
 
-  // match ALL anchors (robust)
   const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
 
   let match;
@@ -166,10 +165,11 @@ function extractAuthLinks(labels) {
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
 
-    // remove tags + normalize whitespace
+    // remove ALL tags including svg + normalize spaces
     const text = match[2]
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
+      .replace(/<svg[\s\S]*?<\/svg>/gi, " ")   // remove svg fully
+      .replace(/<[^>]*>/g, " ")                // remove tags
+      .replace(/\s+/g, " ")                   // collapse whitespace
       .trim()
       .toLowerCase();
 
@@ -192,8 +192,6 @@ function extractAuthLinks(labels) {
 
   return found.size ? Array.from(found) : null;
 }
-
-
 
       authLinks = {
         daftar: extractAuthLinks([
@@ -252,6 +250,7 @@ function extractAuthLinks(labels) {
     };
   }
 }
+
 
 
 
