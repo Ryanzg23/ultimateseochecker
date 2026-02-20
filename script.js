@@ -291,22 +291,27 @@ async function processDomain(domain, options = {}) {
      /* ===== AMP META COMPARISON ===== */
       let titleMismatch = false;
       let descMismatch = false;
+      let keywordsMismatch = false;
       
-      if (isAmp) {
-        const canonTitle = (options.parentTitle || "").trim();
-        const canonDesc = (options.parentDesc || "").trim();
+      if (isAmp && insertAfter) {
+        const parentData = insertAfter.dataset.seoData
+          ? JSON.parse(insertAfter.dataset.seoData)
+          : null;
       
-        const ampTitle = (data.title || "").trim();
-        const ampDesc = (data.description || "").trim();
+        if (parentData) {
+          const normalize = v => (v || "").trim().toLowerCase();
       
-        if (canonTitle && ampTitle && canonTitle !== ampTitle) {
-          titleMismatch = true;
-        }
+          titleMismatch =
+            normalize(parentData.title) !== normalize(data.title);
       
-        if (canonDesc && ampDesc && canonDesc !== ampDesc) {
-          descMismatch = true;
+          descMismatch =
+            normalize(parentData.description) !== normalize(data.description);
+      
+          keywordsMismatch =
+            normalize(parentData.keywords) !== normalize(data.keywords);
         }
       }
+
 
     card.dataset.original = `
       <div class="card-header">
@@ -346,6 +351,11 @@ async function processDomain(domain, options = {}) {
       </div>
       <div class="value">
         ${data.keywords || "—"}
+        ${
+          isAmp && keywordsMismatch
+            ? `<span class="mismatch-badge">Keywords mismatch</span>`
+            : ``
+        }
       </div>
 
       <div class="label inline">
@@ -633,6 +643,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
