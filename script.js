@@ -333,7 +333,7 @@ async function processDomain(domain, options = {}) {
 
 <div class="label">robots.txt</div>
 <div class="value">
-  ${data.robots?.status === "exists"
+  ${data.robots
     ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
     : `
       No Robots detected
@@ -580,6 +580,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
