@@ -748,7 +748,7 @@ button.small {
 }
 
 .tool-green:hover {
-  background: #2eae47;
+  background: #2eae47 !important;
 }
 
 .tool-amp {
@@ -802,6 +802,7 @@ button.small {
   opacity: 1;
   transform: translateX(-50%) translateY(-2px);
 }
+
 
 
 
