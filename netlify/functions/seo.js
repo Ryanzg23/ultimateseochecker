@@ -93,34 +93,53 @@ export async function handler(event) {
         });
     
         const final = new URL(res.url);
-        const text = await res.text();
     
-        // ❌ real missing
+        // ❌ 404 / 410
         if (res.status === 404 || res.status === 410) {
           return { status: "missing" };
         }
     
         // ❌ redirected away from file
-        if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) {
+        if (!final.pathname.toLowerCase().endsWith(path)) {
           return { status: "missing" };
         }
     
-        // ❌ homepage redirect or soft HTML page
-        if (path === "/robots.txt") {
-          if (!/user-agent:/i.test(text)) {
-            return { status: "missing" };
-          }
+        const contentType = res.headers.get("content-type") || "";
+        const text = await res.text();
+    
+        // ❌ HTML fallback
+        if (/<html/i.test(text)) {
+          return { status: "missing" };
         }
     
-        // ❌ sitemap should contain <urlset or <sitemapindex
+        // =========================
+        // ROBOTS VALIDATION
+        // =========================
+        if (path === "/robots.txt") {
+          // must be plain text
+          if (!contentType.includes("text/plain")) {
+            return { status: "missing" };
+          }
+    
+          // must contain directive at line start
+          if (!/^user-agent:/im.test(text)) {
+            return { status: "missing" };
+          }
+    
+          return {
+            status: "exists",
+            url: final.href
+          };
+        }
+    
+        // =========================
+        // SITEMAP VALIDATION
+        // =========================
         if (path === "/sitemap.xml") {
           if (!/<urlset|<sitemapindex/i.test(text)) {
             return { status: "missing" };
           }
-        }
     
-        // ✅ valid
-        if (res.status === 200) {
           return {
             status: "exists",
             url: final.href
@@ -252,6 +271,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
