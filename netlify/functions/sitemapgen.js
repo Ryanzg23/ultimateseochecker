@@ -25,46 +25,54 @@ export async function handler(event) {
 
   const MAX_PAGES = 50;
 
-  const visited = new Set();
-const queue = [root];
-const urls = [];
+  /* ===== URL NORMALIZER ===== */
+  function normalizeUrl(u) {
+    try {
+      const url = new URL(u);
 
-const MAX_PAGES = 50;
+      url.hash = "";
+      url.search = "";
 
-/* ===== URL NORMALIZER ===== */
-function normalizeUrl(u) {
-  try {
-    const url = new URL(u);
+      if (url.pathname === "") {
+        url.pathname = "/";
+      }
 
-    // remove hash
-    url.hash = "";
+      // normalize trailing slash
+      if (url.pathname !== "/") {
+        url.pathname = url.pathname.replace(/\/+$/, "");
+      }
 
-    // remove query (optional for sitemap)
-    url.search = "";
-
-    // normalize root slash
-    if (url.pathname === "") {
-      url.pathname = "/";
+      return url.href;
+    } catch {
+      return u;
     }
-
-    // remove trailing slash duplicates
-    url.pathname = url.pathname.replace(/\/+$/, "/");
-
-    return url.href;
-  } catch {
-    return u;
   }
-}
 
-  
+  /* ===== PRIORITY CALC ===== */
+  function calcPriority(u) {
+    try {
+      const path = new URL(u).pathname;
+      if (path === "/" || path === "") return "1.00";
+
+      const depth = path.split("/").filter(Boolean).length;
+      if (depth === 1) return "0.80";
+      if (depth === 2) return "0.60";
+      return "0.50";
+    } catch {
+      return "0.50";
+    }
+  }
+
   async function crawl(url) {
-    if (visited.has(url)) return;
+    const normalized = normalizeUrl(url);
+
+    if (visited.has(normalized)) return;
     if (visited.size >= MAX_PAGES) return;
 
-    visited.add(url);
+    visited.add(normalized);
 
     try {
-      const res = await fetch(url, {
+      const res = await fetch(normalized, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Sitemap Generator)"
         }
@@ -72,7 +80,7 @@ function normalizeUrl(u) {
 
       if (!res.ok) return;
 
-      const normalized = normalizeUrl(url);
+      // add to sitemap list
       if (!urls.includes(normalized)) {
         urls.push(normalized);
       }
@@ -89,7 +97,6 @@ function normalizeUrl(u) {
           if (
             link.startsWith(root) &&
             !visited.has(link) &&
-            !link.includes("#") &&
             !link.match(/\.(jpg|png|gif|pdf|zip|mp4|svg)$/i)
           ) {
             queue.push(link);
@@ -104,14 +111,20 @@ function normalizeUrl(u) {
     await crawl(next);
   }
 
-  /* ===== build sitemap xml ===== */
+  /* ===== BUILD XML ===== */
+  const now = new Date().toISOString();
+
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>\n` +
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     urls
       .map(
         (u) =>
-          `  <url>\n    <loc>${u}</loc>\n  </url>`
+          `  <url>\n` +
+          `    <loc>${u}</loc>\n` +
+          `    <lastmod>${now}</lastmod>\n` +
+          `    <priority>${calcPriority(u)}</priority>\n` +
+          `  </url>`
       )
       .join("\n") +
     `\n</urlset>`;
