@@ -26,7 +26,6 @@ export async function handler(event) {
     const status = response.status;
     const finalUrl = response.url;
     const html = await response.text();
-
     const origin = new URL(finalUrl).origin;
 
     /* ================================
@@ -40,7 +39,6 @@ export async function handler(event) {
     /* ================================
        META EXTRACTION
     ================================ */
-
     const title = getTag(/<title[^>]*>([^<]*)<\/title>/i);
 
     const description =
@@ -77,54 +75,43 @@ export async function handler(event) {
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
     /* ================================
-   ROBOTS.TXT DETECTION
-================================ */
-async function detectRobots(origin) {
-  try {
-    const res = await fetch(origin + "/robots.txt", {
-      redirect: "follow",
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+       ROBOTS.TXT DETECTION
+    ================================ */
+    async function detectRobots(origin) {
+      try {
+        const res = await fetch(origin + "/robots.txt", {
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+          }
+        });
+
+        if (!res || res.status !== 200) return null;
+
+        const text = (await res.text()).replace(/\r/g, "").trim();
+        if (!text) return null;
+
+        const lower = text.toLowerCase();
+
+        const hasCrawlerDirective =
+          lower.includes("user-agent:") ||
+          lower.includes("disallow:") ||
+          lower.includes("allow:") ||
+          lower.includes("sitemap:");
+
+        if (!hasCrawlerDirective) return null;
+
+        return { url: origin + "/robots.txt" };
+
+      } catch {
+        return null;
       }
-    });
-
-    if (!res || res.status !== 200) return null;
-
-    const text = (await res.text())
-      .replace(/\r/g, "")
-      .trim();
-
-    if (!text) return null;
-
-    const lower = text.toLowerCase();
-
-    // detect real crawler directives
-    const hasCrawlerDirective =
-      lower.includes("user-agent:") ||
-      lower.includes("disallow:") ||
-      lower.includes("allow:") ||
-      lower.includes("sitemap:");
-
-    if (!hasCrawlerDirective) {
-      // hosting placeholder / AI policy
-      return null;
     }
 
-    return {
-      url: origin + "/robots.txt"
-    };
-
-  } catch {
-    return null;
-  }
-}
-
-
-const robots = await detectRobots(origin);
-
+    const robots = await detectRobots(origin);
 
     /* ================================
-       SITEMAP.XML DETECTION (VALID XML)
+       SITEMAP.XML DETECTION
     ================================ */
     async function detectSitemap(origin) {
       try {
@@ -140,13 +127,11 @@ const robots = await detectRobots(origin);
         }
 
         const final = new URL(res.url);
-
         if (!final.pathname.toLowerCase().includes("sitemap")) {
           return { status: "missing" };
         }
 
         const text = await res.text();
-
         if (!/<urlset|<sitemapindex/i.test(text)) {
           return { status: "missing" };
         }
@@ -164,118 +149,81 @@ const robots = await detectRobots(origin);
     const sitemap = await detectSitemap(origin);
 
     /* ================================
-       AUTH LINKS (DAFTAR / LOGIN)
+       AUTH LINKS (LOGIN / DAFTAR)
     ================================ */
-    function extractAuthLinks(labels) {
-  try {
-    const targets = labels.map(t => t.toLowerCase());
-    const found = new Set();
+    let authLinks = { daftar: null, login: null };
 
-    const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
-    const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
+    try {
+      function extractAuthLinks(labels) {
+        const targets = labels.map(t => t.toLowerCase());
+        const found = new Set();
 
-    let match;
+        const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
+        const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
 
-    function isMatch(text) {
-      text = text.toLowerCase().trim();
+        let match;
 
-      return targets.some(t => {
-        if (t === "daftar") {
-          return text.startsWith("daftar");
+        function isMatch(text) {
+          text = text.toLowerCase().trim();
+
+          return targets.some(t => {
+            if (t === "daftar") return text.startsWith("daftar");
+            if (t === "login") return /\blogin\b/.test(text);
+            if (t === "masuk") return text === "masuk";
+            return text.includes(t);
+          });
         }
 
-        if (t === "login") {
-          return /\blogin\b/.test(text);
-        }
+        while ((match = linkRegex.exec(html)) !== null) {
+          const href = match[1];
+          const text = match[2].replace(/<[^>]+>/g, "").trim();
 
-        if (t === "masuk") {
-          return text === "masuk";
-        }
-
-        return text.includes(t);
-      });
-    }
-
-    // ---- scan <a> ----
-    while ((match = linkRegex.exec(html)) !== null) {
-      const href = match[1];
-      const text = match[2].replace(/<[^>]+>/g, "").trim();
-
-      if (isMatch(text)) {
-        try {
-          const url = new URL(href, finalUrl).href;
-          found.add(url);
-        } catch {}
-      }
-    }
-
-    // ---- scan <button> ----
-    while ((match = buttonRegex.exec(html)) !== null) {
-      const inner = match[1].replace(/<[^>]+>/g, "").trim();
-
-      if (isMatch(inner)) {
-        const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
-        if (onclickMatch) {
-          try {
-            const url = new URL(onclickMatch[1], finalUrl).href;
-            found.add(url);
-          } catch {}
-        }
-      }
-    }
-
-    return found.size ? Array.from(found) : null;
-
-  } catch (e) {
-    return null; // prevent function crash
-  }
-}
-
-
-
-      // scan <button>
-      while ((match = buttonRegex.exec(html)) !== null) {
-        const inner = match[1]
-          .replace(/<[^>]+>/g, "")
-          .trim()
-          .toLowerCase();
-
-        const matched = targets.some(t => {
-          if (t === "masuk") return inner === "masuk";
-          return inner.includes(t);
-        });
-
-        if (matched) {
-          const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
-          if (onclickMatch) {
+          if (isMatch(text)) {
             try {
-              const url = new URL(onclickMatch[1], finalUrl).href;
+              const url = new URL(href, finalUrl).href;
               found.add(url);
             } catch {}
           }
         }
+
+        while ((match = buttonRegex.exec(html)) !== null) {
+          const inner = match[1].replace(/<[^>]+>/g, "").trim();
+
+          if (isMatch(inner)) {
+            const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+            if (onclickMatch) {
+              try {
+                const url = new URL(onclickMatch[1], finalUrl).href;
+                found.add(url);
+              } catch {}
+            }
+          }
+        }
+
+        return found.size ? Array.from(found) : null;
       }
 
-      return found.size ? Array.from(found) : null;
-    }
+      authLinks = {
+        daftar: extractAuthLinks([
+          "daftar",
+          "register",
+          "sign up",
+          "signup",
+          "join",
+          "main demo"
+        ]),
+        login: extractAuthLinks([
+          "login",
+          "masuk",
+          "sign in",
+          "signin",
+          "log in"
+        ])
+      };
 
-    const authLinks = {
-      daftar: extractAuthLinks([
-        "daftar",
-        "register",
-        "sign up",
-        "signup",
-        "join",
-        "main demo"
-      ]),
-      login: extractAuthLinks([
-        "login",
-        "masuk",
-        "sign in",
-        "signin",
-        "log in"
-      ])
-    };
+    } catch {
+      authLinks = { daftar: null, login: null };
+    }
 
     /* ================================
        RESPONSE
@@ -302,24 +250,13 @@ const robots = await detectRobots(origin);
       })
     };
 
-  } catch {
+  } catch (err) {
     return {
       statusCode: 500,
       headers: { "Access-Control-Allow-Origin": "*" },
       body: JSON.stringify({
-        error: "Failed to fetch page"
+        error: "fetch_failed"
       })
     };
   }
 }
-
-
-
-
-
-
-
-
-
-
-
