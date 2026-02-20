@@ -154,71 +154,44 @@ export async function handler(event) {
     let authLinks = { daftar: null, login: null };
 
     try {
-      function extractAuthLinks(labels) {
-        const targets = labels.map(t => t.toLowerCase());
-        const found = new Set();
-      
-        const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-        let match;
-      
-        function textMatches(text) {
-          text = text.toLowerCase().trim();
-      
-          return targets.some(t => {
-            if (t === "daftar") return text.startsWith("daftar");
-            if (t === "login") return text.includes("login");
-            if (t === "masuk") return text === "masuk";
-            return text.includes(t);
-          });
-        }
-      
-        while ((match = linkRegex.exec(html)) !== null) {
-          const href = match[1];
-          const inner = match[2]
-            .replace(/<[^>]+>/g, "")
-            .trim();
-      
-          let matched = false;
-      
-          // 1️⃣ normal inner text
-          if (inner && textMatches(inner)) {
-            matched = true;
-          }
-      
-          // 2️⃣ aria/title/class/id attributes
-          const tag = match[0];
-      
-          const attrs = [
-            tag.match(/aria-label=["']([^"']+)["']/i)?.[1],
-            tag.match(/title=["']([^"']+)["']/i)?.[1],
-            tag.match(/class=["']([^"']+)["']/i)?.[1],
-            tag.match(/id=["']([^"']+)["']/i)?.[1]
-          ].filter(Boolean);
-      
-          if (!matched && attrs.some(textMatches)) {
-            matched = true;
-          }
-      
-          // 3️⃣ CSS pseudo content detection (NEW)
-          if (!matched && !inner) {
-            // extract nearby CSS
-            const cssContext = html.slice(Math.max(0, match.index - 500), match.index + 500);
-      
-            if (textMatches(cssContext)) {
-              matched = true;
-            }
-          }
-      
-          if (matched) {
-            try {
-              const url = new URL(href, finalUrl).href;
-              found.add(url);
-            } catch {}
-          }
-        }
-      
-        return found.size ? Array.from(found) : null;
-      }
+function extractAuthLinks(labels) {
+  const targets = labels.map(t => t.toLowerCase());
+  const found = new Set();
+
+  // multiline-safe anchor parser
+  const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match;
+
+  function matchText(text) {
+    const t = text.toLowerCase().trim();
+
+    return targets.some(key => {
+      if (key === "daftar") return t.startsWith("daftar");
+      if (key === "login") return t.includes("login");
+      if (key === "masuk") return t === "masuk";
+      return t.includes(key);
+    });
+  }
+
+  while ((match = linkRegex.exec(html)) !== null) {
+    const href = match[1];
+
+    const text = match[2]
+      .replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (text && matchText(text)) {
+      try {
+        const url = new URL(href, finalUrl).href;
+        found.add(url);
+      } catch {}
+    }
+  }
+
+  return found.size ? Array.from(found) : null;
+}
+
 
       authLinks = {
         daftar: extractAuthLinks([
@@ -277,5 +250,6 @@ export async function handler(event) {
     };
   }
 }
+
 
 
