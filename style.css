@@ -818,6 +818,15 @@ button.small {
   background: #1d4ed8;
 }
 
+.value.mismatch {
+  color: #ef4444;
+}
+
+.note.red {
+  color: #ef4444;
+  font-size: 12px;
+  margin-left: 6px;
+}
 
 
 
