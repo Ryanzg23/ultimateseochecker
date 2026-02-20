@@ -76,71 +76,64 @@ export async function handler(event) {
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
     /* ================================
-       STRICT ROBOTS.TXT DETECTION
-    ================================ */
-    async function detectRobots(origin) {
-      try {
-        const res = await fetch(origin + "/robots.txt", {
-          redirect: "follow",
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
-          }
-        });
-    
-        if (!res || res.status >= 400) {
-          return { status: "missing" };
-        }
-    
-        const final = new URL(res.url);
-    
-        if (!final.pathname.toLowerCase().includes("robots.txt")) {
-          return { status: "missing" };
-        }
-    
-        const text = (await res.text())
-          .toLowerCase()
-          .replace(/\r/g, "")
-          .trim();
-    
-        if (!text) return { status: "missing" };
-    
-        // ✅ detect real crawler directives
-        const hasCrawlerDirective =
-          text.includes("user-agent:") ||
-          text.includes("disallow:") ||
-          text.includes("allow:") ||
-          text.includes("sitemap:");
-    
-        if (!hasCrawlerDirective) {
-          // AI policy / legal text / hosting placeholder
-          return { status: "missing" };
-        }
-    
-        // optional: filter default empty robots
-        const normalized = text
-          .split("\n")
-          .map(l => l.trim())
-          .filter(Boolean)
-          .join("\n");
-    
-        if (
-          normalized === "user-agent: *" ||
-          normalized === "user-agent: *\ndisallow:" ||
-          normalized === "user-agent: *\nallow: /"
-        ) {
-          return { status: "missing" };
-        }
-    
-        return {
-          status: "exists",
-          url: final.href
-        };
-    
-      } catch {
-        return { status: "missing" };
+   ROBOTS.TXT DETECTION
+================================ */
+async function detectRobots(origin) {
+  try {
+    const res = await fetch(origin + "/robots.txt", {
+      redirect: "follow",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
       }
+    });
+
+    if (!res || res.status >= 400) return null;
+
+    const final = new URL(res.url);
+
+    if (!final.pathname.toLowerCase().includes("robots.txt")) {
+      return null;
     }
 
+    const text = (await res.text())
+      .toLowerCase()
+      .replace(/\r/g, "")
+      .trim();
+
+    if (!text) return null;
+
+    // must contain crawler directives
+    const hasDirective =
+      text.includes("user-agent:") ||
+      text.includes("disallow:") ||
+      text.includes("allow:") ||
+      text.includes("sitemap:");
+
+    if (!hasDirective) return null;
+
+    // ignore default empty robots
+    const normalized = text
+      .split("\n")
+      .map(l => l.trim())
+      .filter(Boolean)
+      .join("\n");
+
+    if (
+      normalized === "user-agent: *" ||
+      normalized === "user-agent: *\ndisallow:" ||
+      normalized === "user-agent: *\nallow: /"
+    ) {
+      return null;
+    }
+
+    return { url: final.href };
+
+  } catch {
+    return null;
+  }
+}
+
+const robots = await detectRobots(origin);
 
 
     /* ================================
@@ -181,8 +174,6 @@ export async function handler(event) {
       }
     }
 
-    const robots = await detectRobots(origin);
-    const robots = robotsResult.status === "exists" ? robotsResult : null;
     const sitemap = await detectSitemap(origin);
 
     /* ================================
@@ -297,6 +288,7 @@ export async function handler(event) {
     };
   }
 }
+
 
 
 
