@@ -68,7 +68,8 @@ export async function handler(event) {
 
     /* ---------- AMP ---------- */
     const amphtml =
-      getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i);
+      getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i) ||
+      getTag(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']amphtml["']/i);
 
     /* ---------- META ROBOTS ---------- */
     const robotsMeta =
@@ -274,6 +275,7 @@ const robots = await detectRobots(origin);
     };
   }
 }
+
 
 
 
