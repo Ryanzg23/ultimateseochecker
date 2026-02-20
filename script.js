@@ -292,8 +292,8 @@ async function processDomain(domain, options = {}) {
 <div class="label">Sitemap</div>
 <div class="value">
   ${
-    data.sitemap
-      ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>`
+    data.sitemap && data.sitemap.exists
+      ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
       : `
         <span class="muted">No Sitemap detected</span>
         <button
@@ -524,6 +524,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
