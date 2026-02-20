@@ -182,6 +182,7 @@ export async function handler(event) {
     }
 
     const robots = await detectRobots(origin);
+    const robots = robotsResult.status === "exists" ? robotsResult : null;
     const sitemap = await detectSitemap(origin);
 
     /* ================================
@@ -296,6 +297,7 @@ export async function handler(event) {
     };
   }
 }
+
 
 
 
