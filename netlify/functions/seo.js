@@ -154,62 +154,72 @@ export async function handler(event) {
     let authLinks = { daftar: null, login: null };
 
     try {
-function extractAuthLinks(html, type, baseUrl) {
-  const found = new Set();
+      function extractAuthLinks(labels) {
+        const targets = labels.map(t => t.toLowerCase());
+        const found = new Set();
 
-  const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+        const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
+        const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
 
-  let match;
+        let match;
 
-  while ((match = linkRegex.exec(html)) !== null) {
-    const href = match[1];
-    const rawTag = match[0];
-    const inner = match[2];
+        function isMatch(text) {
+          text = text.toLowerCase().trim();
 
-    // flatten nested text
-    const text = inner
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
+          return targets.some(t => {
+            if (t === "daftar") return text.startsWith("daftar");
+            if (t === "login") return /\blogin\b/.test(text);
+            if (t === "masuk") return text === "masuk";
+            return text.includes(t);
+          });
+        }
 
-    const classAttr = (rawTag.match(/class=["']([^"']+)["']/i)?.[1] || "").toLowerCase();
-    const hrefLower = href.toLowerCase();
+        while ((match = linkRegex.exec(html)) !== null) {
+          const href = match[1];
+          const text = match[2].replace(/<[^>]+>/g, "").trim();
 
-    let matched = false;
+          if (isMatch(text)) {
+            try {
+              const url = new URL(href, finalUrl).href;
+              found.add(url);
+            } catch {}
+          }
+        }
 
-    if (type === "daftar") {
-      matched =
-        text.startsWith("daftar") ||
-        classAttr.includes("daftar") ||
-        hrefLower.includes("daftar");
-    }
+        while ((match = buttonRegex.exec(html)) !== null) {
+          const inner = match[1].replace(/<[^>]+>/g, "").trim();
 
-    if (type === "login") {
-      matched =
-        text.includes("login") ||
-        text.includes("masuk") ||
-        classAttr.includes("login") ||
-        classAttr.includes("masuk") ||
-        hrefLower.includes("login") ||
-        hrefLower.includes("masuk");
-    }
+          if (isMatch(inner)) {
+            const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+            if (onclickMatch) {
+              try {
+                const url = new URL(onclickMatch[1], finalUrl).href;
+                found.add(url);
+              } catch {}
+            }
+          }
+        }
 
-    if (matched) {
-      try {
-        const abs = new URL(href, baseUrl).href;
-        found.add(abs);
-      } catch {}
-    }
-  }
+        return found.size ? Array.from(found) : null;
+      }
 
-  return found.size ? Array.from(found) : null;
-}
-
-const authLinks = {
-  daftar: extractAuthLinks(html, "daftar", finalUrl),
-  login: extractAuthLinks(html, "login", finalUrl)
-};
+      authLinks = {
+        daftar: extractAuthLinks([
+          "daftar",
+          "register",
+          "sign up",
+          "signup",
+          "join",
+          "main demo"
+        ]),
+        login: extractAuthLinks([
+          "login",
+          "masuk",
+          "sign in",
+          "signin",
+          "log in"
+        ])
+      };
 
     } catch {
       authLinks = { daftar: null, login: null };
@@ -250,10 +260,3 @@ const authLinks = {
     };
   }
 }
-
-
-
-
-
-
-
