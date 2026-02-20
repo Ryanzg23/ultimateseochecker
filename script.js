@@ -377,7 +377,7 @@ async function processDomain(domain, options = {}) {
         ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
         : `
           No Robots detected
-          <button class="mini-btn"
+          <button class="mini-btn robots-gen"
             onclick="generateRobots('${data.inputUrl}')">
             Generate Robots
           </button>
@@ -633,6 +633,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
