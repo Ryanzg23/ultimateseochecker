@@ -154,7 +154,7 @@ export async function handler(event) {
     let authLinks = { daftar: null, login: null };
 
     try {
-function extractAuthLinks(type) {
+function extractAuthLinks(html, type, baseUrl) {
   const found = new Set();
 
   const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
@@ -163,24 +163,22 @@ function extractAuthLinks(type) {
 
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
-    const raw = match[0];
+    const rawTag = match[0];
     const inner = match[2];
 
-    // flatten visible text
+    // flatten nested text
     const text = inner
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
 
-    const classAttr = (raw.match(/class=["']([^"']+)["']/i)?.[1] || "").toLowerCase();
-    const roleAttr = (raw.match(/role=["']([^"']+)["']/i)?.[1] || "").toLowerCase();
+    const classAttr = (rawTag.match(/class=["']([^"']+)["']/i)?.[1] || "").toLowerCase();
     const hrefLower = href.toLowerCase();
 
     let matched = false;
 
     if (type === "daftar") {
-      // starts with daftar OR class OR href contains daftar
       matched =
         text.startsWith("daftar") ||
         classAttr.includes("daftar") ||
@@ -188,7 +186,6 @@ function extractAuthLinks(type) {
     }
 
     if (type === "login") {
-      // contains login/masuk anywhere OR class OR href
       matched =
         text.includes("login") ||
         text.includes("masuk") ||
@@ -200,8 +197,8 @@ function extractAuthLinks(type) {
 
     if (matched) {
       try {
-        const url = new URL(href, finalUrl).href;
-        found.add(url);
+        const abs = new URL(href, baseUrl).href;
+        found.add(abs);
       } catch {}
     }
   }
@@ -210,8 +207,8 @@ function extractAuthLinks(type) {
 }
 
 const authLinks = {
-  daftar: extractAuthLinks("daftar"),
-  login: extractAuthLinks("login")
+  daftar: extractAuthLinks(html, "daftar", finalUrl),
+  login: extractAuthLinks(html, "login", finalUrl)
 };
 
     } catch {
@@ -253,6 +250,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
