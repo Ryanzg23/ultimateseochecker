@@ -171,6 +171,30 @@ async function generateSitemap(url) {
   }
 }
 
+function generateRobots(domain) {
+  try {
+    const url = new URL(domain.startsWith("http") ? domain : "https://" + domain);
+    const origin = url.origin;
+
+    const content =
+`User-agent: *
+Allow: /
+
+Sitemap: ${origin}/sitemap.xml`;
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "robots.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch {
+    alert("Failed to generate robots.txt");
+  }
+}
 
 
 /* ================================
@@ -309,13 +333,15 @@ async function processDomain(domain, options = {}) {
 
 <div class="label">robots.txt</div>
 <div class="value">
-  ${
-    data.robots.status === "exists"
-      ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
-      : data.robots.status === "missing"
-        ? "Not detected"
-        : "Unable to verify"
-  }
+  ${data.robots?.status === "exists"
+    ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
+    : `
+      No Robots detected
+      <button class="mini-btn"
+        onclick="generateRobots('${data.inputUrl}')">
+        Generate Robots
+      </button>
+    `}
 </div>
       
 <div class="label">Sitemap</div>
@@ -554,6 +580,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
