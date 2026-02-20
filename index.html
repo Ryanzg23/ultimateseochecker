@@ -62,22 +62,33 @@ https://example.com/page"
 
       <!-- RIGHT ACTION -->
       <div class="action-right">
-        <button
-          id="openBulkBtn"
-          class="secondary open-bulk"
-          onclick="openBulk()"
-        >
-          Open Bulk
-        </button>
-        <button class="secondary open-bulk" onclick="openPreview()">
-          Site Preview
-        </button>
-        <button id="richTestBtn" class="tool-btn tool-purple" onclick="openRichTest()">
-          🧩 Rich Test
-        </button>
-        <button id="ampTestBtn" class="tool-btn tool-amp" onclick="openAmpTest()">
-          ⚡ AMP Test
-        </button>
+              <button id="openBulkBtn"
+              class="tool-btn tool-green"
+              onclick="openBulk()"
+              data-tip="Opens all domains in new tab">
+        Open Bulk
+      </button>
+      
+      <button id="previewBtn"
+              class="tool-btn tool-green"
+              onclick="openPreview()"
+              data-tip="Opens a new tab with bulk site preview">
+        Site Preview
+      </button>
+      
+      <button id="richTestBtn"
+              class="tool-btn tool-purple"
+              onclick="openRichTest()"
+              data-tip="Bulk Rich Results test all domains in new tab">
+        🧩 Rich Results
+      </button>
+      
+      <button id="ampTestBtn"
+              class="tool-btn tool-amp"
+              onclick="openAmpTest()"
+              data-tip="Bulk AMP test all domains in new tab">
+        ⚡ AMP Test
+      </button>
       </div>
 
     </div>
@@ -91,6 +102,7 @@ https://example.com/page"
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
