@@ -129,20 +129,28 @@ function openPreview() {
   window.open(`/preview.html?urls=${encodeURIComponent(urls.join(","))}`, "_blank");
 }
 
-function generateSitemap(url) {
+async function generateSitemap(url) {
   try {
-    const u = new URL(url);
-    const domain = u.hostname.replace(/^www\./, "");
+    const res = await fetch(
+      `/.netlify/functions/sitemapgen?url=${encodeURIComponent(url)}`
+    );
 
-    const xmlUrl =
-      "https://www.xml-sitemaps.com/?siteMapUrl=" +
-      encodeURIComponent(domain);
+    if (!res.ok) throw new Error();
 
-    window.open(xmlUrl, "_blank", "noopener");
+    const xml = await res.text();
+
+    const blob = new Blob([xml], { type: "application/xml" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "sitemap.xml";
+    link.click();
+
   } catch {
-    window.open("https://www.xml-sitemaps.com/", "_blank");
+    alert("Failed to generate sitemap");
   }
 }
+
 
 
 /* ================================
@@ -526,6 +534,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
