@@ -87,37 +87,50 @@ export async function handler(event) {
           }
         });
     
-        if (res.status === 404 || res.status === 410) {
+        if (!res || res.status >= 400) {
           return { status: "missing" };
         }
     
         const final = new URL(res.url);
     
-        // redirected away → missing
         if (!final.pathname.toLowerCase().includes("robots.txt")) {
           return { status: "missing" };
         }
     
         const text = (await res.text())
+          .toLowerCase()
           .replace(/\r/g, "")
-          .trim()
-          .toLowerCase();
+          .trim();
     
-        // empty file
         if (!text) return { status: "missing" };
     
-        // default hosting robots (auto-generated)
-        const defaultPatterns = [
-          "user-agent: *",
-          "user-agent: *\ndisallow:",
-          "user-agent: *\nallow: /"
-        ];
+        // ✅ detect real crawler directives
+        const hasCrawlerDirective =
+          text.includes("user-agent:") ||
+          text.includes("disallow:") ||
+          text.includes("allow:") ||
+          text.includes("sitemap:");
     
-        if (defaultPatterns.includes(text)) {
+        if (!hasCrawlerDirective) {
+          // AI policy / legal text / hosting placeholder
           return { status: "missing" };
         }
     
-        // meaningful robots exists
+        // optional: filter default empty robots
+        const normalized = text
+          .split("\n")
+          .map(l => l.trim())
+          .filter(Boolean)
+          .join("\n");
+    
+        if (
+          normalized === "user-agent: *" ||
+          normalized === "user-agent: *\ndisallow:" ||
+          normalized === "user-agent: *\nallow: /"
+        ) {
+          return { status: "missing" };
+        }
+    
         return {
           status: "exists",
           url: final.href
@@ -127,6 +140,7 @@ export async function handler(event) {
         return { status: "missing" };
       }
     }
+
 
 
     /* ================================
@@ -281,4 +295,5 @@ export async function handler(event) {
     };
   }
 }
+
 
