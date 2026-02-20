@@ -291,27 +291,22 @@ async function processDomain(domain, options = {}) {
      /* ===== AMP META COMPARISON ===== */
       let titleMismatch = false;
       let descMismatch = false;
-      let keywordsMismatch = false;
       
-      if (isAmp && insertAfter) {
-        const parentData = insertAfter.dataset.seoData
-          ? JSON.parse(insertAfter.dataset.seoData)
-          : null;
+      if (isAmp) {
+        const canonTitle = (options.parentTitle || "").trim();
+        const canonDesc = (options.parentDesc || "").trim();
       
-        if (parentData) {
-          const normalize = v => (v || "").trim().toLowerCase();
+        const ampTitle = (data.title || "").trim();
+        const ampDesc = (data.description || "").trim();
       
-          titleMismatch =
-            normalize(parentData.title) !== normalize(data.title);
+        if (canonTitle && ampTitle && canonTitle !== ampTitle) {
+          titleMismatch = true;
+        }
       
-          descMismatch =
-            normalize(parentData.description) !== normalize(data.description);
-      
-          keywordsMismatch =
-            normalize(parentData.keywords) !== normalize(data.keywords);
+        if (canonDesc && ampDesc && canonDesc !== ampDesc) {
+          descMismatch = true;
         }
       }
-
 
     card.dataset.original = `
       <div class="card-header">
@@ -351,11 +346,6 @@ async function processDomain(domain, options = {}) {
       </div>
       <div class="value">
         ${data.keywords || "—"}
-        ${
-          isAmp && keywordsMismatch
-            ? `<span class="mismatch-badge">Keywords mismatch</span>`
-            : ``
-        }
       </div>
 
       <div class="label inline">
@@ -387,7 +377,7 @@ async function processDomain(domain, options = {}) {
         ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
         : `
           No Robots detected
-          <button class="mini-btn robots-gen"
+          <button class="mini-btn"
             onclick="generateRobots('${data.inputUrl}')">
             Generate Robots
           </button>
@@ -643,7 +633,6 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
 
 
 
