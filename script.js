@@ -261,6 +261,7 @@ async function processDomain(domain, options = {}) {
     if (!res.ok || data.error === "fetch_failed") throw new Error();
 
     const inputRoot = getRootDomain(data.inputUrl);
+     const isPagesDev = inputRoot.endsWith("pages.dev");
     const finalRoot = getRootDomain(data.finalUrl);
     const redirected = inputRoot && finalRoot && inputRoot !== finalRoot;
     const is301Home = isHomepageRedirect(data.inputUrl, data.finalUrl);
@@ -632,6 +633,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
