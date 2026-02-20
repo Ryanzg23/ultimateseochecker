@@ -91,37 +91,24 @@ async function detectRobots(origin) {
 
     const final = new URL(res.url);
 
+    // must still be robots.txt
     if (!final.pathname.toLowerCase().includes("robots.txt")) {
       return null;
     }
 
     const text = (await res.text())
-      .toLowerCase()
       .replace(/\r/g, "")
       .trim();
 
+    // empty → missing
     if (!text) return null;
 
-    // must contain crawler directives
-    const hasDirective =
-      text.includes("user-agent:") ||
-      text.includes("disallow:") ||
-      text.includes("allow:") ||
-      text.includes("sitemap:");
-
-    if (!hasDirective) return null;
-
-    // ignore default empty robots
-    const normalized = text
-      .split("\n")
-      .map(l => l.trim())
-      .filter(Boolean)
-      .join("\n");
+    // detect AI placeholder robots (your hosting case)
+    const lower = text.toLowerCase();
 
     if (
-      normalized === "user-agent: *" ||
-      normalized === "user-agent: *\ndisallow:" ||
-      normalized === "user-agent: *\nallow: /"
+      lower.includes("content signals") &&
+      lower.includes("ai-train")
     ) {
       return null;
     }
@@ -288,6 +275,7 @@ const robots = await detectRobots(origin);
     };
   }
 }
+
 
 
 
