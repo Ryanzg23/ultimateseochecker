@@ -743,6 +743,14 @@ button.small {
   background: #6d28d9;
 }
 
+.tool-green {
+  background: #238636;
+}
+
+.tool-green:hover {
+  background: #2eae47;
+}
+
 .tool-amp {
   background: #455a64; /* strong orange */
   color: #fff;
@@ -794,6 +802,7 @@ button.small {
   opacity: 1;
   transform: translateX(-50%) translateY(-2px);
 }
+
 
 
 
