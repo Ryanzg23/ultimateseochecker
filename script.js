@@ -132,13 +132,14 @@ function openPreview() {
 function generateSitemap(url) {
   try {
     const u = new URL(url);
-    const root = u.origin;
+    const domain = u.hostname.replace(/^www\./, "");
 
-    const xmlTool =
+    const xmlUrl =
       "https://www.xml-sitemaps.com/details-" +
-      encodeURIComponent(root.replace(/^https?:\/\//, ""));
+      domain +
+      ".html";
 
-    window.open(xmlTool, "_blank", "noopener");
+    window.open(xmlUrl, "_blank", "noopener");
   } catch {
     window.open("https://www.xml-sitemaps.com/", "_blank");
   }
@@ -292,8 +293,8 @@ async function processDomain(domain, options = {}) {
 <div class="label">Sitemap</div>
 <div class="value">
   ${
-    data.sitemap && data.sitemap.exists
-      ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
+    data.sitemap
+      ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>`
       : `
         <span class="muted">No Sitemap detected</span>
         <button
@@ -524,6 +525,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
