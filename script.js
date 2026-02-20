@@ -284,8 +284,11 @@ async function processDomain(domain, options = {}) {
 
      /* store canonical meta for AMP compare */
       if (!isAmp) {
-        card.dataset.title = data.title || "";
-        card.dataset.desc = data.description || "";
+        card.dataset.seoData = JSON.stringify({
+          title: data.title || "",
+          description: data.description || "",
+          keywords: data.keywords || ""
+        });
       }
 
      /* ===== AMP META COMPARISON ===== */
@@ -647,6 +650,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
