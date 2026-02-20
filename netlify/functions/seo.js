@@ -86,43 +86,48 @@ export async function handler(event) {
             "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
           }
         });
-
-        if (res.status !== 200) {
+    
+        if (res.status === 404 || res.status === 410) {
           return { status: "missing" };
         }
-
+    
         const final = new URL(res.url);
-
-        // must still be robots.txt
-        if (!final.pathname.toLowerCase().endsWith("/robots.txt")) {
+    
+        // redirected away → missing
+        if (!final.pathname.toLowerCase().includes("robots.txt")) {
           return { status: "missing" };
         }
-
-        const contentType = (res.headers.get("content-type") || "").toLowerCase();
-        if (!contentType.includes("text/plain")) {
+    
+        const text = (await res.text())
+          .replace(/\r/g, "")
+          .trim()
+          .toLowerCase();
+    
+        // empty file
+        if (!text) return { status: "missing" };
+    
+        // default hosting robots (auto-generated)
+        const defaultPatterns = [
+          "user-agent: *",
+          "user-agent: *\ndisallow:",
+          "user-agent: *\nallow: /"
+        ];
+    
+        if (defaultPatterns.includes(text)) {
           return { status: "missing" };
         }
-
-        const text = await res.text();
-
-        const firstLine = text
-          .split(/\r?\n/)
-          .map(l => l.trim())
-          .find(l => l.length > 0);
-
-        if (!firstLine || !/^user-agent:/i.test(firstLine)) {
-          return { status: "missing" };
-        }
-
+    
+        // meaningful robots exists
         return {
           status: "exists",
           url: final.href
         };
-
+    
       } catch {
         return { status: "missing" };
       }
     }
+
 
     /* ================================
        SITEMAP.XML DETECTION (VALID XML)
@@ -276,3 +281,4 @@ export async function handler(event) {
     };
   }
 }
+
