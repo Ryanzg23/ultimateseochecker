@@ -157,15 +157,13 @@ export async function handler(event) {
       function extractAuthLinks(labels) {
         const targets = labels.map(t => t.toLowerCase());
         const found = new Set();
-
-        const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
-        const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
-
+      
+        const elementRegex = /<(a|button)[^>]*>/gi;
         let match;
-
+      
         function isMatch(text) {
           text = text.toLowerCase().trim();
-
+      
           return targets.some(t => {
             if (t === "daftar") return text.startsWith("daftar");
             if (t === "login") return /\blogin\b/.test(text);
@@ -173,35 +171,60 @@ export async function handler(event) {
             return text.includes(t);
           });
         }
-
-        while ((match = linkRegex.exec(html)) !== null) {
-          const href = match[1];
-          const text = match[2].replace(/<[^>]+>/g, "").trim();
-
-          if (isMatch(text)) {
+      
+        while ((match = elementRegex.exec(html)) !== null) {
+          const tagStart = match.index;
+      
+          // extract full tag
+          const tagMatch = html.slice(tagStart).match(/^<(a|button)([\s\S]*?)>/i);
+          if (!tagMatch) continue;
+      
+          const tag = tagMatch[0];
+      
+          // attributes
+          const hrefMatch = tag.match(/href=["']([^"']+)["']/i);
+          const ariaMatch = tag.match(/aria-label=["']([^"']+)["']/i);
+          const titleMatch = tag.match(/title=["']([^"']+)["']/i);
+          const classMatch = tag.match(/class=["']([^"']+)["']/i);
+          const idMatch = tag.match(/id=["']([^"']+)["']/i);
+          const tapMatch = tag.match(/on=["'][^"']*tap:[^"']*["']/i);
+      
+          // inner text (capture until closing)
+          let innerText = "";
+          const closeTag = new RegExp(`</${tagMatch[1]}>`, "i");
+          const after = html.slice(tagStart + tag.length);
+          const closeIndex = after.search(closeTag);
+          if (closeIndex !== -1) {
+            innerText = after.slice(0, closeIndex)
+              .replace(/<[^>]+>/g, " ")
+              .trim();
+          }
+      
+          const candidates = [
+            innerText,
+            ariaMatch?.[1],
+            titleMatch?.[1],
+            classMatch?.[1],
+            idMatch?.[1]
+          ].filter(Boolean);
+      
+          const matched = candidates.some(isMatch);
+      
+          if (matched) {
             try {
-              const url = new URL(href, finalUrl).href;
-              found.add(url);
+              if (hrefMatch) {
+                const url = new URL(hrefMatch[1], finalUrl).href;
+                found.add(url);
+              } else if (tapMatch) {
+                found.add(finalUrl + "#login"); // AMP modal
+              }
             } catch {}
           }
         }
-
-        while ((match = buttonRegex.exec(html)) !== null) {
-          const inner = match[1].replace(/<[^>]+>/g, "").trim();
-
-          if (isMatch(inner)) {
-            const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
-            if (onclickMatch) {
-              try {
-                const url = new URL(onclickMatch[1], finalUrl).href;
-                found.add(url);
-              } catch {}
-            }
-          }
-        }
-
+      
         return found.size ? Array.from(found) : null;
       }
+
 
       authLinks = {
         daftar: extractAuthLinks([
@@ -260,3 +283,4 @@ export async function handler(event) {
     };
   }
 }
+
