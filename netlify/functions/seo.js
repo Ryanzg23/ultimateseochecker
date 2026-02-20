@@ -27,6 +27,8 @@ export async function handler(event) {
     const finalUrl = response.url;
     const html = await response.text();
 
+    const origin = new URL(finalUrl).origin;
+
     /* ================================
        HELPER
     ================================ */
@@ -46,26 +48,21 @@ export async function handler(event) {
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
 
     const keywords =
-  getTag(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']*)["']/i) ||
-  getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']keywords["']/i);
+      getTag(/<meta[^>]*name=["']keywords["'][^>]*content=["']([^"']*)["']/i) ||
+      getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']keywords["']/i);
 
-    /* ---------- CANONICAL (HARDENED) ---------- */
+    /* ---------- CANONICAL ---------- */
     const rawCanonical =
       getTag(/<link[^>]*rel=["']canonical["'][^>]*href=["']([^"']*)["']/i) ||
       getTag(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']canonical["']/i);
 
     let canonical = "";
-
     if (rawCanonical) {
       const trimmed = rawCanonical.trim();
-
-      // ignore empty or placeholder canonicals
-      if (trimmed !== "" && trimmed !== "#") {
+      if (trimmed && trimmed !== "#") {
         try {
           canonical = new URL(trimmed, finalUrl).href;
-        } catch {
-          canonical = "";
-        }
+        } catch {}
       }
     }
 
@@ -79,163 +76,170 @@ export async function handler(event) {
       getTag(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']robots["']/i);
 
     /* ================================
-       ROBOTS.TXT / SITEMAP.XML (3-STATE)
+       STRICT ROBOTS.TXT DETECTION
     ================================ */
-    const origin = new URL(finalUrl).origin;
-
-    async function detectFile(path) {
+    async function detectRobots(origin) {
       try {
-        const res = await fetch(origin + path, {
+        const res = await fetch(origin + "/robots.txt", {
           redirect: "follow",
           headers: {
             "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
           }
         });
-    
+
+        if (res.status !== 200) {
+          return { status: "missing" };
+        }
+
         const final = new URL(res.url);
-    
-        // ❌ 404 / 410
-        if (res.status === 404 || res.status === 410) {
+
+        // must still be robots.txt
+        if (!final.pathname.toLowerCase().endsWith("/robots.txt")) {
           return { status: "missing" };
         }
-    
-        // ❌ redirected away from file
-        if (!final.pathname.toLowerCase().endsWith(path)) {
+
+        const contentType = (res.headers.get("content-type") || "").toLowerCase();
+        if (!contentType.includes("text/plain")) {
           return { status: "missing" };
         }
-    
-        const contentType = res.headers.get("content-type") || "";
+
         const text = await res.text();
-    
-        // ❌ HTML fallback
-        if (/<html/i.test(text)) {
+
+        const firstLine = text
+          .split(/\r?\n/)
+          .map(l => l.trim())
+          .find(l => l.length > 0);
+
+        if (!firstLine || !/^user-agent:/i.test(firstLine)) {
           return { status: "missing" };
         }
-    
-        // =========================
-        // ROBOTS VALIDATION
-        // =========================
-        if (path === "/robots.txt") {
-          // must be plain text
-          if (!contentType.includes("text/plain")) {
-            return { status: "missing" };
-          }
-    
-          // must contain directive at line start
-          if (!/^user-agent:/im.test(text)) {
-            return { status: "missing" };
-          }
-    
-          return {
-            status: "exists",
-            url: final.href
-          };
-        }
-    
-        // =========================
-        // SITEMAP VALIDATION
-        // =========================
-        if (path === "/sitemap.xml") {
-          if (!/<urlset|<sitemapindex/i.test(text)) {
-            return { status: "missing" };
-          }
-    
-          return {
-            status: "exists",
-            url: final.href
-          };
-        }
-    
-        return { status: "missing" };
-    
+
+        return {
+          status: "exists",
+          url: final.href
+        };
+
       } catch {
         return { status: "missing" };
       }
     }
 
-
-    const robots = await detectFile("/robots.txt");
-    const sitemap = await detectFile("/sitemap.xml");
-
-
     /* ================================
-   AUTH LINKS (DAFTAR / LOGIN)
-================================ */
-
-function extractAuthLinks(labels) {
-  const targets = labels.map(t => t.toLowerCase());
-  const found = new Set();
-
-  const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
-  const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
-
-  let match;
-
-  // ----- scan <a> -----
-  while ((match = linkRegex.exec(html)) !== null) {
-    const href = match[1];
-    const text = match[2]
-      .replace(/<[^>]+>/g, "")
-      .trim()
-      .toLowerCase();
-
-    const matched = targets.some(t => {
-      if (t === "masuk") return text === "masuk";
-      return text.includes(t);
-    });
-
-    if (matched) {
+       SITEMAP.XML DETECTION (VALID XML)
+    ================================ */
+    async function detectSitemap(origin) {
       try {
-        const url = new URL(href, finalUrl).href;
-        found.add(url);
-      } catch {}
-    }
-  }
+        const res = await fetch(origin + "/sitemap.xml", {
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+          }
+        });
 
-  // ----- scan <button> -----
-  while ((match = buttonRegex.exec(html)) !== null) {
-    const inner = match[1]
-      .replace(/<[^>]+>/g, "")
-      .trim()
-      .toLowerCase();
+        if (res.status !== 200) {
+          return { status: "missing" };
+        }
 
-    const matched = targets.some(t => {
-      if (t === "masuk") return inner === "masuk";
-      return inner.includes(t);
-    });
+        const final = new URL(res.url);
 
-    if (matched) {
-      const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
-      if (onclickMatch) {
-        try {
-          const url = new URL(onclickMatch[1], finalUrl).href;
-          found.add(url);
-        } catch {}
+        if (!final.pathname.toLowerCase().includes("sitemap")) {
+          return { status: "missing" };
+        }
+
+        const text = await res.text();
+
+        if (!/<urlset|<sitemapindex/i.test(text)) {
+          return { status: "missing" };
+        }
+
+        return {
+          status: "exists",
+          url: final.href
+        };
+
+      } catch {
+        return { status: "missing" };
       }
     }
-  }
 
-  return found.size ? Array.from(found) : null;
-}
+    const robots = await detectRobots(origin);
+    const sitemap = await detectSitemap(origin);
 
+    /* ================================
+       AUTH LINKS (DAFTAR / LOGIN)
+    ================================ */
+    function extractAuthLinks(labels) {
+      const targets = labels.map(t => t.toLowerCase());
+      const found = new Set();
 
+      const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
+      const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
 
-const authLinks = {
-  daftar: extractAuthLinks([
-    "daftar",
-    "register",
-    "sign up",
-    "signup",
-    "join"
-  ]),
-  login: extractAuthLinks([
-    "login",
-    "masuk",
-    "sign in",
-    "signin",
-    "log in"
-  ])
-};
+      let match;
+
+      // scan <a>
+      while ((match = linkRegex.exec(html)) !== null) {
+        const href = match[1];
+        const text = match[2]
+          .replace(/<[^>]+>/g, "")
+          .trim()
+          .toLowerCase();
+
+        const matched = targets.some(t => {
+          if (t === "masuk") return text === "masuk";
+          return text.includes(t);
+        });
+
+        if (matched) {
+          try {
+            const url = new URL(href, finalUrl).href;
+            found.add(url);
+          } catch {}
+        }
+      }
+
+      // scan <button>
+      while ((match = buttonRegex.exec(html)) !== null) {
+        const inner = match[1]
+          .replace(/<[^>]+>/g, "")
+          .trim()
+          .toLowerCase();
+
+        const matched = targets.some(t => {
+          if (t === "masuk") return inner === "masuk";
+          return inner.includes(t);
+        });
+
+        if (matched) {
+          const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+          if (onclickMatch) {
+            try {
+              const url = new URL(onclickMatch[1], finalUrl).href;
+              found.add(url);
+            } catch {}
+          }
+        }
+      }
+
+      return found.size ? Array.from(found) : null;
+    }
+
+    const authLinks = {
+      daftar: extractAuthLinks([
+        "daftar",
+        "register",
+        "sign up",
+        "signup",
+        "join"
+      ]),
+      login: extractAuthLinks([
+        "login",
+        "masuk",
+        "sign in",
+        "signin",
+        "log in"
+      ])
+    };
 
     /* ================================
        RESPONSE
@@ -246,7 +250,7 @@ const authLinks = {
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
       },
-     body: JSON.stringify({
+      body: JSON.stringify({
         inputUrl,
         finalUrl,
         status,
@@ -258,9 +262,10 @@ const authLinks = {
         robotsMeta,
         robots,
         sitemap,
-        authLinks  
+        authLinks
       })
     };
+
   } catch {
     return {
       statusCode: 500,
@@ -271,14 +276,3 @@ const authLinks = {
     };
   }
 }
-
-
-
-
-
-
-
-
-
-
-
