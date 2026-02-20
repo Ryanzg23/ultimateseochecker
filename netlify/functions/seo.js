@@ -154,8 +154,7 @@ export async function handler(event) {
     let authLinks = { daftar: null, login: null };
 
     try {
-function extractAuthLinks(labels) {
-  const targets = labels.map(t => t.toLowerCase());
+function extractAuthLinks(type) {
   const found = new Set();
 
   const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
@@ -164,23 +163,40 @@ function extractAuthLinks(labels) {
 
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
+    const raw = match[0];
+    const inner = match[2];
 
-    // remove ALL tags including svg + normalize spaces
-    const text = match[2]
-      .replace(/<svg[\s\S]*?<\/svg>/gi, " ")   // remove svg fully
-      .replace(/<[^>]*>/g, " ")                // remove tags
-      .replace(/\s+/g, " ")                   // collapse whitespace
+    // flatten visible text
+    const text = inner
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
 
-    if (!text) continue;
+    const classAttr = (raw.match(/class=["']([^"']+)["']/i)?.[1] || "").toLowerCase();
+    const roleAttr = (raw.match(/role=["']([^"']+)["']/i)?.[1] || "").toLowerCase();
+    const hrefLower = href.toLowerCase();
 
-    const matched = targets.some(t => {
-      if (t === "daftar") return text.startsWith("daftar");
-      if (t === "login") return text.includes("login");
-      if (t === "masuk") return text === "masuk";
-      return text.includes(t);
-    });
+    let matched = false;
+
+    if (type === "daftar") {
+      // starts with daftar OR class OR href contains daftar
+      matched =
+        text.startsWith("daftar") ||
+        classAttr.includes("daftar") ||
+        hrefLower.includes("daftar");
+    }
+
+    if (type === "login") {
+      // contains login/masuk anywhere OR class OR href
+      matched =
+        text.includes("login") ||
+        text.includes("masuk") ||
+        classAttr.includes("login") ||
+        classAttr.includes("masuk") ||
+        hrefLower.includes("login") ||
+        hrefLower.includes("masuk");
+    }
 
     if (matched) {
       try {
@@ -193,23 +209,10 @@ function extractAuthLinks(labels) {
   return found.size ? Array.from(found) : null;
 }
 
-      authLinks = {
-        daftar: extractAuthLinks([
-          "daftar",
-          "register",
-          "sign up",
-          "signup",
-          "join",
-          "main demo"
-        ]),
-        login: extractAuthLinks([
-          "login",
-          "masuk",
-          "sign in",
-          "signin",
-          "log in"
-        ])
-      };
+const authLinks = {
+  daftar: extractAuthLinks("daftar"),
+  login: extractAuthLinks("login")
+};
 
     } catch {
       authLinks = { daftar: null, login: null };
@@ -250,6 +253,7 @@ function extractAuthLinks(labels) {
     };
   }
 }
+
 
 
 
