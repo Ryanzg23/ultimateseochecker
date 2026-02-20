@@ -158,30 +158,31 @@ function extractAuthLinks(labels) {
   const targets = labels.map(t => t.toLowerCase());
   const found = new Set();
 
-  // multiline-safe anchor parser
+  // match ALL anchors (robust)
   const linkRegex = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+
   let match;
-
-  function matchText(text) {
-    const t = text.toLowerCase().trim();
-
-    return targets.some(key => {
-      if (key === "daftar") return t.startsWith("daftar");
-      if (key === "login") return t.includes("login");
-      if (key === "masuk") return t === "masuk";
-      return t.includes(key);
-    });
-  }
 
   while ((match = linkRegex.exec(html)) !== null) {
     const href = match[1];
 
+    // remove tags + normalize whitespace
     const text = match[2]
-      .replace(/<[^>]+>/g, "")
+      .replace(/<[^>]*>/g, " ")
       .replace(/\s+/g, " ")
-      .trim();
+      .trim()
+      .toLowerCase();
 
-    if (text && matchText(text)) {
+    if (!text) continue;
+
+    const matched = targets.some(t => {
+      if (t === "daftar") return text.startsWith("daftar");
+      if (t === "login") return text.includes("login");
+      if (t === "masuk") return text === "masuk";
+      return text.includes(t);
+    });
+
+    if (matched) {
       try {
         const url = new URL(href, finalUrl).href;
         found.add(url);
@@ -191,6 +192,7 @@ function extractAuthLinks(labels) {
 
   return found.size ? Array.from(found) : null;
 }
+
 
 
       authLinks = {
@@ -250,6 +252,7 @@ function extractAuthLinks(labels) {
     };
   }
 }
+
 
 
 
