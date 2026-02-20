@@ -91,37 +91,49 @@ export async function handler(event) {
             "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
           }
         });
-
-        // explicitly missing
+    
+        const final = new URL(res.url);
+        const text = await res.text();
+    
+        // ❌ real missing
         if (res.status === 404 || res.status === 410) {
           return { status: "missing" };
         }
-
-        const final = new URL(res.url);
-
-        // redirected to homepage
-        if (final.pathname === "/" || final.pathname === "") {
-          return { status: "missing" };
-        }
-
-        // redirected to something else (not same file)
+    
+        // ❌ redirected away from file
         if (!final.pathname.toLowerCase().includes(path.replace("/", ""))) {
           return { status: "missing" };
         }
-
-        // accessible
+    
+        // ❌ homepage redirect or soft HTML page
+        if (path === "/robots.txt") {
+          if (!/user-agent:/i.test(text)) {
+            return { status: "missing" };
+          }
+        }
+    
+        // ❌ sitemap should contain <urlset or <sitemapindex
+        if (path === "/sitemap.xml") {
+          if (!/<urlset|<sitemapindex/i.test(text)) {
+            return { status: "missing" };
+          }
+        }
+    
+        // ✅ valid
         if (res.status === 200) {
           return {
             status: "exists",
             url: final.href
           };
         }
-
-        return { status: "unknown" };
+    
+        return { status: "missing" };
+    
       } catch {
-        return { status: "unknown" };
+        return { status: "missing" };
       }
     }
+
 
     const robots = await detectFile("/robots.txt");
     const sitemap = await detectFile("/sitemap.xml");
@@ -240,6 +252,7 @@ const authLinks = {
     };
   }
 }
+
 
 
 
