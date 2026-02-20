@@ -803,6 +803,20 @@ button.small {
   transform: translateX(-50%) translateY(-2px);
 }
 
+.mini-btn.sitemap-gen {
+  margin-left: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+}
+
+.mini-btn.sitemap-gen:hover {
+  background: #1d4ed8;
+}
 
 
 
