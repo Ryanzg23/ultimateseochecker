@@ -87,38 +87,36 @@ async function detectRobots(origin) {
       }
     });
 
-    if (!res || res.status >= 400) return null;
+    if (!res) return null;
 
-    const final = new URL(res.url);
-
-    // must still be robots.txt
-    if (!final.pathname.toLowerCase().includes("robots.txt")) {
-      return null;
-    }
+    // must be successful
+    if (res.status !== 200) return null;
 
     const text = (await res.text())
       .replace(/\r/g, "")
       .trim();
 
-    // empty → missing
     if (!text) return null;
 
-    // detect AI placeholder robots (your hosting case)
     const lower = text.toLowerCase();
 
+    // filter AI placeholder robots (your hosting case)
     if (
-      lower.includes("content signals") &&
+      lower.includes("content signals") ||
       lower.includes("ai-train")
     ) {
       return null;
     }
 
-    return { url: final.href };
+    return {
+      url: origin + "/robots.txt"
+    };
 
   } catch {
     return null;
   }
 }
+
 
 const robots = await detectRobots(origin);
 
@@ -275,6 +273,7 @@ const robots = await detectRobots(origin);
     };
   }
 }
+
 
 
 
