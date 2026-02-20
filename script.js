@@ -284,46 +284,30 @@ async function processDomain(domain, options = {}) {
 
      /* store canonical meta for AMP compare */
       if (!isAmp) {
-        card.dataset.seoData = JSON.stringify({
-          title: data.title || "",
-          description: data.description || "",
-          keywords: data.keywords || ""
-        });
+        card.dataset.title = data.title || "";
+        card.dataset.desc = data.description || "";
       }
 
      /* ===== AMP META COMPARISON ===== */
-let titleMismatch = false;
-let descMismatch = false;
-let keywordsMismatch = false;
+      let titleMismatch = false;
+      let descMismatch = false;
+      
+      if (isAmp) {
+        const canonTitle = (options.parentTitle || "").trim();
+        const canonDesc = (options.parentDesc || "").trim();
+      
+        const ampTitle = (data.title || "").trim();
+        const ampDesc = (data.description || "").trim();
+      
+        if (canonTitle && ampTitle && canonTitle !== ampTitle) {
+          titleMismatch = true;
+        }
+      
+        if (canonDesc && ampDesc && canonDesc !== ampDesc) {
+          descMismatch = true;
+        }
+      }
 
-if (isAmp && insertAfter) {
-  try {
-    const parentData = insertAfter.dataset.seoData
-      ? JSON.parse(insertAfter.dataset.seoData)
-      : null;
-
-    if (parentData) {
-      const norm = v => (v || "").trim().toLowerCase();
-
-      titleMismatch = norm(parentData.title) !== norm(data.title);
-      descMismatch = norm(parentData.description) !== norm(data.description);
-      keywordsMismatch = norm(parentData.keywords) !== norm(data.keywords);
-    }
-  } catch {}
-}
-
-
-     
-if (!isAmp) {
-  card.dataset.seoData = JSON.stringify({
-    title: data.title || "",
-    description: data.description || "",
-    keywords: data.keywords || ""
-  });
-}
-     
-const robotsInfo = interpretRobots(data.robotsMeta);
-     
     card.dataset.original = `
       <div class="card-header">
         <h3>
@@ -345,21 +329,20 @@ const robotsInfo = interpretRobots(data.robotsMeta);
         Title (${titleCount} characters)
         ${titleMismatch ? `<span class="note red">Title mismatch</span>` : ``}
       </div>
-      <div class="value">
+      <div class="value ${titleMismatch ? "mismatch" : ""}">
         ${data.title || "—"}
       </div>
 
-      <div class="label">
+     <div class="label">
         Meta Description (${descCount} characters)
         ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
       </div>
-      <div class="value">
+      <div class="value ${descMismatch ? "mismatch" : ""}">
         ${data.description || "—"}
       </div>
 
       <div class="label">
         Meta Keywords (${data.keywords ? data.keywords.split(",").length : 0})
-        ${keywordsMismatch ? `<span class="note red">Keywords mismatch</span>` : ``}
       </div>
       <div class="value">
         ${data.keywords || "—"}
@@ -650,8 +633,6 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
 
 
 
