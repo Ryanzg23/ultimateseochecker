@@ -281,6 +281,32 @@ async function processDomain(domain, options = {}) {
     const titleCount = data.title.length;
     const descCount = data.description.length;
 
+     /* store canonical meta for AMP compare */
+      if (!isAmp) {
+        card.dataset.title = data.title || "";
+        card.dataset.desc = data.description || "";
+      }
+
+     /* ===== AMP META COMPARISON ===== */
+      let titleMismatch = false;
+      let descMismatch = false;
+      
+      if (isAmp) {
+        const canonTitle = (options.parentTitle || "").trim();
+        const canonDesc = (options.parentDesc || "").trim();
+      
+        const ampTitle = (data.title || "").trim();
+        const ampDesc = (data.description || "").trim();
+      
+        if (canonTitle && ampTitle && canonTitle !== ampTitle) {
+          titleMismatch = true;
+        }
+      
+        if (canonDesc && ampDesc && canonDesc !== ampDesc) {
+          descMismatch = true;
+        }
+      }
+
     card.dataset.original = `
       <div class="card-header">
         <h3>
@@ -298,11 +324,21 @@ async function processDomain(domain, options = {}) {
 
       ${redirected ? `<div class="redirect">301 → ${data.finalUrl}</div>` : ""}
 
-      <div class="label">Title (${titleCount} characters)</div>
-      <div class="value">${data.title || "—"}</div>
+      <div class="label">
+        Title (${titleCount} characters)
+        ${titleMismatch ? `<span class="note red">Title mismatch</span>` : ``}
+      </div>
+      <div class="value ${titleMismatch ? "mismatch" : ""}">
+        ${data.title || "—"}
+      </div>
 
-      <div class="label">Meta Description (${descCount} characters)</div>
-      <div class="value">${data.description || "—"}</div>
+     <div class="label">
+        Meta Description (${descCount} characters)
+        ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
+      </div>
+      <div class="value ${descMismatch ? "mismatch" : ""}">
+        ${data.description || "—"}
+      </div>
 
       <div class="label">
         Meta Keywords (${data.keywords ? data.keywords.split(",").length : 0})
@@ -446,10 +482,18 @@ function openAmp(url, el) {
   const parent = el.closest(".card");
   if (parent.nextSibling?.classList.contains("amp-card")) return;
 
+  const parentTitle = parent.dataset.title || "";
+  const parentDesc = parent.dataset.desc || "";
+
   el.style.pointerEvents = "none";
   el.style.opacity = "0.6";
 
-  processDomain(url, { isAmp: true, insertAfter: parent });
+  processDomain(url, {
+    isAmp: true,
+    insertAfter: parent,
+    parentTitle,
+    parentDesc
+  });
 }
 
 /* ================================
@@ -580,4 +624,5 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
