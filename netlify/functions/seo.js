@@ -249,7 +249,8 @@ export async function handler(event) {
         "register",
         "sign up",
         "signup",
-        "join"
+        "join",
+        "main demo"
       ]),
       login: extractAuthLinks([
         "login",
@@ -295,5 +296,6 @@ export async function handler(event) {
     };
   }
 }
+
 
 
