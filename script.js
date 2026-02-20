@@ -135,15 +135,15 @@ function generateSitemap(url) {
     const domain = u.hostname.replace(/^www\./, "");
 
     const xmlUrl =
-      "https://www.xml-sitemaps.com/details-" +
-      domain +
-      ".html";
+      "https://www.xml-sitemaps.com/?siteMapUrl=" +
+      encodeURIComponent(domain);
 
     window.open(xmlUrl, "_blank", "noopener");
   } catch {
     window.open("https://www.xml-sitemaps.com/", "_blank");
   }
 }
+
 
 /* ================================
    MAIN RUN
@@ -526,6 +526,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
