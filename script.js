@@ -13,11 +13,12 @@ function interpretRobots(content) {
     };
   }
 
-  const v = content.toLowerCase();
-  const hasIndex = v.includes("index");
-  const hasNoindex = v.includes("noindex");
-  const hasFollow = v.includes("follow");
-  const hasNofollow = v.includes("nofollow");
+  const value = content.toLowerCase();
+
+  const hasIndex = value.includes("index");
+  const hasNoindex = value.includes("noindex");
+  const hasFollow = value.includes("follow");
+  const hasNofollow = value.includes("nofollow");
 
   if (hasNoindex && hasNofollow) return { label: "noindex, nofollow", status: "danger" };
   if (hasNoindex) return { label: "noindex", status: "danger" };
@@ -39,9 +40,9 @@ function getRootDomain(url) {
 
 function isHomepageRedirect(inputUrl, finalUrl) {
   try {
-    const i = new URL(inputUrl);
-    const f = new URL(finalUrl);
-    return i.pathname !== "/" && f.pathname === "/" && i.hostname === f.hostname;
+    const input = new URL(inputUrl);
+    const final = new URL(finalUrl);
+    return input.pathname !== "/" && final.pathname === "/" && input.hostname === final.hostname;
   } catch {
     return false;
   }
@@ -52,10 +53,9 @@ function isHomepageRedirect(inputUrl, finalUrl) {
 ================================ */
 
 function setLoading(state) {
-  ["runBtn", "clearBtn", "openBulkBtn"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = state;
-  });
+  document.getElementById("runBtn").disabled = state;
+  document.getElementById("clearBtn").disabled = state;
+  document.getElementById("openBulkBtn").disabled = state;
 }
 
 function clearDomains() {
@@ -67,135 +67,20 @@ function clearDomains() {
 }
 
 function openBulk() {
-  document.getElementById("domains").value
-    .split("\n")
-    .map(d => d.trim())
-    .filter(Boolean)
-    .forEach(d => {
-      const url = d.startsWith("http") ? d : "https://" + d;
-      window.open(url, "_blank", "noopener");
-    });
-}
-
-function openAmpTest() {
   const input = document.getElementById("domains").value;
-
-  const urls = input
-    .split("\n")
-    .map(d => d.trim())
-    .filter(Boolean);
-
-  if (!urls.length) return;
-
-  urls.forEach(u => {
-    const url = u.startsWith("http") ? u : "https://" + u;
-
-    const ampTestUrl =
-      "https://search.google.com/test/amp?url=" +
-      encodeURIComponent(url);
-
-    window.open(ampTestUrl, "_blank", "noopener");
-  });
-}
-
-function openRichTest() {
-  const input = document.getElementById("domains").value;
-
-  const urls = input
-    .split("\n")
-    .map(d => d.trim())
-    .filter(Boolean);
-
-  if (!urls.length) return;
-
-  urls.forEach(u => {
-    const url = u.startsWith("http") ? u : "https://" + u;
-
-    const richUrl =
-      "https://search.google.com/test/rich-results?url=" +
-      encodeURIComponent(url);
-
-    window.open(richUrl, "_blank", "noopener");
+  input.split("\n").map(d => d.trim()).filter(Boolean).forEach(d => {
+    const url = d.startsWith("http") ? d : "https://" + d;
+    window.open(url, "_blank", "noopener");
   });
 }
 
 function openPreview() {
-  const urls = document.getElementById("domains").value
-    .split("\n")
-    .map(d => d.trim())
-    .filter(Boolean);
-
+  const input = document.getElementById("domains").value;
+  const urls = input.split("\n").map(d => d.trim()).filter(Boolean);
   if (!urls.length) return;
-  window.open(`/preview.html?urls=${encodeURIComponent(urls.join(","))}`, "_blank");
+  const encoded = encodeURIComponent(urls.join(","));
+  window.open(`/preview.html?urls=${encoded}`, "_blank");
 }
-
-async function generateSitemap(url) {
-  if (!url) return;
-
-  try {
-    const res = await fetch(
-      `/.netlify/functions/sitemapgen?url=${encodeURIComponent(url)}`
-    );
-
-    if (!res.ok) {
-      throw new Error("Generator error");
-    }
-
-    const xml = await res.text();
-
-    // basic validation
-    if (!xml || !xml.includes("<urlset")) {
-      throw new Error("Invalid sitemap");
-    }
-
-    // derive filename from domain
-    let filename = "sitemap.xml";
-    try {
-      const u = new URL(url);
-      filename = u.hostname.replace(/^www\./, "") + "-sitemap.xml";
-    } catch {}
-
-    // download file
-    const blob = new Blob([xml], { type: "application/xml" });
-    const link = document.createElement("a");
-
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-  } catch (err) {
-    console.error("Sitemap generation failed:", err);
-    alert("Failed to generate sitemap");
-  }
-}
-
-function generateRobots(domain) {
-  try {
-    const url = new URL(domain.startsWith("http") ? domain : "https://" + domain);
-    const origin = url.origin;
-
-    const content =
-`User-agent: *
-Allow: /
-
-Sitemap: ${origin}/sitemap.xml`;
-
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-
-    link.href = URL.createObjectURL(blob);
-    link.download = "robots.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-  } catch {
-    alert("Failed to generate robots.txt");
-  }
-}
-
 
 /* ================================
    MAIN RUN
@@ -234,7 +119,7 @@ async function run() {
 ================================ */
 
 async function processDomain(domain, options = {}) {
-  const { isAmp = false, insertAfter = null } = options;
+  const { isAmp = false, insertAfter = null, parentTitle = "", parentDesc = "" } = options;
   const results = document.getElementById("results");
 
   const card = document.createElement("div");
@@ -251,192 +136,138 @@ async function processDomain(domain, options = {}) {
     <div class="muted">Checking domain…</div>
   `;
 
-  insertAfter?.nextSibling
-    ? results.insertBefore(card, insertAfter.nextSibling)
-    : results.appendChild(card);
+  if (insertAfter?.nextSibling) {
+    results.insertBefore(card, insertAfter.nextSibling);
+  } else {
+    results.appendChild(card);
+  }
 
   try {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
-    if (!res.ok || data.error === "fetch_failed") throw new Error();
+    if (!res.ok || data.error) throw new Error();
 
     const inputRoot = getRootDomain(data.inputUrl);
     const finalRoot = getRootDomain(data.finalUrl);
+
     const redirected = inputRoot && finalRoot && inputRoot !== finalRoot;
     const is301Home = isHomepageRedirect(data.inputUrl, data.finalUrl);
     const is404 = data.status === 404 || data.status === 410;
 
-    if (is404 || is301Home) {
-      card.innerHTML = `
-        <div class="card-header"><h3>${data.inputUrl}</h3></div>
-        <div class="issue-pill ${is404 ? "danger" : "success"}">
-          ${is404 ? "404 – page not found" : "301 → homepage"}
-        </div>
-      `;
-      return;
+    const titleCount = (data.title || "").length;
+    const descCount = (data.description || "").length;
+
+    /* ===== AMP META COMPARISON ===== */
+    let titleMismatch = false;
+    let descMismatch = false;
+
+    if (isAmp) {
+      const canonTitle = (parentTitle || "").trim();
+      const canonDesc = (parentDesc || "").trim();
+      const ampTitle = (data.title || "").trim();
+      const ampDesc = (data.description || "").trim();
+
+      if (canonTitle && ampTitle && canonTitle !== ampTitle) titleMismatch = true;
+      if (canonDesc && ampDesc && canonDesc !== ampDesc) descMismatch = true;
     }
 
-    const robotsInfo = interpretRobots(data.robotsMeta);
-
-    const titleCount = data.title.length;
-    const descCount = data.description.length;
+    /* ===== STORE CANONICAL META ===== */
+    card.dataset.title = data.title || "";
+    card.dataset.desc = data.description || "";
 
     card.dataset.original = `
       <div class="card-header">
-        <h3>
-           <a href="${data.finalUrl || data.inputUrl}" target="_blank" class="card-url">
-             ${data.inputUrl}
-           </a>
-         </h3>
+        <h3><a href="${data.inputUrl}" target="_blank">${data.inputUrl}</a></h3>
         <div class="card-actions">
-          ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
-          <button class="secondary small http-btn hidden"
-            onclick="showHttpStatus(this, '${data.inputUrl}')">See HTTP Status</button>
+          ${!redirected && !isAmp && !is404 && !is301Home ? `<span class="badge green ok-badge">OK</span>` : ``}
+
+          ${!is404 && !is301Home ? `
+            <button
+              class="secondary small http-btn hidden"
+              onclick="showHttpStatus(this, '${data.inputUrl}')"
+            >
+              See HTTP Status
+            </button>
+          ` : ``}
+
           ${isAmp ? `<span class="badge purple">AMP</span>` : ``}
         </div>
       </div>
 
-      ${redirected ? `<div class="redirect">301 → ${data.finalUrl}</div>` : ""}
+      ${is301Home ? `<div class="issue-pill success">301 → homepage</div>` : ``}
+      ${is404 ? `<div class="issue-pill danger">404 – page not found</div>` : ``}
+      ${redirected && !is301Home ? `<div class="redirect">301 → ${data.finalUrl}</div>` : ``}
 
-      <div class="label">Title (${titleCount} characters)</div>
-      <div class="value">${data.title || "—"}</div>
+      ${!is404 && !is301Home ? `
+        <div class="label">
+          Title (${titleCount} characters)
+          ${titleMismatch ? `<span class="note red">Title mismatch</span>` : ``}
+        </div>
+        <div class="value ${titleMismatch ? "mismatch" : ""}">
+          ${data.title || "—"}
+        </div>
 
-      <div class="label">Meta Description (${descCount} characters)</div>
-      <div class="value">${data.description || "—"}</div>
+        <div class="label">
+          Meta Description (${descCount} characters)
+          ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
+        </div>
+        <div class="value ${descMismatch ? "mismatch" : ""}">
+          ${data.description || "—"}
+        </div>
 
-      <div class="label">
-        Meta Keywords (${data.keywords ? data.keywords.split(",").length : 0})
-      </div>
-      <div class="value">
-        ${data.keywords || "—"}
-      </div>
+        <div class="label">Canonical</div>
+        <div class="value">${data.canonical || "—"}</div>
 
-      <div class="label inline">
-        Meta Robots:
-        <span class="robots ${robotsInfo.status}">
-          ${robotsInfo.label}
-        </span>
-        ${robotsInfo.note ? `<span class="robots-note">${robotsInfo.note}</span>` : ""}
-      </div>
+        <div class="label">AMP HTML</div>
+        <div class="value">
+          ${
+            data.amphtml && !isAmp
+              ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
+              : data.amphtml || "—"
+          }
+        </div>
 
-      <div class="label">Canonical</div>
-      <div class="value">${data.canonical || "—"}</div>
+        <div class="label">robots.txt</div>
+        <div class="value">
+          ${data.robots
+            ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
+            : `No Robots detected`}
+        </div>
 
-      <div class="label">AMP HTML</div>
-      <div class="value">
-        ${
-          data.amphtml && !isAmp
-            ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
-            : data.amphtml || "—"
-        }
-      </div>
-
-<div class="label">robots.txt</div>
-<div class="value">
-  ${data.robots
-    ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
-    : `
-      No Robots detected
-      <button class="mini-btn"
-        onclick="generateRobots('${data.inputUrl}')">
-        Generate Robots
-      </button>
-    `}
-</div>
-      
-<div class="label">Sitemap</div>
-<div class="value">
-  ${
-    data.sitemap && data.sitemap.status === "exists"
-      ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
-      : `
-        <span class="muted">No Sitemap detected</span>
-        <button
-          class="mini-btn sitemap-gen"
-          onclick="generateSitemap('${data.inputUrl}')"
-        >
-          Generate Sitemap
-        </button>
-      `
-  }
-</div>
-
-
-<div class="label">Daftar</div>
-<div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
-
-<div class="label">Login</div>
-<div class="value">${renderAuthLinks(data.authLinks?.login)}</div>
-
+        <div class="label">Sitemap</div>
+        <div class="value">
+          ${data.sitemap
+            ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
+            : `No Sitemap detected`}
+        </div>
+      ` : ``}
     `;
 
     card.innerHTML = card.dataset.original;
 
-    setTimeout(() => {
-      card.querySelector(".ok-badge")?.remove();
-      card.querySelector(".http-btn")?.classList.remove("hidden");
+    const okBadge = card.querySelector(".ok-badge");
+    const httpBtn = card.querySelector(".http-btn");
+
+    if (okBadge) {
+      setTimeout(() => {
+        okBadge.remove();
+        httpBtn?.classList.remove("hidden");
+        card.dataset.ready = card.innerHTML;
+      }, 1000);
+    } else {
+      httpBtn?.classList.remove("hidden");
       card.dataset.ready = card.innerHTML;
-    }, 1000);
+    }
 
   } catch {
     card.innerHTML = `
-      <div class="card-header"><h3>${domain}</h3></div>
-      <div class="issue-pill danger">Domain not reachable</div>
+      <div class="card-header">
+        <h3>${domain}</h3>
+      </div>
+      <div class="issue-pill danger">Domain not active</div>
     `;
   }
 }
-
-function renderAuthLinks(list) {
-  if (!list || !list.length) return "Not detected";
-
-  if (list.length === 1) {
-    return `<a href="${list[0]}" target="_blank">${list[0]}</a>`;
-  }
-
-  const id = "auth_" + Math.random().toString(36).slice(2);
-
-  const extraLinks = list
-    .slice(1)
-    .map(u => `<div><a href="${u}" target="_blank">${u}</a></div>`)
-    .join("");
-
-  return `
-    <div class="auth-links">
-      <div><a href="${list[0]}" target="_blank">${list[0]}</a></div>
-
-      <div class="auth-toggle muted" onclick="expandAuth('${id}', this)">
-        +${list.length - 1} more
-      </div>
-
-      <div id="${id}" class="auth-extra hidden">
-        ${extraLinks}
-        <div class="auth-toggle muted" onclick="collapseAuth('${id}')">
-          hide other links
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function expandAuth(id, btn) {
-  const box = document.getElementById(id);
-  if (!box) return;
-
-  box.classList.remove("hidden");
-  btn.classList.add("hidden");
-}
-
-function collapseAuth(id) {
-  const box = document.getElementById(id);
-  if (!box) return;
-
-  const wrapper = box.closest(".auth-links");
-  const expandBtn = wrapper.querySelector(".auth-toggle");
-
-  box.classList.add("hidden");
-  expandBtn.classList.remove("hidden");
-}
-
 
 /* ================================
    AMP HANDLER
@@ -444,20 +275,29 @@ function collapseAuth(id) {
 
 function openAmp(url, el) {
   const parent = el.closest(".card");
+
   if (parent.nextSibling?.classList.contains("amp-card")) return;
+
+  const parentTitle = parent.dataset.title || "";
+  const parentDesc = parent.dataset.desc || "";
 
   el.style.pointerEvents = "none";
   el.style.opacity = "0.6";
 
-  processDomain(url, { isAmp: true, insertAfter: parent });
+  processDomain(url, {
+    isAmp: true,
+    insertAfter: parent,
+    parentTitle,
+    parentDesc
+  });
 }
 
 /* ================================
    HTTP STATUS
 ================================ */
+
 async function showHttpStatus(btn, domain) {
   const card = btn.closest(".card");
-  card.dataset.ready = card.innerHTML;
   card.innerHTML = `<div class="muted">Checking HTTP status…</div>`;
 
   const clean = domain.replace(/^https?:\/\//, "");
@@ -474,19 +314,13 @@ async function showHttpStatus(btn, domain) {
       try {
         const req = new URL(row.requestUrl);
         const fin = new URL(row.finalUrl);
-
-        // Ignore trailing slash / same protocol changes
-        meaningfulRedirect =
-          req.hostname !== fin.hostname ||
-          req.protocol !== fin.protocol;
+        meaningfulRedirect = req.protocol !== fin.protocol || req.hostname !== fin.hostname;
       } catch {}
 
-      // Redirect badge + tooltip
       if (meaningfulRedirect) {
         const redirectCode = row.statusChain.find(code =>
           [301, 302, 307, 308].includes(code)
         );
-
         if (redirectCode) {
           badges += `
             <span class="badge blue has-tooltip">
@@ -499,11 +333,8 @@ async function showHttpStatus(btn, domain) {
         }
       }
 
-      // Final status badge
       if (finalStatus === 200) {
         badges += `<span class="badge green">200</span>`;
-      } else if (finalStatus === 404) {
-        badges += `<span class="badge red">404</span>`;
       }
 
       return `
@@ -521,7 +352,6 @@ async function showHttpStatus(btn, domain) {
           <button class="secondary small" onclick="restoreCard(this)">Back</button>
         </div>
       </div>
-
       <div class="http-table">
         <div class="http-row head">
           <div>Request URL</div>
@@ -532,7 +362,7 @@ async function showHttpStatus(btn, domain) {
     `;
   } catch {
     card.innerHTML = `
-      <div class="issue-pill danger">Failed to load HTTP status</div>
+      <div>Error loading HTTP status</div>
       <button class="secondary small" onclick="restoreCard(this)">Back</button>
     `;
   }
@@ -540,7 +370,7 @@ async function showHttpStatus(btn, domain) {
 
 function restoreCard(btn) {
   const card = btn.closest(".card");
-  card.innerHTML = card.dataset.ready;
+  card.innerHTML = card.dataset.ready || card.dataset.original;
 }
 
 /* ================================
@@ -560,7 +390,7 @@ function updateProgress(done, total) {
 }
 
 /* ================================
-   THEME TOGGLE
+   THEME
 ================================ */
 
 function toggleTheme() {
@@ -580,27 +410,3 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
