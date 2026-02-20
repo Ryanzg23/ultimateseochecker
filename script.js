@@ -137,8 +137,38 @@ async function generateSitemap(url) {
 
     if (!res.ok) throw new Error();
 
-    const xml = await res.text();
+    const now = new Date().toISOString();
 
+function calcPriority(u) {
+  try {
+    const path = new URL(u).pathname;
+    if (path === "/" || path === "") return "1.00";
+
+    const depth = path.split("/").filter(Boolean).length;
+
+    if (depth === 1) return "0.80";
+    if (depth === 2) return "0.60";
+    return "0.50";
+  } catch {
+    return "0.50";
+  }
+}
+
+const xml =
+  `<?xml version="1.0" encoding="UTF-8"?>\n` +
+  `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+  urls
+    .map((u) => {
+      return (
+        `  <url>\n` +
+        `    <loc>${u}</loc>\n` +
+        `    <lastmod>${now}</lastmod>\n` +
+        `    <priority>${calcPriority(u)}</priority>\n` +
+        `  </url>`
+      );
+    })
+    .join("\n") +
+  `\n</urlset>`;
     const blob = new Blob([xml], { type: "application/xml" });
     const link = document.createElement("a");
 
@@ -534,6 +564,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
