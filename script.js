@@ -129,6 +129,21 @@ function openPreview() {
   window.open(`/preview.html?urls=${encodeURIComponent(urls.join(","))}`, "_blank");
 }
 
+function generateSitemap(url) {
+  try {
+    const u = new URL(url);
+    const root = u.origin;
+
+    const xmlTool =
+      "https://www.xml-sitemaps.com/details-" +
+      encodeURIComponent(root.replace(/^https?:\/\//, ""));
+
+    window.open(xmlTool, "_blank", "noopener");
+  } catch {
+    window.open("https://www.xml-sitemaps.com/", "_blank");
+  }
+}
+
 /* ================================
    MAIN RUN
 ================================ */
@@ -277,11 +292,17 @@ async function processDomain(domain, options = {}) {
 <div class="label">Sitemap</div>
 <div class="value">
   ${
-    data.sitemap.status === "exists"
-      ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
-      : data.sitemap.status === "missing"
-        ? "No Sitemap detected"
-        : "Unable to verify"
+    data.sitemap
+      ? `<a href="${data.sitemap}" target="_blank">${data.sitemap}</a>`
+      : `
+        <span class="muted">No Sitemap detected</span>
+        <button
+          class="mini-btn sitemap-gen"
+          onclick="generateSitemap('${data.inputUrl}')"
+        >
+          Generate Sitemap
+        </button>
+      `
   }
 </div>
 
@@ -503,6 +524,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
