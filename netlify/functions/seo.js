@@ -169,32 +169,69 @@ const robots = await detectRobots(origin);
     function extractAuthLinks(labels) {
       const targets = labels.map(t => t.toLowerCase());
       const found = new Set();
-
+    
       const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
       const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
-
+    
       let match;
-
-      // scan <a>
+    
+      function isMatch(text) {
+        text = text.toLowerCase().trim();
+    
+        return targets.some(t => {
+          if (t === "daftar") {
+            return text.startsWith("daftar");
+          }
+    
+          if (t === "login") {
+            return /\blogin\b/.test(text); // whole word anywhere
+          }
+    
+          if (t === "masuk") {
+            return text === "masuk";
+          }
+    
+          return text.includes(t);
+        });
+      }
+    
+      // ---- scan <a> ----
       while ((match = linkRegex.exec(html)) !== null) {
         const href = match[1];
         const text = match[2]
           .replace(/<[^>]+>/g, "")
           .trim()
           .toLowerCase();
-
-        const matched = targets.some(t => {
-          if (t === "masuk") return text === "masuk";
-          return text.includes(t);
-        });
-
-        if (matched) {
+    
+        if (isMatch(text)) {
           try {
             const url = new URL(href, finalUrl).href;
             found.add(url);
           } catch {}
         }
       }
+    
+      // ---- scan <button> ----
+      while ((match = buttonRegex.exec(html)) !== null) {
+        const inner = match[1]
+          .replace(/<[^>]+>/g, "")
+          .trim()
+          .toLowerCase();
+    
+        if (isMatch(inner)) {
+          const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+          if (onclickMatch) {
+            try {
+              const url = new URL(onclickMatch[1], finalUrl).href;
+              found.add(url);
+            } catch {}
+          }
+        }
+      }
+    
+      return found.size ? Array.from(found) : null;
+    }
+
 
       // scan <button>
       while ((match = buttonRegex.exec(html)) !== null) {
@@ -275,6 +312,7 @@ const robots = await detectRobots(origin);
     };
   }
 }
+
 
 
 
