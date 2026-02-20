@@ -158,73 +158,67 @@ export async function handler(event) {
         const targets = labels.map(t => t.toLowerCase());
         const found = new Set();
       
-        const elementRegex = /<(a|button)[^>]*>/gi;
+        const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
         let match;
       
-        function isMatch(text) {
+        function textMatches(text) {
           text = text.toLowerCase().trim();
       
           return targets.some(t => {
             if (t === "daftar") return text.startsWith("daftar");
-            if (t === "login") return /\blogin\b/.test(text);
+            if (t === "login") return text.includes("login");
             if (t === "masuk") return text === "masuk";
             return text.includes(t);
           });
         }
       
-        while ((match = elementRegex.exec(html)) !== null) {
-          const tagStart = match.index;
+        while ((match = linkRegex.exec(html)) !== null) {
+          const href = match[1];
+          const inner = match[2]
+            .replace(/<[^>]+>/g, "")
+            .trim();
       
-          // extract full tag
-          const tagMatch = html.slice(tagStart).match(/^<(a|button)([\s\S]*?)>/i);
-          if (!tagMatch) continue;
+          let matched = false;
       
-          const tag = tagMatch[0];
-      
-          // attributes
-          const hrefMatch = tag.match(/href=["']([^"']+)["']/i);
-          const ariaMatch = tag.match(/aria-label=["']([^"']+)["']/i);
-          const titleMatch = tag.match(/title=["']([^"']+)["']/i);
-          const classMatch = tag.match(/class=["']([^"']+)["']/i);
-          const idMatch = tag.match(/id=["']([^"']+)["']/i);
-          const tapMatch = tag.match(/on=["'][^"']*tap:[^"']*["']/i);
-      
-          // inner text (capture until closing)
-          let innerText = "";
-          const closeTag = new RegExp(`</${tagMatch[1]}>`, "i");
-          const after = html.slice(tagStart + tag.length);
-          const closeIndex = after.search(closeTag);
-          if (closeIndex !== -1) {
-            innerText = after.slice(0, closeIndex)
-              .replace(/<[^>]+>/g, " ")
-              .trim();
+          // 1️⃣ normal inner text
+          if (inner && textMatches(inner)) {
+            matched = true;
           }
       
-          const candidates = [
-            innerText,
-            ariaMatch?.[1],
-            titleMatch?.[1],
-            classMatch?.[1],
-            idMatch?.[1]
+          // 2️⃣ aria/title/class/id attributes
+          const tag = match[0];
+      
+          const attrs = [
+            tag.match(/aria-label=["']([^"']+)["']/i)?.[1],
+            tag.match(/title=["']([^"']+)["']/i)?.[1],
+            tag.match(/class=["']([^"']+)["']/i)?.[1],
+            tag.match(/id=["']([^"']+)["']/i)?.[1]
           ].filter(Boolean);
       
-          const matched = candidates.some(isMatch);
+          if (!matched && attrs.some(textMatches)) {
+            matched = true;
+          }
+      
+          // 3️⃣ CSS pseudo content detection (NEW)
+          if (!matched && !inner) {
+            // extract nearby CSS
+            const cssContext = html.slice(Math.max(0, match.index - 500), match.index + 500);
+      
+            if (textMatches(cssContext)) {
+              matched = true;
+            }
+          }
       
           if (matched) {
             try {
-              if (hrefMatch) {
-                const url = new URL(hrefMatch[1], finalUrl).href;
-                found.add(url);
-              } else if (tapMatch) {
-                found.add(finalUrl + "#login"); // AMP modal
-              }
+              const url = new URL(href, finalUrl).href;
+              found.add(url);
             } catch {}
           }
         }
       
         return found.size ? Array.from(found) : null;
       }
-
 
       authLinks = {
         daftar: extractAuthLinks([
@@ -283,4 +277,5 @@ export async function handler(event) {
     };
   }
 }
+
 
