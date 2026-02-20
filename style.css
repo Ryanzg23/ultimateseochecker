@@ -752,6 +752,49 @@ button.small {
   background: #ea580c;
 }
 
+.tool-btn {
+  position: relative;
+}
+
+/* tooltip bubble */
+.tool-btn::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform-origin: bottom;
+}
+
+/* tooltip arrow */
+.tool-btn::before {
+  content: "";
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #111;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* show on hover */
+.tool-btn:hover::after,
+.tool-btn:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
 
 
 
