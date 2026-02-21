@@ -107,6 +107,73 @@ function openPreview() {
   window.open(`/preview.html?urls=${encodeURIComponent(urls.join(","))}`, "_blank");
 }
 
+async function generateSitemap(url) {
+  if (!url) return;
+
+  try {
+    const res = await fetch(
+      `/.netlify/functions/sitemapgen?url=${encodeURIComponent(url)}`
+    );
+
+    if (!res.ok) {
+      throw new Error("Generator error");
+    }
+
+    const xml = await res.text();
+
+    // basic validation
+    if (!xml || !xml.includes("<urlset")) {
+      throw new Error("Invalid sitemap");
+    }
+
+    // derive filename from domain
+    let filename = "sitemap.xml";
+    try {
+      const u = new URL(url);
+      filename = u.hostname.replace(/^www\./, "") + "-sitemap.xml";
+    } catch {}
+
+    // download file
+    const blob = new Blob([xml], { type: "application/xml" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+  } catch (err) {
+    console.error("Sitemap generation failed:", err);
+    alert("Failed to generate sitemap");
+  }
+}
+
+function generateRobots(domain) {
+  try {
+    const url = new URL(domain.startsWith("http") ? domain : "https://" + domain);
+    const origin = url.origin;
+
+    const content =
+`User-agent: *
+Allow: /
+
+Sitemap: ${origin}/sitemap.xml`;
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "robots.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch {
+    alert("Failed to generate robots.txt");
+  }
+}
+
 /* ================================
    MAIN RUN
 ================================ */
@@ -519,6 +586,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
