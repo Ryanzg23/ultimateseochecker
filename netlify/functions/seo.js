@@ -163,25 +163,37 @@ try {
       .toLowerCase();
   }
 
-  function hasKeyword(value, type) {
-    if (!value) return false;
-    value = value.toLowerCase();
+function hasKeyword(value, type, href = "") {
+  if (!value && !href) return false;
 
-    if (type === "daftar") {
-      return value.startsWith("daftar") || value.includes("register") || value.includes("signup");
-    }
+  const v = (value || "").toLowerCase();
+  const h = (href || "").toLowerCase();
 
-    if (type === "login") {
-      return (
-        /\blogin\b/.test(value) ||
-        value.includes("masuk") ||
-        value.includes("signin") ||
-        value.includes("log-in")
-      );
-    }
-
-    return false;
+  if (type === "daftar") {
+    return (
+      v.startsWith("daftar") ||
+      v.includes("register") ||
+      v.includes("signup") ||
+      h.includes("daftar") ||     // ← NEW
+      h.includes("register") ||   // ← NEW
+      h.includes("signup")        // ← NEW
+    );
   }
+
+  if (type === "login") {
+    return (
+      /\blogin\b/.test(v) ||
+      v.includes("masuk") ||
+      v.includes("signin") ||
+      v.includes("log-in") ||
+      h.includes("login") ||      // ← NEW
+      h.includes("signin") ||
+      h.includes("masuk")
+    );
+  }
+
+  return false;
+}
 
   function extractAuth(type) {
     const found = new Set();
@@ -292,5 +304,6 @@ try {
     };
   }
 }
+
 
 
