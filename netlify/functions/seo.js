@@ -148,9 +148,6 @@ export async function handler(event) {
 
     const sitemap = await detectSitemap(origin);
 
-    /* ================================
-       AUTH LINKS (LOGIN / DAFTAR)
-    ================================ */
 /* ================================
    AUTH LINKS (LOGIN / DAFTAR)
 ================================ */
@@ -158,41 +155,61 @@ let authLinks = { daftar: null, login: null };
 
 try {
 
-  function normalizeText(str) {
-    return str
+  function normalize(str) {
+    return (str || "")
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
       .trim()
       .toLowerCase();
   }
 
-  function isMatch(text, type) {
-    if (!text) return false;
+  function hasKeyword(value, type) {
+    if (!value) return false;
+    value = value.toLowerCase();
 
     if (type === "daftar") {
-      return text.startsWith("daftar");
+      return value.startsWith("daftar") || value.includes("register") || value.includes("signup");
     }
 
     if (type === "login") {
-      return /\blogin\b/.test(text) || text === "masuk";
+      return (
+        /\blogin\b/.test(value) ||
+        value.includes("masuk") ||
+        value.includes("signin") ||
+        value.includes("log-in")
+      );
     }
 
     return false;
   }
 
-  function extractAuthLinks(type) {
+  function extractAuth(type) {
     const found = new Set();
 
-    const anchorRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
-    let match;
+    const anchorRegex = /<a([^>]*)href=["']([^"']+)["']([^>]*)>([\s\S]*?)<\/a>/gi;
+    let m;
 
-    while ((match = anchorRegex.exec(html)) !== null) {
-      const href = match[1];
-      const innerHtml = match[2];
+    while ((m = anchorRegex.exec(html)) !== null) {
+      const before = m[1] || "";
+      const href = m[2];
+      const after = m[3] || "";
+      const inner = m[4] || "";
 
-      const text = normalizeText(innerHtml);
+      const attrs = (before + " " + after).toLowerCase();
 
-      if (isMatch(text, type)) {
+      const text = normalize(inner);
+
+      const classMatch = attrs.match(/class=["']([^"']+)["']/i);
+      const idMatch = attrs.match(/id=["']([^"']+)["']/i);
+
+      const classVal = classMatch ? classMatch[1] : "";
+      const idVal = idMatch ? idMatch[1] : "";
+
+      if (
+        hasKeyword(text, type) ||
+        hasKeyword(classVal, type) ||
+        hasKeyword(idVal, type)
+      ) {
         try {
           const url = new URL(href, finalUrl).href;
           found.add(url);
@@ -200,15 +217,25 @@ try {
       }
     }
 
-    // also detect standalone buttons with onclick
-    const buttonRegex = /<button[^>]*>([\s\S]*?)<\/button>/gi;
+    // standalone buttons with onclick
+    const buttonRegex = /<button([^>]*)>([\s\S]*?)<\/button>/gi;
 
-    while ((match = buttonRegex.exec(html)) !== null) {
-      const innerHtml = match[1];
-      const text = normalizeText(innerHtml);
+    while ((m = buttonRegex.exec(html)) !== null) {
+      const attrs = (m[1] || "").toLowerCase();
+      const inner = normalize(m[2] || "");
 
-      if (isMatch(text, type)) {
-        const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+      const classMatch = attrs.match(/class=["']([^"']+)["']/i);
+      const idMatch = attrs.match(/id=["']([^"']+)["']/i);
+
+      const classVal = classMatch ? classMatch[1] : "";
+      const idVal = idMatch ? idMatch[1] : "";
+
+      if (
+        hasKeyword(inner, type) ||
+        hasKeyword(classVal, type) ||
+        hasKeyword(idVal, type)
+      ) {
+        const onclickMatch = m[0].match(/location\.href=['"]([^'"]+)['"]/i);
         if (onclickMatch) {
           try {
             const url = new URL(onclickMatch[1], finalUrl).href;
@@ -222,8 +249,8 @@ try {
   }
 
   authLinks = {
-    daftar: extractAuthLinks("daftar"),
-    login: extractAuthLinks("login")
+    daftar: extractAuth("daftar"),
+    login: extractAuth("login")
   };
 
 } catch {
@@ -265,4 +292,5 @@ try {
     };
   }
 }
+
 
