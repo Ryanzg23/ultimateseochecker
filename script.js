@@ -275,23 +275,42 @@ async function processDomain(domain, options = {}) {
         }
       </div>
 
-      <div class="label">robots.txt</div>
-      <div class="value">
-        ${
-          data.robots
-            ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
-            : `<span class="muted">No Robots detected</span>`
-        }
-      </div>
+<div class="label">robots.txt</div>
+<div class="value">
+  ${
+    isPagesDev
+      ? `<span class="muted">Not applicable (Pages.dev)</span>`
+      : data.robots
+        ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
+        : `
+          No Robots detected
+          <button class="mini-btn robots-gen"
+            onclick="generateRobots('${data.inputUrl}')">
+            Generate Robots
+          </button>
+        `
+  }
+</div>
 
-      <div class="label">Sitemap</div>
-      <div class="value">
-        ${
-          data.sitemap && data.sitemap.status === "exists"
-            ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
-            : `<span class="muted">No Sitemap detected</span>`
-        }
-      </div>
+      
+<div class="label">Sitemap</div>
+<div class="value">
+  ${
+    isPagesDev
+      ? `<span class="muted">Not applicable (Pages.dev)</span>`
+      : data.sitemap && data.sitemap.status === "exists"
+        ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
+        : `
+          <span class="muted">No Sitemap detected</span>
+          <button
+            class="mini-btn sitemap-gen"
+            onclick="generateSitemap('${data.inputUrl}')"
+          >
+            Generate Sitemap
+          </button>
+        `
+  }
+</div>
 
       <div class="label">Daftar</div>
       <div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
@@ -495,3 +514,4 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
