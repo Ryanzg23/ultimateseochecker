@@ -176,6 +176,11 @@ async function processDomain(domain, options = {}) {
     const is301Home = isHomepageRedirect(data.inputUrl, data.finalUrl);
     const is404 = data.status === 404 || data.status === 410;
 
+     const host = (data.finalUrl || data.inputUrl || "")
+  .toLowerCase();
+
+      const isPagesDev = host.includes(".pages.dev")
+
     if (is404 || is301Home) {
       card.innerHTML = `
         <div class="card-header"><h3>${data.inputUrl}</h3></div>
@@ -275,40 +280,41 @@ async function processDomain(domain, options = {}) {
         }
       </div>
 
-${(() => {
-  const host = new URL(data.finalUrl || data.inputUrl).hostname.toLowerCase();
-  const isPages = host.endsWith("pages.dev");
-
-  if (isPages) {
-    return `
-      <div class="label">robots.txt</div>
-      <div class="value"><span class="muted">Not applicable</span></div>
-
-      <div class="label">Sitemap</div>
-      <div class="value"><span class="muted">Not applicable</span></div>
-    `;
+<div class="label">robots.txt</div>
+<div class="value">
+  ${
+    isPagesDev
+      ? `<span class="muted">Not applicable (Pages.dev)</span>`
+      : data.robots
+        ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
+        : `
+          No Robots detected
+          <button class="mini-btn robots-gen"
+            onclick="generateRobots('${data.inputUrl}')">
+            Generate Robots
+          </button>
+        `
   }
+</div>
 
-  return `
-    <div class="label">robots.txt</div>
-    <div class="value">
-      ${
-        data.robots
-          ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
-          : `<span class="muted">No Robots detected</span>`
-      }
-    </div>
-
-    <div class="label">Sitemap</div>
-    <div class="value">
-      ${
-        data.sitemap && data.sitemap.status === "exists"
-          ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
-          : `<span class="muted">No Sitemap detected</span>`
-      }
-    </div>
-  `;
-})()}
+<div class="label">Sitemap</div>
+<div class="value">
+  ${
+    isPagesDev
+      ? `<span class="muted">Not applicable (Pages.dev)</span>`
+      : data.sitemap && data.sitemap.status === "exists"
+        ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
+        : `
+          <span class="muted">No Sitemap detected</span>
+          <button
+            class="mini-btn sitemap-gen"
+            onclick="generateSitemap('${data.inputUrl}')"
+          >
+            Generate Sitemap
+          </button>
+        `
+  }
+</div>
 
 
       <div class="label">Daftar</div>
@@ -513,5 +519,6 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
