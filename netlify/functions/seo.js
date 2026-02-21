@@ -218,9 +218,9 @@ function hasKeyword(value, type, href = "") {
       const idVal = idMatch ? idMatch[1] : "";
 
       if (
-        hasKeyword(text, type) ||
-        hasKeyword(classVal, type) ||
-        hasKeyword(idVal, type)
+        hasKeyword(text, type, href) ||
+        hasKeyword(classVal, type, href) ||
+        hasKeyword(idVal, type, href)
       ) {
         try {
           const url = new URL(href, finalUrl).href;
@@ -304,6 +304,7 @@ function hasKeyword(value, type, href = "") {
     };
   }
 }
+
 
 
 
