@@ -6,11 +6,7 @@ const CONCURRENCY = 5;
 
 function interpretRobots(content) {
   if (!content) {
-    return {
-      label: "not set",
-      status: "neutral",
-      note: "Default is index, follow"
-    };
+    return { label: "not set", status: "neutral", note: "Default is index, follow" };
   }
 
   const v = content.toLowerCase();
@@ -78,44 +74,26 @@ function openBulk() {
 }
 
 function openAmpTest() {
-  const input = document.getElementById("domains").value;
-
-  const urls = input
+  const urls = document.getElementById("domains").value
     .split("\n")
     .map(d => d.trim())
     .filter(Boolean);
 
-  if (!urls.length) return;
-
   urls.forEach(u => {
     const url = u.startsWith("http") ? u : "https://" + u;
-
-    const ampTestUrl =
-      "https://search.google.com/test/amp?url=" +
-      encodeURIComponent(url);
-
-    window.open(ampTestUrl, "_blank", "noopener");
+    window.open("https://search.google.com/test/amp?url=" + encodeURIComponent(url), "_blank");
   });
 }
 
 function openRichTest() {
-  const input = document.getElementById("domains").value;
-
-  const urls = input
+  const urls = document.getElementById("domains").value
     .split("\n")
     .map(d => d.trim())
     .filter(Boolean);
 
-  if (!urls.length) return;
-
   urls.forEach(u => {
     const url = u.startsWith("http") ? u : "https://" + u;
-
-    const richUrl =
-      "https://search.google.com/test/rich-results?url=" +
-      encodeURIComponent(url);
-
-    window.open(richUrl, "_blank", "noopener");
+    window.open("https://search.google.com/test/rich-results?url=" + encodeURIComponent(url), "_blank");
   });
 }
 
@@ -128,74 +106,6 @@ function openPreview() {
   if (!urls.length) return;
   window.open(`/preview.html?urls=${encodeURIComponent(urls.join(","))}`, "_blank");
 }
-
-async function generateSitemap(url) {
-  if (!url) return;
-
-  try {
-    const res = await fetch(
-      `/.netlify/functions/sitemapgen?url=${encodeURIComponent(url)}`
-    );
-
-    if (!res.ok) {
-      throw new Error("Generator error");
-    }
-
-    const xml = await res.text();
-
-    // basic validation
-    if (!xml || !xml.includes("<urlset")) {
-      throw new Error("Invalid sitemap");
-    }
-
-    // derive filename from domain
-    let filename = "sitemap.xml";
-    try {
-      const u = new URL(url);
-      filename = u.hostname.replace(/^www\./, "") + "-sitemap.xml";
-    } catch {}
-
-    // download file
-    const blob = new Blob([xml], { type: "application/xml" });
-    const link = document.createElement("a");
-
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-  } catch (err) {
-    console.error("Sitemap generation failed:", err);
-    alert("Failed to generate sitemap");
-  }
-}
-
-function generateRobots(domain) {
-  try {
-    const url = new URL(domain.startsWith("http") ? domain : "https://" + domain);
-    const origin = url.origin;
-
-    const content =
-`User-agent: *
-Allow: /
-
-Sitemap: ${origin}/sitemap.xml`;
-
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-
-    link.href = URL.createObjectURL(blob);
-    link.download = "robots.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-  } catch {
-    alert("Failed to generate robots.txt");
-  }
-}
-
 
 /* ================================
    MAIN RUN
@@ -261,7 +171,6 @@ async function processDomain(domain, options = {}) {
     if (!res.ok || data.error === "fetch_failed") throw new Error();
 
     const inputRoot = getRootDomain(data.inputUrl);
-     const isPagesDev = inputRoot.endsWith("pages.dev");
     const finalRoot = getRootDomain(data.finalUrl);
     const redirected = inputRoot && finalRoot && inputRoot !== finalRoot;
     const is301Home = isHomepageRedirect(data.inputUrl, data.finalUrl);
@@ -279,42 +188,46 @@ async function processDomain(domain, options = {}) {
 
     const robotsInfo = interpretRobots(data.robotsMeta);
 
+    /* SAVE PARENT SEO DATA */
+    if (!isAmp) {
+      card.dataset.seoData = JSON.stringify({
+        title: data.title || "",
+        description: data.description || "",
+        keywords: data.keywords || ""
+      });
+    }
+
+    /* AMP MISMATCH COMPARE */
+    let titleMismatch = false;
+    let descMismatch = false;
+    let keywordsMismatch = false;
+
+    if (isAmp && insertAfter) {
+      try {
+        const parentData = insertAfter.dataset.seoData
+          ? JSON.parse(insertAfter.dataset.seoData)
+          : null;
+
+        if (parentData) {
+          const norm = v => (v || "").trim().toLowerCase();
+
+          titleMismatch = norm(parentData.title) !== norm(data.title);
+          descMismatch = norm(parentData.description) !== norm(data.description);
+          keywordsMismatch = norm(parentData.keywords) !== norm(data.keywords);
+        }
+      } catch {}
+    }
+
     const titleCount = data.title.length;
     const descCount = data.description.length;
 
-     /* store canonical meta for AMP compare */
-      if (!isAmp) {
-        card.dataset.title = data.title || "";
-        card.dataset.desc = data.description || "";
-      }
-
-     /* ===== AMP META COMPARISON ===== */
-      let titleMismatch = false;
-      let descMismatch = false;
-      
-      if (isAmp) {
-        const canonTitle = (options.parentTitle || "").trim();
-        const canonDesc = (options.parentDesc || "").trim();
-      
-        const ampTitle = (data.title || "").trim();
-        const ampDesc = (data.description || "").trim();
-      
-        if (canonTitle && ampTitle && canonTitle !== ampTitle) {
-          titleMismatch = true;
-        }
-      
-        if (canonDesc && ampDesc && canonDesc !== ampDesc) {
-          descMismatch = true;
-        }
-      }
-
-    card.dataset.original = `
+    card.innerHTML = `
       <div class="card-header">
         <h3>
-           <a href="${data.finalUrl || data.inputUrl}" target="_blank" class="card-url">
-             ${data.inputUrl}
-           </a>
-         </h3>
+          <a href="${data.finalUrl || data.inputUrl}" target="_blank" class="card-url">
+            ${data.inputUrl}
+          </a>
+        </h3>
         <div class="card-actions">
           ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
           <button class="secondary small http-btn hidden"
@@ -329,31 +242,25 @@ async function processDomain(domain, options = {}) {
         Title (${titleCount} characters)
         ${titleMismatch ? `<span class="note red">Title mismatch</span>` : ``}
       </div>
-      <div class="value ${titleMismatch ? "mismatch" : ""}">
-        ${data.title || "—"}
-      </div>
+      <div class="value">${data.title || "—"}</div>
 
-     <div class="label">
+      <div class="label">
         Meta Description (${descCount} characters)
         ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
       </div>
-      <div class="value ${descMismatch ? "mismatch" : ""}">
-        ${data.description || "—"}
-      </div>
+      <div class="value">${data.description || "—"}</div>
 
       <div class="label">
         Meta Keywords (${data.keywords ? data.keywords.split(",").length : 0})
+        ${keywordsMismatch ? `<span class="note red">Keywords mismatch</span>` : ``}
       </div>
-      <div class="value">
-        ${data.keywords || "—"}
-      </div>
+      <div class="value">${data.keywords || "—"}</div>
 
       <div class="label inline">
         Meta Robots:
         <span class="robots ${robotsInfo.status}">
           ${robotsInfo.label}
         </span>
-        ${robotsInfo.note ? `<span class="robots-note">${robotsInfo.note}</span>` : ""}
       </div>
 
       <div class="label">Canonical</div>
@@ -368,59 +275,34 @@ async function processDomain(domain, options = {}) {
         }
       </div>
 
-<div class="label">robots.txt</div>
-<div class="value">
-  ${
-    isPagesDev
-      ? `<span class="muted">Not applicable (Pages.dev)</span>`
-      : data.robots
-        ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
-        : `
-          No Robots detected
-          <button class="mini-btn robots-gen"
-            onclick="generateRobots('${data.inputUrl}')">
-            Generate Robots
-          </button>
-        `
-  }
-</div>
+      <div class="label">robots.txt</div>
+      <div class="value">
+        ${
+          data.robots
+            ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
+            : `<span class="muted">No Robots detected</span>`
+        }
+      </div>
 
-      
-<div class="label">Sitemap</div>
-<div class="value">
-  ${
-    isPagesDev
-      ? `<span class="muted">Not applicable (Pages.dev)</span>`
-      : data.sitemap && data.sitemap.status === "exists"
-        ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
-        : `
-          <span class="muted">No Sitemap detected</span>
-          <button
-            class="mini-btn sitemap-gen"
-            onclick="generateSitemap('${data.inputUrl}')"
-          >
-            Generate Sitemap
-          </button>
-        `
-  }
-</div>
+      <div class="label">Sitemap</div>
+      <div class="value">
+        ${
+          data.sitemap && data.sitemap.status === "exists"
+            ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
+            : `<span class="muted">No Sitemap detected</span>`
+        }
+      </div>
 
+      <div class="label">Daftar</div>
+      <div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
 
-
-<div class="label">Daftar</div>
-<div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
-
-<div class="label">Login</div>
-<div class="value">${renderAuthLinks(data.authLinks?.login)}</div>
-
+      <div class="label">Login</div>
+      <div class="value">${renderAuthLinks(data.authLinks?.login)}</div>
     `;
-
-    card.innerHTML = card.dataset.original;
 
     setTimeout(() => {
       card.querySelector(".ok-badge")?.remove();
       card.querySelector(".http-btn")?.classList.remove("hidden");
-      card.dataset.ready = card.innerHTML;
     }, 1000);
 
   } catch {
@@ -430,6 +312,10 @@ async function processDomain(domain, options = {}) {
     `;
   }
 }
+
+/* ================================
+   AUTH RENDER
+================================ */
 
 function renderAuthLinks(list) {
   if (!list || !list.length) return "Not detected";
@@ -448,11 +334,9 @@ function renderAuthLinks(list) {
   return `
     <div class="auth-links">
       <div><a href="${list[0]}" target="_blank">${list[0]}</a></div>
-
       <div class="auth-toggle muted" onclick="expandAuth('${id}', this)">
         +${list.length - 1} more
       </div>
-
       <div id="${id}" class="auth-extra hidden">
         ${extraLinks}
         <div class="auth-toggle muted" onclick="collapseAuth('${id}')">
@@ -466,7 +350,6 @@ function renderAuthLinks(list) {
 function expandAuth(id, btn) {
   const box = document.getElementById(id);
   if (!box) return;
-
   box.classList.remove("hidden");
   btn.classList.add("hidden");
 }
@@ -474,14 +357,11 @@ function expandAuth(id, btn) {
 function collapseAuth(id) {
   const box = document.getElementById(id);
   if (!box) return;
-
   const wrapper = box.closest(".auth-links");
   const expandBtn = wrapper.querySelector(".auth-toggle");
-
   box.classList.add("hidden");
   expandBtn.classList.remove("hidden");
 }
-
 
 /* ================================
    AMP HANDLER
@@ -491,23 +371,16 @@ function openAmp(url, el) {
   const parent = el.closest(".card");
   if (parent.nextSibling?.classList.contains("amp-card")) return;
 
-  const parentTitle = parent.dataset.title || "";
-  const parentDesc = parent.dataset.desc || "";
-
   el.style.pointerEvents = "none";
   el.style.opacity = "0.6";
 
-  processDomain(url, {
-    isAmp: true,
-    insertAfter: parent,
-    parentTitle,
-    parentDesc
-  });
+  processDomain(url, { isAmp: true, insertAfter: parent });
 }
 
 /* ================================
    HTTP STATUS
 ================================ */
+
 async function showHttpStatus(btn, domain) {
   const card = btn.closest(".card");
   card.dataset.ready = card.innerHTML;
@@ -527,37 +400,27 @@ async function showHttpStatus(btn, domain) {
       try {
         const req = new URL(row.requestUrl);
         const fin = new URL(row.finalUrl);
-
-        // Ignore trailing slash / same protocol changes
         meaningfulRedirect =
           req.hostname !== fin.hostname ||
           req.protocol !== fin.protocol;
       } catch {}
 
-      // Redirect badge + tooltip
       if (meaningfulRedirect) {
         const redirectCode = row.statusChain.find(code =>
           [301, 302, 307, 308].includes(code)
         );
-
         if (redirectCode) {
           badges += `
             <span class="badge blue has-tooltip">
               ${redirectCode}
-              <span class="tooltip">
-                Redirect → ${row.finalUrl}
-              </span>
+              <span class="tooltip">Redirect → ${row.finalUrl}</span>
             </span>
           `;
         }
       }
 
-      // Final status badge
-      if (finalStatus === 200) {
-        badges += `<span class="badge green">200</span>`;
-      } else if (finalStatus === 404) {
-        badges += `<span class="badge red">404</span>`;
-      }
+      if (finalStatus === 200) badges += `<span class="badge green">200</span>`;
+      else if (finalStatus === 404) badges += `<span class="badge red">404</span>`;
 
       return `
         <div class="http-row">
@@ -574,7 +437,6 @@ async function showHttpStatus(btn, domain) {
           <button class="secondary small" onclick="restoreCard(this)">Back</button>
         </div>
       </div>
-
       <div class="http-table">
         <div class="http-row head">
           <div>Request URL</div>
@@ -633,10 +495,3 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
-
-
-
-
-
-
-
