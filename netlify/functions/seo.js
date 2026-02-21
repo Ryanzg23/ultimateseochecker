@@ -151,79 +151,84 @@ export async function handler(event) {
     /* ================================
        AUTH LINKS (LOGIN / DAFTAR)
     ================================ */
-    let authLinks = { daftar: null, login: null };
+/* ================================
+   AUTH LINKS (LOGIN / DAFTAR)
+================================ */
+let authLinks = { daftar: null, login: null };
 
-    try {
-      function extractAuthLinks(labels) {
-        const targets = labels.map(t => t.toLowerCase());
-        const found = new Set();
+try {
 
-        const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
-        const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
+  function normalizeText(str) {
+    return str
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
 
-        let match;
+  function isMatch(text, type) {
+    if (!text) return false;
 
-        function isMatch(text) {
-          text = text.toLowerCase().trim();
-
-          return targets.some(t => {
-            if (t === "daftar") return text.startsWith("daftar");
-            if (t === "login") return /\blogin\b/.test(text);
-            if (t === "masuk") return text === "masuk";
-            return text.includes(t);
-          });
-        }
-
-        while ((match = linkRegex.exec(html)) !== null) {
-          const href = match[1];
-          const text = match[2].replace(/<[^>]+>/g, "").trim();
-
-          if (isMatch(text)) {
-            try {
-              const url = new URL(href, finalUrl).href;
-              found.add(url);
-            } catch {}
-          }
-        }
-
-        while ((match = buttonRegex.exec(html)) !== null) {
-          const inner = match[1].replace(/<[^>]+>/g, "").trim();
-
-          if (isMatch(inner)) {
-            const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
-            if (onclickMatch) {
-              try {
-                const url = new URL(onclickMatch[1], finalUrl).href;
-                found.add(url);
-              } catch {}
-            }
-          }
-        }
-
-        return found.size ? Array.from(found) : null;
-      }
-
-      authLinks = {
-        daftar: extractAuthLinks([
-          "daftar",
-          "register",
-          "sign up",
-          "signup",
-          "join",
-          "main demo"
-        ]),
-        login: extractAuthLinks([
-          "login",
-          "masuk",
-          "sign in",
-          "signin",
-          "log in"
-        ])
-      };
-
-    } catch {
-      authLinks = { daftar: null, login: null };
+    if (type === "daftar") {
+      return text.startsWith("daftar");
     }
+
+    if (type === "login") {
+      return /\blogin\b/.test(text) || text === "masuk";
+    }
+
+    return false;
+  }
+
+  function extractAuthLinks(type) {
+    const found = new Set();
+
+    const anchorRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+    let match;
+
+    while ((match = anchorRegex.exec(html)) !== null) {
+      const href = match[1];
+      const innerHtml = match[2];
+
+      const text = normalizeText(innerHtml);
+
+      if (isMatch(text, type)) {
+        try {
+          const url = new URL(href, finalUrl).href;
+          found.add(url);
+        } catch {}
+      }
+    }
+
+    // also detect standalone buttons with onclick
+    const buttonRegex = /<button[^>]*>([\s\S]*?)<\/button>/gi;
+
+    while ((match = buttonRegex.exec(html)) !== null) {
+      const innerHtml = match[1];
+      const text = normalizeText(innerHtml);
+
+      if (isMatch(text, type)) {
+        const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+        if (onclickMatch) {
+          try {
+            const url = new URL(onclickMatch[1], finalUrl).href;
+            found.add(url);
+          } catch {}
+        }
+      }
+    }
+
+    return found.size ? Array.from(found) : null;
+  }
+
+  authLinks = {
+    daftar: extractAuthLinks("daftar"),
+    login: extractAuthLinks("login")
+  };
+
+} catch {
+  authLinks = { daftar: null, login: null };
+}
 
     /* ================================
        RESPONSE
@@ -260,3 +265,4 @@ export async function handler(event) {
     };
   }
 }
+
