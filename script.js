@@ -174,6 +174,68 @@ Sitemap: ${origin}/sitemap.xml`;
   }
 }
 
+function generateSchema(url, detected) {
+  try {
+    const u = new URL(url.startsWith("http") ? url : "https://" + url);
+
+    const graph = [];
+
+    /* WebPage (always) */
+    graph.push({
+      "@type": "WebPage",
+      "@id": u.href,
+      "url": u.href,
+      "name": document.title || u.hostname
+    });
+
+    /* Article */
+    if (detected?.article) {
+      graph.push({
+        "@type": "Article",
+        "headline": document.title || u.hostname,
+        "mainEntityOfPage": u.href
+      });
+    }
+
+    /* FAQ */
+    if (detected?.faq) {
+      graph.push({
+        "@type": "FAQPage",
+        "mainEntity": []
+      });
+    }
+
+    /* Breadcrumb */
+    if (detected?.breadcrumb) {
+      graph.push({
+        "@type": "BreadcrumbList",
+        "itemListElement": []
+      });
+    }
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@graph": graph
+    };
+
+    const json = JSON.stringify(schema, null, 2);
+
+    const blob = new Blob([json], { type: "application/ld+json" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = u.hostname.replace(/^www\./, "") + "-schema.json";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+  } catch {
+    alert("Failed to generate schema");
+  }
+}
+
+
 /* ================================
    MAIN RUN
 ================================ */
@@ -259,6 +321,24 @@ async function processDomain(domain, options = {}) {
     }
 
     const robotsInfo = interpretRobots(data.robotsMeta);
+
+/* ================================
+   SCHEMA SUMMARY
+================================ */
+let schemaSummary = "none";
+let schemaList = [];
+
+if (data.schemaDetected) {
+  if (data.schemaDetected.article) schemaList.push("Article");
+  if (data.schemaDetected.faq) schemaList.push("FAQ");
+  if (data.schemaDetected.breadcrumb) schemaList.push("Breadcrumb");
+}
+
+if (schemaList.length) {
+  schemaSummary = schemaList.join(" + ") + " detected";
+} else {
+  schemaSummary = "none detected";
+}
 
     /* SAVE PARENT SEO DATA */
     if (!isAmp) {
@@ -383,6 +463,22 @@ async function processDomain(domain, options = {}) {
   }
 </div>
 
+<div class="label">Schema</div>
+<div class="value">
+  ${
+    schemaSummary !== "none detected"
+      ? `${schemaSummary}
+         <button class="mini-btn schema-gen"
+           onclick="generateSchema('${data.inputUrl}', ${JSON.stringify(data.schemaDetected)})">
+           Generate
+         </button>`
+      : `none detected
+         <button class="mini-btn schema-gen"
+           onclick="generateSchema('${data.inputUrl}', ${JSON.stringify(data.schemaDetected)})">
+           Generate
+         </button>`
+  }
+</div>
 
       <div class="label">Daftar</div>
       <div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
@@ -586,6 +682,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
