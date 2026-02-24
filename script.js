@@ -174,9 +174,15 @@ Sitemap: ${origin}/sitemap.xml`;
   }
 }
 
-function generateSchema(url, detected) {
+function generateSchema(btn) {
   try {
-    const u = new URL(url.startsWith("http") ? url : "https://" + url);
+    const card = btn.closest(".card");
+    const detected = JSON.parse(card.dataset.schemaDetected || "{}");
+
+    const linkEl = card.querySelector(".card-url");
+    const url = linkEl ? linkEl.href : "";
+
+    const u = new URL(url);
 
     const graph = [];
 
@@ -185,19 +191,17 @@ function generateSchema(url, detected) {
       "@type": "WebPage",
       "@id": u.href,
       "url": u.href,
-      "name": document.title || u.hostname
+      "name": u.hostname
     });
 
-    /* Article */
     if (detected?.article) {
       graph.push({
         "@type": "Article",
-        "headline": document.title || u.hostname,
+        "headline": u.hostname,
         "mainEntityOfPage": u.href
       });
     }
 
-    /* FAQ */
     if (detected?.faq) {
       graph.push({
         "@type": "FAQPage",
@@ -205,7 +209,6 @@ function generateSchema(url, detected) {
       });
     }
 
-    /* Breadcrumb */
     if (detected?.breadcrumb) {
       graph.push({
         "@type": "BreadcrumbList",
@@ -218,11 +221,12 @@ function generateSchema(url, detected) {
       "@graph": graph
     };
 
-    const json = JSON.stringify(schema, null, 2);
+    const blob = new Blob(
+      [JSON.stringify(schema, null, 2)],
+      { type: "application/ld+json" }
+    );
 
-    const blob = new Blob([json], { type: "application/ld+json" });
     const link = document.createElement("a");
-
     link.href = URL.createObjectURL(blob);
     link.download = u.hostname.replace(/^www\./, "") + "-schema.json";
 
@@ -349,6 +353,9 @@ if (schemaList.length) {
       });
     }
 
+  card.dataset.schemaDetected = JSON.stringify(data.schemaDetected || {});
+
+
     /* AMP MISMATCH COMPARE */
     let titleMismatch = false;
     let descMismatch = false;
@@ -465,20 +472,13 @@ if (schemaList.length) {
 
 <div class="label">Schema</div>
 <div class="value">
-  ${
-    schemaSummary !== "none detected"
-      ? `${schemaSummary}
-         <button class="mini-btn schema-gen"
-           onclick="generateSchema('${data.inputUrl}', ${JSON.stringify(data.schemaDetected)})">
-           Generate
-         </button>`
-      : `none detected
-         <button class="mini-btn schema-gen"
-           onclick="generateSchema('${data.inputUrl}', ${JSON.stringify(data.schemaDetected)})">
-           Generate
-         </button>`
-  }
+  ${schemaSummary}
+  <button class="mini-btn schema-gen"
+    onclick="generateSchema(this)">
+    Generate
+  </button>
 </div>
+
 
       <div class="label">Daftar</div>
       <div class="value">${renderAuthLinks(data.authLinks?.daftar)}</div>
@@ -682,6 +682,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
