@@ -174,14 +174,14 @@ Sitemap: ${origin}/sitemap.xml`;
   }
 }
 
-function generateSchema(url, detected) {
+function generateSchema(btn, url, detected) {
   try {
+    const card = btn.closest(".card");
     const u = new URL(url.startsWith("http") ? url : "https://" + url);
 
     const graph = [];
 
-    const card = event.target.closest(".card");
-
+    /* Extract title + description from card */
     const title =
       card.querySelector(".value")?.textContent?.trim() || u.hostname;
 
@@ -231,27 +231,31 @@ function generateSchema(url, detected) {
 
     const json = JSON.stringify(schema, null, 2);
 
-    // create modal-style output inside card
-    const outputBox = document.createElement("div");
-    outputBox.className = "schema-output";
+    /* Remove existing output if any */
+    card.querySelector(".schema-output")?.remove();
 
-    outputBox.innerHTML = `
+    const box = document.createElement("div");
+    box.className = "schema-output";
+
+    box.innerHTML = `
       <div class="schema-header">
         <strong>Generated Schema</strong>
         <button class="mini-btn" onclick="this.closest('.schema-output').remove()">
           Close
         </button>
       </div>
+
       <textarea readonly class="schema-textarea">${json}</textarea>
-      <button class="mini-btn copy-btn"
-        onclick="copySchema(this)">
+
+      <button class="mini-btn copy-btn" onclick="copySchema(this)">
         Copy Schema
       </button>
     `;
 
-    card.appendChild(outputBox);
+    card.appendChild(box);
 
-  } catch {
+  } catch (err) {
+    console.error(err);
     alert("Failed to generate schema");
   }
 }
@@ -267,6 +271,7 @@ function copySchema(btn) {
   btn.textContent = "Copied!";
   setTimeout(() => btn.textContent = "Copy Schema", 1500);
 }
+
 
 /* ================================
    MAIN RUN
@@ -710,6 +715,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
