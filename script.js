@@ -176,30 +176,25 @@ Sitemap: ${origin}/sitemap.xml`;
 
 function generateSchema(url, detected) {
   try {
-    const card = event?.target?.closest(".card");
-
     const u = new URL(url.startsWith("http") ? url : "https://" + url);
 
-    /* ================================
-       EXTRACT TITLE + DESCRIPTION FROM CARD
-    ================================ */
-    const title =
-      card?.querySelector(".label + .value")?.textContent?.trim() || u.hostname;
-
-    const desc =
-      card?.querySelectorAll(".value")[1]?.textContent?.trim() || "";
-
-    /* ================================
-       BUILD GRAPH
-    ================================ */
     const graph = [];
 
+    const card = event.target.closest(".card");
+
+    const title =
+      card.querySelector(".value")?.textContent?.trim() || u.hostname;
+
+    const description =
+      card.querySelectorAll(".value")[1]?.textContent?.trim() || "";
+
+    /* WebPage */
     graph.push({
       "@type": "WebPage",
       "@id": u.href,
       "url": u.href,
       "name": title,
-      "description": desc,
+      "description": description,
       "inLanguage": "en",
       "isPartOf": {
         "@type": "WebSite",
@@ -236,28 +231,41 @@ function generateSchema(url, detected) {
 
     const json = JSON.stringify(schema, null, 2);
 
-    /* ================================
-       COPY TO CLIPBOARD
-    ================================ */
-    navigator.clipboard.writeText(json);
+    // create modal-style output inside card
+    const outputBox = document.createElement("div");
+    outputBox.className = "schema-output";
 
-    /* ================================
-       FEEDBACK UI
-    ================================ */
-    const btn = event.target;
-    const original = btn.textContent;
+    outputBox.innerHTML = `
+      <div class="schema-header">
+        <strong>Generated Schema</strong>
+        <button class="mini-btn" onclick="this.closest('.schema-output').remove()">
+          Close
+        </button>
+      </div>
+      <textarea readonly class="schema-textarea">${json}</textarea>
+      <button class="mini-btn copy-btn"
+        onclick="copySchema(this)">
+        Copy Schema
+      </button>
+    `;
 
-    btn.textContent = "Copied!";
-    btn.classList.add("success");
-
-    setTimeout(() => {
-      btn.textContent = original;
-      btn.classList.remove("success");
-    }, 1500);
+    card.appendChild(outputBox);
 
   } catch {
     alert("Failed to generate schema");
   }
+}
+
+
+function copySchema(btn) {
+  const textarea = btn.closest(".schema-output")
+    .querySelector("textarea");
+
+  textarea.select();
+  document.execCommand("copy");
+
+  btn.textContent = "Copied!";
+  setTimeout(() => btn.textContent = "Copy Schema", 1500);
 }
 
 /* ================================
@@ -702,6 +710,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
