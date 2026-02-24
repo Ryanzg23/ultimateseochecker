@@ -203,27 +203,28 @@ function generateSchema(btn, url) {
       }
     });
 
-    if (detected?.article) {
-      graph.push({
-        "@type": "Article",
-        "headline": title,
-        "mainEntityOfPage": u.href
-      });
-    }
+    if (detected?.articleSchema) {
+        graph.push({
+          "@type": "Article",
+          "headline": title,
+          "mainEntityOfPage": u.href
+        });
+      }
+      
+      if (detected?.faqSchema) {
+        graph.push({
+          "@type": "FAQPage",
+          "mainEntity": []
+        });
+      }
+      
+      if (detected?.breadcrumbSchema) {
+        graph.push({
+          "@type": "BreadcrumbList",
+          "itemListElement": []
+        });
+      }
 
-    if (detected?.faq) {
-      graph.push({
-        "@type": "FAQPage",
-        "mainEntity": []
-      });
-    }
-
-    if (detected?.breadcrumb) {
-      graph.push({
-        "@type": "BreadcrumbList",
-        "itemListElement": []
-      });
-    }
 
     const schema = {
       "@context": "https://schema.org",
@@ -709,6 +710,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
