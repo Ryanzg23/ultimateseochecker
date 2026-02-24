@@ -305,6 +305,49 @@ function hasKeyword(value, type, href = "") {
   }
 }
 
+/* ================================
+   SCHEMA DETECTION (FAQ / BREADCRUMB / ARTICLE)
+================================ */
+let schemaDetected = {
+  faq: false,
+  breadcrumb: false,
+  article: false
+};
+
+try {
+  const lowerHtml = html.toLowerCase();
+
+  /* FAQ detection */
+  if (
+    /"@type"\s*:\s*"faqpage"/i.test(html) ||
+    lowerHtml.includes("faq") &&
+    (lowerHtml.includes("question") || lowerHtml.includes("answer"))
+  ) {
+    schemaDetected.faq = true;
+  }
+
+  /* Breadcrumb detection */
+  if (
+    /"@type"\s*:\s*"breadcrumblist"/i.test(html) ||
+    lowerHtml.includes("breadcrumb") ||
+    lowerHtml.includes("aria-label=\"breadcrumb\"") ||
+    lowerHtml.includes("itemtype=\"https://schema.org/breadcrumblist\"")
+  ) {
+    schemaDetected.breadcrumb = true;
+  }
+
+  /* Article detection */
+  if (
+    /"@type"\s*:\s*"article"/i.test(html) ||
+    lowerHtml.includes("<article") ||
+    lowerHtml.includes("datepublished") ||
+    lowerHtml.includes("og:type\" content=\"article\"")
+  ) {
+    schemaDetected.article = true;
+  }
+
+} catch {}
+
 
 
 
