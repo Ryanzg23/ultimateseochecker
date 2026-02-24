@@ -174,19 +174,20 @@ Sitemap: ${origin}/sitemap.xml`;
   }
 }
 
-function generateSchema(btn, url, detected) {
+function generateSchema(btn, url) {
   try {
     const card = btn.closest(".card");
+    const detected = JSON.parse(btn.dataset.schema || "{}");
+
     const u = new URL(url.startsWith("http") ? url : "https://" + url);
 
-    const graph = [];
-
-    /* Extract title + description from card */
     const title =
       card.querySelector(".value")?.textContent?.trim() || u.hostname;
 
     const description =
       card.querySelectorAll(".value")[1]?.textContent?.trim() || "";
+
+    const graph = [];
 
     /* WebPage */
     graph.push({
@@ -231,7 +232,6 @@ function generateSchema(btn, url, detected) {
 
     const json = JSON.stringify(schema, null, 2);
 
-    /* Remove existing output if any */
     card.querySelector(".schema-output")?.remove();
 
     const box = document.createElement("div");
@@ -240,9 +240,7 @@ function generateSchema(btn, url, detected) {
     box.innerHTML = `
       <div class="schema-header">
         <strong>Generated Schema</strong>
-        <button class="mini-btn" onclick="this.closest('.schema-output').remove()">
-          Close
-        </button>
+        <button class="mini-btn" onclick="this.closest('.schema-output').remove()">Close</button>
       </div>
 
       <textarea readonly class="schema-textarea">${json}</textarea>
@@ -254,11 +252,12 @@ function generateSchema(btn, url, detected) {
 
     card.appendChild(box);
 
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     alert("Failed to generate schema");
   }
 }
+
 
 
 function copySchema(btn) {
@@ -506,8 +505,11 @@ if (schemaList.length) {
 <div class="label">Schema</div>
 <div class="value">
   ${schemaSummary}
-  <button class="mini-btn schema-gen"
-    onclick="generateSchema(this, '${data.inputUrl}', ${JSON.stringify(data.schemaDetected)})">
+  <button
+    class="mini-btn schema-gen"
+    data-schema='${JSON.stringify(data.schemaDetected || {})}'
+    onclick="generateSchema(this, '${data.inputUrl}')"
+  >
     Generate
   </button>
 </div>
@@ -715,6 +717,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
