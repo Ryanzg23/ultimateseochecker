@@ -502,7 +502,7 @@ if (schemaList.length) {
 <div class="value">
   ${schemaSummary}
   <button class="mini-btn schema-gen"
-    onclick="generateSchema(this)">
+    onclick="generateSchema(this, '${data.inputUrl}', ${JSON.stringify(data.schemaDetected)})">
     Generate
   </button>
 </div>
@@ -710,6 +710,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
