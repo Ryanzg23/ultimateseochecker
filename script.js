@@ -187,12 +187,25 @@ function generateSchema(btn) {
     const graph = [];
 
     /* WebPage (always) */
-    graph.push({
-      "@type": "WebPage",
-      "@id": u.href,
-      "url": u.href,
-      "name": u.hostname
-    });
+    const cardTitle =
+     card.querySelector(".label")?.nextElementSibling?.textContent?.trim() || "";
+   
+   const cardDesc =
+     card.querySelectorAll(".value")[1]?.textContent?.trim() || "";
+   
+   graph.push({
+     "@type": "WebPage",
+     "@id": u.href,
+     "url": u.href,
+     "name": cardTitle || u.hostname,
+     "description": cardDesc || "",
+     "inLanguage": "en",
+     "isPartOf": {
+       "@type": "WebSite",
+       "url": u.origin
+     }
+   });
+
 
     if (detected?.article) {
       graph.push({
@@ -682,6 +695,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
