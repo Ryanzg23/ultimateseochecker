@@ -232,32 +232,24 @@ function generateSchema(btn, url) {
 
     const json = JSON.stringify(schema, null, 2);
 
-    card.querySelector(".schema-output")?.remove();
+    /* COPY TO CLIPBOARD */
+    navigator.clipboard.writeText(json);
 
-    const box = document.createElement("div");
-    box.className = "schema-output";
+    /* BUTTON FEEDBACK */
+    const original = btn.textContent;
+    btn.textContent = "Copied!";
+    btn.disabled = true;
 
-    box.innerHTML = `
-      <div class="schema-header">
-        <strong>Generated Schema</strong>
-        <button class="mini-btn" onclick="this.closest('.schema-output').remove()">Close</button>
-      </div>
-
-      <textarea readonly class="schema-textarea">${json}</textarea>
-
-      <button class="mini-btn copy-btn" onclick="copySchema(this)">
-        Copy Schema
-      </button>
-    `;
-
-    card.appendChild(box);
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.disabled = false;
+    }, 1500);
 
   } catch (e) {
     console.error(e);
     alert("Failed to generate schema");
   }
 }
-
 
 
 function copySchema(btn) {
@@ -717,6 +709,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
