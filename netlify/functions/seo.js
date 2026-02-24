@@ -148,126 +148,125 @@ export async function handler(event) {
 
     const sitemap = await detectSitemap(origin);
 
-/* ================================
-   AUTH LINKS (LOGIN / DAFTAR)
-================================ */
-let authLinks = { daftar: null, login: null };
+    /* ================================
+       SCHEMA DETECTION
+    ================================ */
+    let schemaDetected = {
+      faq: false,
+      breadcrumb: false,
+      article: false
+    };
 
-try {
+    try {
+      const lowerHtml = html.toLowerCase();
 
-  function normalize(str) {
-    return (str || "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase();
-  }
-
-function hasKeyword(value, type, href = "") {
-  if (!value && !href) return false;
-
-  const v = (value || "").toLowerCase();
-  const h = (href || "").toLowerCase();
-
-  if (type === "daftar") {
-    return (
-      v.startsWith("daftar") ||
-      v.includes("register") ||
-      v.includes("signup") ||
-      h.includes("daftar") ||     // ← NEW
-      h.includes("register") ||   // ← NEW
-      h.includes("signup")        // ← NEW
-    );
-  }
-
-  if (type === "login") {
-    return (
-      /\blogin\b/.test(v) ||
-      v.includes("masuk") ||
-      v.includes("signin") ||
-      v.includes("log-in") ||
-      h.includes("login") ||      // ← NEW
-      h.includes("signin") ||
-      h.includes("masuk")
-    );
-  }
-
-  return false;
-}
-
-  function extractAuth(type) {
-    const found = new Set();
-
-    const anchorRegex = /<a([^>]*)href=["']([^"']+)["']([^>]*)>([\s\S]*?)<\/a>/gi;
-    let m;
-
-    while ((m = anchorRegex.exec(html)) !== null) {
-      const before = m[1] || "";
-      const href = m[2];
-      const after = m[3] || "";
-      const inner = m[4] || "";
-
-      const attrs = (before + " " + after).toLowerCase();
-
-      const text = normalize(inner);
-
-      const classMatch = attrs.match(/class=["']([^"']+)["']/i);
-      const idMatch = attrs.match(/id=["']([^"']+)["']/i);
-
-      const classVal = classMatch ? classMatch[1] : "";
-      const idVal = idMatch ? idMatch[1] : "";
-
+      // FAQ
       if (
-        hasKeyword(text, type, href) ||
-        hasKeyword(classVal, type, href) ||
-        hasKeyword(idVal, type, href)
+        /"@type"\s*:\s*"faqpage"/i.test(html) ||
+        (lowerHtml.includes("faq") &&
+         (lowerHtml.includes("question") || lowerHtml.includes("answer")))
       ) {
-        try {
-          const url = new URL(href, finalUrl).href;
-          found.add(url);
-        } catch {}
+        schemaDetected.faq = true;
       }
-    }
 
-    // standalone buttons with onclick
-    const buttonRegex = /<button([^>]*)>([\s\S]*?)<\/button>/gi;
-
-    while ((m = buttonRegex.exec(html)) !== null) {
-      const attrs = (m[1] || "").toLowerCase();
-      const inner = normalize(m[2] || "");
-
-      const classMatch = attrs.match(/class=["']([^"']+)["']/i);
-      const idMatch = attrs.match(/id=["']([^"']+)["']/i);
-
-      const classVal = classMatch ? classMatch[1] : "";
-      const idVal = idMatch ? idMatch[1] : "";
-
+      // Breadcrumb
       if (
-        hasKeyword(inner, type) ||
-        hasKeyword(classVal, type) ||
-        hasKeyword(idVal, type)
+        /"@type"\s*:\s*"breadcrumblist"/i.test(html) ||
+        lowerHtml.includes("breadcrumb") ||
+        lowerHtml.includes("aria-label=\"breadcrumb\"") ||
+        lowerHtml.includes("itemtype=\"https://schema.org/breadcrumblist\"")
       ) {
-        const onclickMatch = m[0].match(/location\.href=['"]([^'"]+)['"]/i);
-        if (onclickMatch) {
-          try {
-            const url = new URL(onclickMatch[1], finalUrl).href;
-            found.add(url);
-          } catch {}
+        schemaDetected.breadcrumb = true;
+      }
+
+      // Article
+      if (
+        /"@type"\s*:\s*"article"/i.test(html) ||
+        lowerHtml.includes("<article") ||
+        lowerHtml.includes("datepublished") ||
+        lowerHtml.includes("og:type\" content=\"article\"")
+      ) {
+        schemaDetected.article = true;
+      }
+
+    } catch {}
+
+    /* ================================
+       AUTH LINKS (LOGIN / DAFTAR)
+    ================================ */
+    let authLinks = { daftar: null, login: null };
+
+    try {
+      function extractAuthLinks(labels) {
+        const targets = labels.map(t => t.toLowerCase());
+        const found = new Set();
+
+        const linkRegex = /<a[^>]*href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gis;
+        const buttonRegex = /<button[^>]*>(.*?)<\/button>/gis;
+
+        let match;
+
+        function isMatch(text) {
+          text = text.toLowerCase().trim();
+
+          return targets.some(t => {
+            if (t === "daftar") return text.startsWith("daftar");
+            if (t === "login") return /\blogin\b/.test(text);
+            if (t === "masuk") return text === "masuk";
+            return text.includes(t);
+          });
         }
+
+        while ((match = linkRegex.exec(html)) !== null) {
+          const href = match[1];
+          const text = match[2].replace(/<[^>]+>/g, "").trim();
+
+          if (isMatch(text)) {
+            try {
+              const url = new URL(href, finalUrl).href;
+              found.add(url);
+            } catch {}
+          }
+        }
+
+        while ((match = buttonRegex.exec(html)) !== null) {
+          const inner = match[1].replace(/<[^>]+>/g, "").trim();
+
+          if (isMatch(inner)) {
+            const onclickMatch = match[0].match(/location\.href=['"]([^'"]+)['"]/i);
+            if (onclickMatch) {
+              try {
+                const url = new URL(onclickMatch[1], finalUrl).href;
+                found.add(url);
+              } catch {}
+            }
+          }
+        }
+
+        return found.size ? Array.from(found) : null;
       }
+
+      authLinks = {
+        daftar: extractAuthLinks([
+          "daftar",
+          "register",
+          "sign up",
+          "signup",
+          "join",
+          "main demo"
+        ]),
+        login: extractAuthLinks([
+          "login",
+          "masuk",
+          "sign in",
+          "signin",
+          "log in"
+        ])
+      };
+
+    } catch {
+      authLinks = { daftar: null, login: null };
     }
-
-    return found.size ? Array.from(found) : null;
-  }
-
-  authLinks = {
-    daftar: extractAuth("daftar"),
-    login: extractAuth("login")
-  };
-
-} catch {
-  authLinks = { daftar: null, login: null };
-}
 
     /* ================================
        RESPONSE
@@ -290,7 +289,8 @@ function hasKeyword(value, type, href = "") {
         robotsMeta,
         robots,
         sitemap,
-        authLinks
+        authLinks,
+        schemaDetected
       })
     };
 
@@ -304,50 +304,3 @@ function hasKeyword(value, type, href = "") {
     };
   }
 }
-
-/* ================================
-   SCHEMA DETECTION (FAQ / BREADCRUMB / ARTICLE)
-================================ */
-let schemaDetected = {
-  faq: false,
-  breadcrumb: false,
-  article: false
-};
-
-try {
-  const lowerHtml = html.toLowerCase();
-
-  /* FAQ detection */
-  if (
-    /"@type"\s*:\s*"faqpage"/i.test(html) ||
-    lowerHtml.includes("faq") &&
-    (lowerHtml.includes("question") || lowerHtml.includes("answer"))
-  ) {
-    schemaDetected.faq = true;
-  }
-
-  /* Breadcrumb detection */
-  if (
-    /"@type"\s*:\s*"breadcrumblist"/i.test(html) ||
-    lowerHtml.includes("breadcrumb") ||
-    lowerHtml.includes("aria-label=\"breadcrumb\"") ||
-    lowerHtml.includes("itemtype=\"https://schema.org/breadcrumblist\"")
-  ) {
-    schemaDetected.breadcrumb = true;
-  }
-
-  /* Article detection */
-  if (
-    /"@type"\s*:\s*"article"/i.test(html) ||
-    lowerHtml.includes("<article") ||
-    lowerHtml.includes("datepublished") ||
-    lowerHtml.includes("og:type\" content=\"article\"")
-  ) {
-    schemaDetected.article = true;
-  }
-
-} catch {}
-
-
-
-
