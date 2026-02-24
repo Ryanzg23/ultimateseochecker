@@ -831,6 +831,29 @@ button.small {
 }
 
 
+.schema-output {
+  margin-top: 15px;
+  padding: 15px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.schema-textarea {
+  width: 100%;
+  height: 220px;
+  margin-top: 10px;
+  background: #111;
+  color: #9eefff;
+  font-family: monospace;
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 6px;
+}
+
+.copy-btn {
+  margin-top: 10px;
+}
 
 
 
