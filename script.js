@@ -174,43 +174,43 @@ Sitemap: ${origin}/sitemap.xml`;
   }
 }
 
-function generateSchema(btn) {
+function generateSchema(url, detected) {
   try {
-    const card = btn.closest(".card");
-    const detected = JSON.parse(card.dataset.schemaDetected || "{}");
+    const card = event?.target?.closest(".card");
 
-    const linkEl = card.querySelector(".card-url");
-    const url = linkEl ? linkEl.href : "";
+    const u = new URL(url.startsWith("http") ? url : "https://" + url);
 
-    const u = new URL(url);
+    /* ================================
+       EXTRACT TITLE + DESCRIPTION FROM CARD
+    ================================ */
+    const title =
+      card?.querySelector(".label + .value")?.textContent?.trim() || u.hostname;
 
+    const desc =
+      card?.querySelectorAll(".value")[1]?.textContent?.trim() || "";
+
+    /* ================================
+       BUILD GRAPH
+    ================================ */
     const graph = [];
 
-    /* WebPage (always) */
-    const cardTitle =
-     card.querySelector(".label")?.nextElementSibling?.textContent?.trim() || "";
-   
-   const cardDesc =
-     card.querySelectorAll(".value")[1]?.textContent?.trim() || "";
-   
-   graph.push({
-     "@type": "WebPage",
-     "@id": u.href,
-     "url": u.href,
-     "name": cardTitle || u.hostname,
-     "description": cardDesc || "",
-     "inLanguage": "en",
-     "isPartOf": {
-       "@type": "WebSite",
-       "url": u.origin
-     }
-   });
-
+    graph.push({
+      "@type": "WebPage",
+      "@id": u.href,
+      "url": u.href,
+      "name": title,
+      "description": desc,
+      "inLanguage": "en",
+      "isPartOf": {
+        "@type": "WebSite",
+        "url": u.origin
+      }
+    });
 
     if (detected?.article) {
       graph.push({
         "@type": "Article",
-        "headline": u.hostname,
+        "headline": title,
         "mainEntityOfPage": u.href
       });
     }
@@ -234,24 +234,31 @@ function generateSchema(btn) {
       "@graph": graph
     };
 
-    const blob = new Blob(
-      [JSON.stringify(schema, null, 2)],
-      { type: "application/ld+json" }
-    );
+    const json = JSON.stringify(schema, null, 2);
 
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = u.hostname.replace(/^www\./, "") + "-schema.json";
+    /* ================================
+       COPY TO CLIPBOARD
+    ================================ */
+    navigator.clipboard.writeText(json);
 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    /* ================================
+       FEEDBACK UI
+    ================================ */
+    const btn = event.target;
+    const original = btn.textContent;
+
+    btn.textContent = "Copied!";
+    btn.classList.add("success");
+
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove("success");
+    }, 1500);
 
   } catch {
     alert("Failed to generate schema");
   }
 }
-
 
 /* ================================
    MAIN RUN
@@ -695,6 +702,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
