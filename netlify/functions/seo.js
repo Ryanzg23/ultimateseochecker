@@ -64,7 +64,6 @@ export async function handler(event) {
       }
     }
 
-    /* ---------- CANONICAL REDIRECT CHECK ---------- */
 /* ---------- CANONICAL REDIRECT CHECK ---------- */
 let canonicalRedirect = null;
 
@@ -229,13 +228,35 @@ if (canonical) {
 
     } catch {}
 
+
+/* ================================
+   AUTH LINK STATUS CHECK
+================================ */
+
+async function checkLinkStatus(url) {
+  try {
+    const res = await fetch(url, {
+      method: "HEAD",
+      redirect: "manual",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+      }
+    });
+
+    return res.status;
+
+  } catch {
+    return 0; // unreachable
+  }
+}
+
     /* ================================
        AUTH LINKS (LOGIN / DAFTAR)
     ================================ */
     let authLinks = { daftar: null, login: null };
 
     try {
-      function extractAuthLinks(labels) {
+      async function extractAuthLinks(labels) {
         const targets = labels.map(t => t.toLowerCase());
         const found = new Set();
 
@@ -281,11 +302,21 @@ if (canonical) {
           }
         }
 
-        return found.size ? Array.from(found) : null;
+        if (!found.size) return null;
+        
+        const urls = Array.from(found).slice(0, 3); // limit checks
+        const results = [];
+        
+        for (const u of urls) {
+          const status = await checkLinkStatus(u);
+          results.push({ url: u, status });
+        }
+        
+        return results;
       }
 
       authLinks = {
-        daftar: extractAuthLinks([
+        daftar: await extractAuthLinks([
           "daftar",
           "register",
           "sign up",
@@ -293,7 +324,7 @@ if (canonical) {
           "join",
           "main demo"
         ]),
-        login: extractAuthLinks([
+        login: await extractAuthLinks([
           "login",
           "masuk",
           "sign in",
@@ -343,5 +374,6 @@ if (canonical) {
     };
   }
 }
+
 
 
