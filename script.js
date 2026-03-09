@@ -559,19 +559,36 @@ if (schemaList.length) {
 function renderAuthLinks(list) {
   if (!list || !list.length) return "Not detected";
 
-  function badge(status) {
-    if (status === 200) return `<span class="badge green">200</span>`;
-    if (status === 301 || status === 302) return `<span class="badge blue">${status}</span>`;
-    if (status === 404) return `<span class="badge red">404</span>`;
-    if (status === 0) return `<span class="badge red">Error</span>`;
-    return `<span class="badge">${status}</span>`;
-  }
+   function badge(item) {
+   
+     const status = item.status;
+   
+     let html = "";
+   
+     if (status === 200) html = `<span class="badge green">200</span>`;
+     else if (status === 404) html = `<span class="badge red">404</span>`;
+     else if (status === 0) html = `<span class="badge red">Error</span>`;
+     else html = `<span class="badge">${status}</span>`;
+   
+     if (item.redirected) {
+       html = `
+         <span class="badge green has-tooltip">
+           200
+           <span class="tooltip">
+             Redirect → ${item.finalUrl}
+           </span>
+         </span>
+       `;
+     }
+   
+     return html;
+   }
 
   if (list.length === 1) {
     return `
       <div>
         <a href="${list[0].url}" target="_blank">${list[0].url}</a>
-        ${badge(list[0].status)}
+        ${badge(list[0])}
       </div>
     `;
   }
@@ -757,6 +774,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
