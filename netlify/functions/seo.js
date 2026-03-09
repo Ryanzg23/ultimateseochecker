@@ -237,7 +237,7 @@ async function checkLinkStatus(url) {
   try {
     const res = await fetch(url, {
       method: "HEAD",
-      redirect: "manual",
+      redirect: "follow",
       headers: {
         "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
       }
@@ -246,7 +246,7 @@ async function checkLinkStatus(url) {
     return res.status;
 
   } catch {
-    return 0; // unreachable
+    return 0;
   }
 }
 
@@ -374,6 +374,7 @@ async function checkLinkStatus(url) {
     };
   }
 }
+
 
 
 
