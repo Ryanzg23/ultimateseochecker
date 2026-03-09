@@ -455,13 +455,18 @@ if (schemaList.length) {
               ${data.canonical}
               ${
                 data.canonicalRedirect?.redirected
-                  ? `<span class="note red">
-                      (301 redirect${
+                  ? `
+                    <span class="note red has-tooltip">
+                      (301 → ${
                         data.canonicalRedirect.crossDomain
-                          ? " → another domain"
-                          : ""
+                          ? "another domain"
+                          : "redirect"
                       })
-                    </span>`
+                      <span class="tooltip">
+                        301 → ${data.canonicalRedirect.finalUrl}
+                      </span>
+                    </span>
+                  `
                   : ""
               }
             `
@@ -729,6 +734,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
