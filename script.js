@@ -559,23 +559,46 @@ if (schemaList.length) {
 function renderAuthLinks(list) {
   if (!list || !list.length) return "Not detected";
 
+  function badge(status) {
+    if (status === 200) return `<span class="badge green">200</span>`;
+    if (status === 301 || status === 302) return `<span class="badge blue">${status}</span>`;
+    if (status === 404) return `<span class="badge red">404</span>`;
+    if (status === 0) return `<span class="badge red">Error</span>`;
+    return `<span class="badge">${status}</span>`;
+  }
+
   if (list.length === 1) {
-    return `<a href="${list[0]}" target="_blank">${list[0]}</a>`;
+    return `
+      <div>
+        <a href="${list[0].url}" target="_blank">${list[0].url}</a>
+        ${badge(list[0].status)}
+      </div>
+    `;
   }
 
   const id = "auth_" + Math.random().toString(36).slice(2);
 
   const extraLinks = list
     .slice(1)
-    .map(u => `<div><a href="${u}" target="_blank">${u}</a></div>`)
+    .map(item => `
+      <div>
+        <a href="${item.url}" target="_blank">${item.url}</a>
+        ${badge(item.status)}
+      </div>
+    `)
     .join("");
 
   return `
     <div class="auth-links">
-      <div><a href="${list[0]}" target="_blank">${list[0]}</a></div>
+      <div>
+        <a href="${list[0].url}" target="_blank">${list[0].url}</a>
+        ${badge(list[0].status)}
+      </div>
+
       <div class="auth-toggle muted" onclick="expandAuth('${id}', this)">
         +${list.length - 1} more
       </div>
+
       <div id="${id}" class="auth-extra hidden">
         ${extraLinks}
         <div class="auth-toggle muted" onclick="collapseAuth('${id}')">
@@ -734,6 +757,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
