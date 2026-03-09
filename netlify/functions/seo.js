@@ -64,6 +64,36 @@ export async function handler(event) {
       }
     }
 
+    /* ---------- CANONICAL REDIRECT CHECK ---------- */
+    let canonicalRedirect = null;
+    
+    if (canonical) {
+      try {
+        const res = await fetch(canonical, {
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+          }
+        });
+    
+        if (res.url !== canonical) {
+          const finalCanonical = new URL(res.url);
+          const originalCanonical = new URL(canonical);
+    
+          const redirectDomain =
+            finalCanonical.hostname.replace(/^www\./, "") !==
+            originalCanonical.hostname.replace(/^www\./, "");
+    
+          canonicalRedirect = {
+            redirected: true,
+            finalUrl: res.url,
+            crossDomain: redirectDomain
+          };
+        }
+    
+      } catch {}
+    }
+
     /* ---------- AMP ---------- */
     const amphtml =
       getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i) ||
@@ -290,7 +320,8 @@ export async function handler(event) {
         robots,
         sitemap,
         authLinks,
-        schemaDetected
+        schemaDetected,
+        canonicalRedirect
       })
     };
 
@@ -304,3 +335,4 @@ export async function handler(event) {
     };
   }
 }
+
