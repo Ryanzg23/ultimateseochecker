@@ -448,7 +448,26 @@ if (schemaList.length) {
       </div>
 
       <div class="label">Canonical</div>
-      <div class="value">${data.canonical || "—"}</div>
+      <div class="value">
+        ${
+          data.canonical
+            ? `
+              ${data.canonical}
+              ${
+                data.canonicalRedirect?.redirected
+                  ? `<span class="note red">
+                      (301 redirect${
+                        data.canonicalRedirect.crossDomain
+                          ? " → another domain"
+                          : ""
+                      })
+                    </span>`
+                  : ""
+              }
+            `
+            : "—"
+        }
+      </div>
 
       <div class="label">AMP HTML</div>
       <div class="value">
@@ -710,6 +729,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
