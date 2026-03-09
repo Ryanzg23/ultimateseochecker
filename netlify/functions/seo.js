@@ -65,34 +65,42 @@ export async function handler(event) {
     }
 
     /* ---------- CANONICAL REDIRECT CHECK ---------- */
-    let canonicalRedirect = null;
-    
-    if (canonical) {
-      try {
-        const res = await fetch(canonical, {
-          redirect: "follow",
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
-          }
-        });
-    
-        if (res.url !== canonical) {
-          const finalCanonical = new URL(res.url);
-          const originalCanonical = new URL(canonical);
-    
-          const redirectDomain =
-            finalCanonical.hostname.replace(/^www\./, "") !==
-            originalCanonical.hostname.replace(/^www\./, "");
-    
-          canonicalRedirect = {
-            redirected: true,
-            finalUrl: res.url,
-            crossDomain: redirectDomain
-          };
-        }
-    
-      } catch {}
+/* ---------- CANONICAL REDIRECT CHECK ---------- */
+let canonicalRedirect = null;
+
+if (canonical) {
+  try {
+    const res = await fetch(canonical, {
+      redirect: "manual",
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+      }
+    });
+
+    if ([301,302,307,308].includes(res.status)) {
+
+      const location = res.headers.get("location");
+
+      if (location) {
+
+        const finalCanonical = new URL(location, canonical);
+        const originalCanonical = new URL(canonical);
+
+        const redirectDomain =
+          finalCanonical.hostname.replace(/^www\./,"") !==
+          originalCanonical.hostname.replace(/^www\./,"");
+
+        canonicalRedirect = {
+          redirected: true,
+          finalUrl: finalCanonical.href,
+          crossDomain: redirectDomain
+        };
+      }
     }
+
+  } catch {}
+}
+
 
     /* ---------- AMP ---------- */
     const amphtml =
@@ -335,4 +343,5 @@ export async function handler(event) {
     };
   }
 }
+
 
