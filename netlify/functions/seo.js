@@ -237,19 +237,50 @@ async function checkLinkStatus(url) {
   try {
     const res = await fetch(url, {
       method: "HEAD",
-      redirect: "follow",
+      redirect: "manual",
       headers: {
         "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
       }
     });
 
-    return res.status;
+    if ([301,302,307,308].includes(res.status)) {
+
+      const location = res.headers.get("location");
+
+      if (location) {
+
+        const finalUrl = new URL(location, url).href;
+
+        const finalRes = await fetch(finalUrl, {
+          method: "HEAD",
+          redirect: "follow",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
+          }
+        });
+
+        return {
+          status: finalRes.status,
+          redirected: true,
+          finalUrl
+        };
+      }
+    }
+
+    return {
+      status: res.status,
+      redirected: false,
+      finalUrl: url
+    };
 
   } catch {
-    return 0;
+    return {
+      status: 0,
+      redirected: false,
+      finalUrl: url
+    };
   }
 }
-
     /* ================================
        AUTH LINKS (LOGIN / DAFTAR)
     ================================ */
@@ -309,7 +340,14 @@ async function checkLinkStatus(url) {
         
         for (const u of urls) {
           const status = await checkLinkStatus(u);
-          results.push({ url: u, status });
+          const check = await checkLinkStatus(u);
+
+          results.push({
+            url: u,
+            status: check.status,
+            redirected: check.redirected,
+            finalUrl: check.finalUrl
+          });
         }
         
         return results;
@@ -374,6 +412,7 @@ async function checkLinkStatus(url) {
     };
   }
 }
+
 
 
 
