@@ -457,11 +457,11 @@ if (schemaList.length) {
                 data.canonicalRedirect?.redirected
                   ? `
                     <span class="note red has-tooltip">
-                      (301 → ${
+                      301 → ${
                         data.canonicalRedirect.crossDomain
                           ? "another domain"
                           : "redirect"
-                      })
+                      }
                       <span class="tooltip">
                         301 → ${data.canonicalRedirect.finalUrl}
                       </span>
@@ -774,6 +774,7 @@ function toggleTheme() {
   const btn = document.getElementById("themeToggle");
   if (btn) btn.textContent = saved === "dark" ? "🌙" : "☀️";
 })();
+
 
 
 
