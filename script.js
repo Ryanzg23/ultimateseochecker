@@ -856,20 +856,20 @@ card.innerHTML = `
       ? `<span class="badge green">404 page detected</span>`
       : `<span class="badge red">No 404 page</span>`
   }
-
-  <button class="mini-btn"
-    onclick="generate404Page('${data.url}')">
-    Generate 404.html
-  </button>
 </div>
 
 <div class="label">404.html File</div>
-<div class="value">
+<div class="value file-row">
   ${
     data.html404Exists
       ? `<span class="badge blue">Found but not configured</span>`
       : `<span class="badge red">Not found</span>`
   }
+
+  <button class="mini-btn generate404"
+    onclick="generate404Page('${data.url}')">
+    Generate 404.html
+  </button>
 </div>
 
 <div class="label">301 Redirect to Homepage</div>
@@ -882,11 +882,13 @@ card.innerHTML = `
 </div>
 
 <div class="label">.htaccess Fix</div>
-<div class="value">
-  <code>${htaccessCode}</code>
-  <button class="mini-btn"
-    onclick="copyHtaccess()">
-    Copy Code
+
+<div class="code-box">
+  <pre><code>${htaccessCode}</code></pre>
+
+  <button class="copy-code-btn"
+    onclick="copyHtaccess(this)">
+    Copy
   </button>
 </div>
 `;
@@ -902,13 +904,17 @@ card.innerHTML = `
 
 }
 
-function copyHtaccess() {
+function copyHtaccess(btn) {
 
-  const code = `ErrorDocument 404 /404.html`;
+const code = `ErrorDocument 404 /404.html`;
 
-  navigator.clipboard.writeText(code);
+navigator.clipboard.writeText(code);
 
-  alert("Copied .htaccess code");
+btn.textContent = "Copied";
+
+setTimeout(() => {
+  btn.textContent = "Copy";
+}, 1500);
 
 }
 
@@ -1002,6 +1008,7 @@ link.click();
 link.remove();
 
 }
+
 
 
 
