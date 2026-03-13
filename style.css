@@ -916,6 +916,15 @@ color:#3b82f6;
 border-color:rgba(59,130,246,0.35);
 }
 
+.badge-link{
+text-decoration:none;
+cursor:pointer;
+transition:opacity .15s;
+}
+
+.badge-link:hover{
+opacity:.8;
+}
 
 
 
