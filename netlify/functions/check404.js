@@ -92,26 +92,43 @@ export async function handler(event) {
 
     }
 
-    /* ==============================
-       CHECK 404.HTML FILE
-    ============================== */
+   /* ==============================
+   CHECK 404.HTML FILE
+============================== */
 
-    let html404Exists = false;
+let html404Exists = false;
+let html404RedirectHome = false;
 
-    try {
+try {
 
-      const resFile = await fetch(origin + "/404.html", {
-        redirect: "follow",
-        headers: {
-          "User-Agent": "Mozilla/5.0 (404 Checker)"
-        }
-      });
+  const resFile = await fetch(origin + "/404.html", {
+    redirect: "manual",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (404 Checker)"
+    }
+  });
 
-      if (resFile.status === 200) {
-        html404Exists = true;
+  if (resFile.status === 200) {
+    html404Exists = true;
+  }
+
+  if ([301,302,307,308].includes(resFile.status)) {
+
+    const location = resFile.headers.get("location");
+
+    if (location) {
+
+      const final = new URL(location, origin);
+
+      if (final.pathname === "/") {
+        html404RedirectHome = true;
       }
 
-    } catch {}
+    }
+
+  }
+
+} catch {}
 
     /* ==============================
        RESPONSE
