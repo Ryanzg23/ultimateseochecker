@@ -297,6 +297,44 @@ async function run() {
   setLoading(false);
 }
 
+
+async function run404Check() {
+
+  const domains = document.getElementById("domains").value
+    .split("\n")
+    .map(d => d.trim())
+    .filter(Boolean);
+
+  if (!domains.length) return;
+
+  setLoading(true);
+
+  document.getElementById("results").innerHTML = "";
+  initProgress(domains.length);
+
+  let completed = 0;
+  const queue = [...domains];
+
+  const workers = Array.from({ length: CONCURRENCY }, async () => {
+
+    while (queue.length) {
+
+      const domain = queue.shift();
+
+      await process404Domain(domain);
+
+      completed++;
+
+      updateProgress(completed, domains.length);
+    }
+
+  });
+
+  await Promise.all(workers);
+
+  setLoading(false);
+}
+
 /* ================================
    PROCESS DOMAIN
 ================================ */
@@ -776,8 +814,194 @@ function toggleTheme() {
 })();
 
 
+async function process404Domain(domain) {
+
+  const results = document.getElementById("results");
+
+  const card = document.createElement("div");
+  card.className = "card";
+
+  card.innerHTML = `
+    <div class="card-header">
+      <h3>${domain}</h3>
+      <div class="card-actions">
+        <span class="badge blue">CHECKING</span>
+      </div>
+    </div>
+    <div class="muted">Checking 404 behaviour...</div>
+  `;
+
+  results.appendChild(card);
+
+  try {
+
+    const res = await fetch(`/.netlify/functions/check404?url=${encodeURIComponent(domain)}`);
+    const data = await res.json();
+
+const htaccessCode = `ErrorDocument 404 /404.html`;
+
+card.innerHTML = `
+<div class="card-header">
+  <h3>
+    <a href="${data.url}" target="_blank" class="card-url">
+      ${data.url}
+    </a>
+  </h3>
+</div>
+
+<div class="label">404 Page</div>
+<div class="value">
+  ${
+    data.has404
+      ? `<span class="badge green">404 page detected</span>`
+      : `<span class="badge red">No 404 page</span>`
+  }
+
+  <button class="mini-btn"
+    onclick="generate404Page('${data.url}')">
+    Generate 404.html
+  </button>
+</div>
+
+<div class="label">404.html File</div>
+<div class="value">
+  ${
+    data.html404Exists
+      ? `<span class="badge blue">Found but not configured</span>`
+      : `<span class="badge red">Not found</span>`
+  }
+</div>
+
+<div class="label">301 Redirect to Homepage</div>
+<div class="value">
+  ${
+    data.redirectHome
+      ? `<span class="badge red">Detected</span>`
+      : `<span class="badge green">Not detected</span>`
+  }
+</div>
+
+<div class="label">.htaccess Fix</div>
+<div class="value">
+  <code>${htaccessCode}</code>
+  <button class="mini-btn"
+    onclick="copyHtaccess()">
+    Copy Code
+  </button>
+</div>
+`;
+
+  } catch {
+
+    card.innerHTML = `
+      <div class="issue-pill danger">
+        Domain not reachable
+      </div>
+    `;
+  }
+
+}
+
+function copyHtaccess() {
+
+  const code = `ErrorDocument 404 /404.html`;
+
+  navigator.clipboard.writeText(code);
+
+  alert("Copied .htaccess code");
+
+}
 
 
+function generate404Page() {
+
+const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>404 Page</title>
+<style>
+body{
+background:#000;
+color:#3e3e3e;
+font-family:'Open Sans',sans-serif;
+max-height:700px;
+overflow:hidden;
+}
+.c{
+text-align:center;
+display:block;
+position:relative;
+width:80%;
+margin:100px auto;
+}
+._404{
+font-size:220px;
+position:relative;
+display:inline-block;
+z-index:2;
+height:250px;
+letter-spacing:15px;
+}
+._1{
+text-align:center;
+display:block;
+position:relative;
+letter-spacing:12px;
+font-size:4em;
+line-height:80%;
+}
+._2{
+text-align:center;
+display:block;
+position:relative;
+font-size:20px;
+}
+hr{
+padding:0;
+border:none;
+border-top:5px solid #3e3e3e;
+color:#3e3e3e;
+text-align:center;
+margin:0 auto;
+width:420px;
+height:10px;
+z-index:-10;
+}
+hr:after{
+content:"\\2022";
+display:inline-block;
+position:relative;
+top:-0.75em;
+font-size:2em;
+padding:0 0.2em;
+background:#000;
+}
+</style>
+</head>
+
+<body>
+<div class='c'>
+<div class='_404'>404</div>
+<hr><br>
+<div class='_1'>THE PAGE</div><br>
+<div class='_2'>WAS NOT FOUND</div><br>
+</div>
+</body>
+</html>`;
+
+const blob = new Blob([html], { type: "text/html" });
+
+const link = document.createElement("a");
+
+link.href = URL.createObjectURL(blob);
+link.download = "404.html";
+
+document.body.appendChild(link);
+link.click();
+link.remove();
+
+}
 
 
 
