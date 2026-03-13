@@ -851,25 +851,37 @@ card.innerHTML = `
 
 <div class="label">404 Page</div>
 <div class="value">
-  ${
-    data.has404
-      ? `<span class="badge green">404 page detected</span>`
-      : `<span class="badge red">No 404 page</span>`
-  }
+
+${
+data.has404
+? `<a href="${data.url}/this-page-should-not-exist-404-test"
+     target="_blank"
+     class="badge green badge-link">
+     404 page detected
+   </a>`
+: `<span class="badge red">No 404 page</span>`
+}
+
 </div>
 
 <div class="label">404.html File</div>
 <div class="value file-row">
-  ${
-    data.html404Exists
-      ? `<span class="badge blue">Found but not configured</span>`
-      : `<span class="badge red">Not found</span>`
-  }
 
-  <button class="mini-btn generate404"
-    onclick="generate404Page('${data.url}')">
-    Generate 404.html
-  </button>
+${
+data.html404Exists
+? `<a href="${data.url}/404.html"
+     target="_blank"
+     class="badge blue badge-link">
+     404.html detected
+   </a>`
+: `<span class="badge red">Not found</span>`
+}
+
+<button class="mini-btn generate404"
+onclick="generate404Page('${data.url}')">
+Generate 404.html
+</button>
+
 </div>
 
 <div class="label">301 Redirect to Homepage</div>
@@ -1008,6 +1020,7 @@ link.click();
 link.remove();
 
 }
+
 
 
 
