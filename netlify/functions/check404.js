@@ -9,8 +9,6 @@ export async function handler(event) {
     };
   }
 
-  /* ensure protocol */
-
   if (!/^https?:\/\//i.test(url)) {
     url = "https://" + url;
   }
@@ -19,15 +17,7 @@ export async function handler(event) {
 
     const origin = new URL(url).origin;
 
-    /* ==============================
-       CREATE FAKE PAGE
-    ============================== */
-
-    const fake404 = origin + "/this-page-should-not-exist-404-test";
-
-    /* ==============================
-       REQUEST FAKE PAGE
-    ============================== */
+    const fake404 = origin + "/this-page-should-not-exist-404-test-983475";
 
     const res404 = await fetch(fake404, {
       redirect: "manual",
@@ -37,9 +27,10 @@ export async function handler(event) {
     });
 
     const text = await res404.text();
+    const lower = text.toLowerCase();
 
     /* ==============================
-       CHECK HOMEPAGE REDIRECT
+       HOMEPAGE REDIRECT CHECK
     ============================== */
 
     let redirectHome = false;
@@ -57,10 +48,11 @@ export async function handler(event) {
         }
 
       }
+
     }
 
     /* ==============================
-       VALID 404 DETECTION
+       PROPER 404 DETECTION
     ============================== */
 
     let has404 = false;
@@ -70,14 +62,25 @@ export async function handler(event) {
     }
 
     /* ==============================
+       APACHE DEFAULT 404
+    ============================== */
+
+    let apache404 = false;
+
+    if (
+      lower.includes("the requested url was not found on this server") ||
+      lower.includes("additionally, a 404 not found error was encountered")
+    ) {
+      apache404 = true;
+    }
+
+    /* ==============================
        SOFT 404 DETECTION
     ============================== */
 
     let soft404 = false;
 
     if (res404.status === 200) {
-
-      const lower = text.toLowerCase();
 
       if (
         lower.includes("not found") ||
@@ -90,7 +93,7 @@ export async function handler(event) {
     }
 
     /* ==============================
-       CHECK IF 404.HTML EXISTS
+       CHECK 404.HTML FILE
     ============================== */
 
     let html404Exists = false;
@@ -123,6 +126,7 @@ export async function handler(event) {
       body: JSON.stringify({
         url: origin,
         has404,
+        apache404,
         soft404,
         redirectHome,
         html404Exists,
