@@ -242,10 +242,6 @@ button.secondary:hover:not(:disabled) {
   color: var(--text);
 }
 
-.hidden {
-  display: none;
-}
-
 /* ================================
    RESULTS GRID
 ================================ */
@@ -467,10 +463,6 @@ button.small {
   gap: 8px;
 }
 
-.hidden {
-  display: none;
-}
-
 /* ================================
    SITE PREVIEW PAGE
 ================================ */
@@ -585,10 +577,6 @@ button.small {
 
 .open-site-btn:hover {
   background: #1d4ed8;
-}
-
-.hidden {
-  display: none;
 }
 
 .issue-pill {
@@ -829,6 +817,7 @@ button.small {
   padding: 3px 8px;
   border-radius: 20px;
 }
+
 
 
 
