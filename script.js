@@ -849,31 +849,27 @@ card.innerHTML = `
   </h3>
 </div>
 
-let badge = "";
-
-if (data.apache404) {
-  badge = `<span class="badge blue">Apache 404 page detected</span>`;
-}
-else if (data.has404) {
-  badge = `<a href="${data.testUrl}"
-              target="_blank"
-              class="badge green badge-link">
-              404 page detected
-           </a>`;
-}
-else if (data.soft404) {
-  badge = `<span class="badge yellow">Soft 404 detected</span>`;
-}
-else {
-  badge = `<span class="badge red">No 404 page</span>`;
-}
-
-card.innerHTML += `
 <div class="label">404 Page</div>
 <div class="value">
-${badge}
+
+${
+data.apache404
+? `<span class="badge blue">Apache 404 page detected</span>`
+
+: data.has404
+? `<a href="${data.testUrl}"
+     target="_blank"
+     class="badge green badge-link">
+     404 page detected
+   </a>`
+
+: data.soft404
+? `<span class="badge yellow">Soft 404 detected</span>`
+
+: `<span class="badge red">No 404 page</span>`
+}
+
 </div>
-`;
 
 <div class="label">404.html File</div>
 <div class="value file-row">
@@ -1031,6 +1027,7 @@ link.click();
 link.remove();
 
 }
+
 
 
 
