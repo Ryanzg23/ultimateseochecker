@@ -879,6 +879,44 @@ background:#1d4ed8;
 }
 
 
+/* ================================
+   STATUS BADGES (NOT BUTTONS)
+================================ */
+
+.badge{
+display:inline-block;
+padding:3px 10px;
+font-size:12px;
+border-radius:20px;
+font-weight:600;
+border:1px solid transparent;
+}
+
+/* success */
+
+.badge.green{
+background:rgba(34,197,94,0.15);
+color:#22c55e;
+border-color:rgba(34,197,94,0.35);
+}
+
+/* error */
+
+.badge.red{
+background:rgba(239,68,68,0.15);
+color:#ef4444;
+border-color:rgba(239,68,68,0.35);
+}
+
+/* neutral / info */
+
+.badge.blue{
+background:rgba(59,130,246,0.15);
+color:#3b82f6;
+border-color:rgba(59,130,246,0.35);
+}
+
+
 
 
 
