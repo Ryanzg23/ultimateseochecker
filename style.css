@@ -819,6 +819,64 @@ button.small {
 }
 
 
+/* ================================
+   HTACCESS CODE BLOCK
+================================ */
+
+.code-box{
+position:relative;
+background:#0f172a;
+border:1px solid #334155;
+border-radius:12px;
+padding:18px 16px;
+margin-top:6px;
+font-family:monospace;
+font-size:14px;
+}
+
+.code-box pre{
+margin:0;
+color:#e2e8f0;
+overflow:auto;
+}
+
+.copy-code-btn{
+position:absolute;
+top:10px;
+right:10px;
+background:#1e293b;
+color:#e2e8f0;
+border:none;
+border-radius:8px;
+padding:6px 12px;
+font-size:12px;
+cursor:pointer;
+transition:background .2s;
+}
+
+.copy-code-btn:hover{
+background:#334155;
+}
+
+/* 404 generator button row */
+
+.file-row{
+display:flex;
+align-items:center;
+gap:10px;
+margin-top:4px;
+}
+
+.generate404{
+background:#2563eb;
+padding:6px 12px;
+font-size:13px;
+border-radius:8px;
+}
+
+.generate404:hover{
+background:#1d4ed8;
+}
 
 
 
