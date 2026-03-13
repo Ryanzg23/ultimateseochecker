@@ -147,6 +147,7 @@ try {
         soft404,
         redirectHome,
         html404Exists,
+        html404RedirectHome,
         testUrl: fake404
       })
     };
