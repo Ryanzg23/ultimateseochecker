@@ -925,6 +925,11 @@ transition:opacity .15s;
 .badge-link:hover{
 opacity:.8;
 }
+.badge.yellow{
+background:rgba(234,179,8,0.15);
+color:#eab308;
+border:1px solid rgba(234,179,8,0.35);
+}
 
 
 
