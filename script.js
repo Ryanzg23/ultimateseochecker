@@ -854,7 +854,7 @@ card.innerHTML = `
 
 ${
 data.has404
-? `<a href="${data.url}/this-page-should-not-exist-404-test"
+? `<a href="${data.testUrl}"
      target="_blank"
      class="badge green badge-link">
      404 page detected
@@ -1020,6 +1020,7 @@ link.click();
 link.remove();
 
 }
+
 
 
 
