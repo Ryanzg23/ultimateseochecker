@@ -894,10 +894,10 @@ Generate 404.html
 <div class="label">301 Redirect to Homepage</div>
 <div class="value">
   ${
-    data.redirectHome
-      ? `<span class="badge red">Detected</span>`
-      : `<span class="badge green">Not detected</span>`
-  }
+      data.redirectHome
+      ? `<span class="badge green">Detected</span>`
+      : `<span class="badge red">Not detected</span>`
+   }
 </div>
 
 <div class="label">.htaccess Fix</div>
