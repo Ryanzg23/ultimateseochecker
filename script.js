@@ -873,7 +873,7 @@ const htaccessCode = `ErrorDocument 404 /404.html`;
 card.innerHTML = `
 <div class="card-header">
   <h3>
-      <a href="${domain}" target="_blank" class="card-url">
+      <a href="${domain.match(/^https?:\/\//) ? domain : 'https://' + domain}" target="_blank" class="card-url">
         ${domain}
       </a>
 </h3>
