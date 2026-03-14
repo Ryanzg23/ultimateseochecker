@@ -838,15 +838,48 @@ async function process404Domain(domain) {
     const res = await fetch(`/.netlify/functions/check404?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
 
+/* ================================
+   SKIP IF DOMAIN REDIRECTS
+================================ */
+
+if (data.redirectDomain) {
+
+card.innerHTML = `
+<div class="card-header">
+  <h3>
+    <a href="${domain}" target="_blank" class="card-url">
+      ${domain}
+    </a>
+  </h3>
+</div>
+
+<div class="redirect">
+301 → ${data.redirectTarget}
+</div>
+
+<div class="issue-pill danger">
+404 CHECKING SKIPPED — DOMAIN REDIRECT
+</div>
+`;
+
+return;
+
+}
+
 const htaccessCode = `ErrorDocument 404 /404.html`;
 
 card.innerHTML = `
 <div class="card-header">
   <h3>
-    <a href="${data.url}" target="_blank" class="card-url">
-      ${data.url}
-    </a>
-  </h3>
+      <a href="${domain}" target="_blank" class="card-url">
+        ${domain}
+      </a>
+</h3>
+
+   ${data.redirectDomain
+     ? `<div class="redirect">301 → ${data.redirectTarget}</div>`
+     : ``}
+
 </div>
 
 <div class="label">404 Page</div>
