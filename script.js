@@ -847,7 +847,9 @@ if (data.redirectDomain) {
 card.innerHTML = `
 <div class="card-header">
   <h3>
-      <a href="${domain.startsWith('http') ? domain : 'https://' + domain}" target="_blank" class="card-url">
+      <a href="${domain.match(/^https?:\/\//) ? domain : 'https://' + domain}"
+         target="_blank"
+         class="card-url">
         ${domain}
       </a>
   </h3>
