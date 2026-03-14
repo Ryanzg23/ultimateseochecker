@@ -57,6 +57,27 @@ export async function handler(event) {
 
     const fake404 = origin + "/this-page-should-not-exist-404-test-983475";
 
+    /* ==============================
+       SKIP 404 CHECK IF DOMAIN REDIRECTS
+    ============================== */
+    
+    if (redirectDomain) {
+    
+      return {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          url,
+          redirectDomain,
+          redirectTarget
+        })
+      };
+    
+    }
+
     const res404 = await fetch(fake404, {
       redirect: "manual",
       headers: {
