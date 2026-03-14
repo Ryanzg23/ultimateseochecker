@@ -17,6 +17,44 @@ export async function handler(event) {
 
     const origin = new URL(url).origin;
 
+    /* ==============================
+       DOMAIN REDIRECT CHECK
+    ============================== */
+    
+    let redirectDomain = false;
+    let redirectTarget = "";
+    
+    try {
+    
+      const resDomain = await fetch(origin, {
+        redirect: "manual",
+        headers: {
+          "User-Agent": "Mozilla/5.0"
+        }
+      });
+    
+      if ([301,302,307,308].includes(resDomain.status)) {
+    
+        const location = resDomain.headers.get("location");
+    
+        if (location) {
+    
+          const final = new URL(location, origin);
+    
+          const inputHost = new URL(origin).hostname.replace(/^www\./,"");
+          const finalHost = final.hostname.replace(/^www\./,"");
+    
+          if (inputHost !== finalHost) {
+            redirectDomain = true;
+            redirectTarget = final.hostname;
+          }
+    
+        }
+    
+      }
+    
+    } catch {}
+
     const fake404 = origin + "/this-page-should-not-exist-404-test-983475";
 
     const res404 = await fetch(fake404, {
@@ -148,6 +186,8 @@ try {
         redirectHome,
         html404Exists,
         html404RedirectHome,
+        redirectDomain,
+        redirectTarget,
         testUrl: fake404
       })
     };
