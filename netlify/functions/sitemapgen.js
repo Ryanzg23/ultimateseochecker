@@ -74,7 +74,7 @@ export async function handler(event) {
     try {
       const res = await fetch(normalized, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (Sitemap Generator)"
+          "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
         }
       });
 
