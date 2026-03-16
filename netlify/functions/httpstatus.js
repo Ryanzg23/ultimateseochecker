@@ -42,7 +42,9 @@ export async function handler(event) {
         const res = await fetch(currentUrl, {
           redirect: "manual",
           headers: {
-            "User-Agent": "SEO HTTP Status Checker"
+            "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)",
+            "Accept": "text/html,application/xhtml+xml",
+            "Accept-Language": "en-US,en;q=0.9"
           }
         });
 
