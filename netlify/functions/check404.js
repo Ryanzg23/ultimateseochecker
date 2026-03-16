@@ -29,7 +29,7 @@ export async function handler(event) {
       const resDomain = await fetch(origin, {
         redirect: "manual",
         headers: {
-          "User-Agent": "Mozilla/5.0"
+          "User-Agent": "Mozilla/5.0 (Bulk SEO Meta Viewer)"
         }
       });
     
