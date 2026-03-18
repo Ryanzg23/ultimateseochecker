@@ -157,34 +157,47 @@ export async function handler(event) {
 
 let html404Exists = false;
 let html404RedirectHome = false;
+let html404Url = null;
+
+let alt404Exists = false;
+let alt404Url = null;
 
 try {
 
-  const resFile = await fetch(origin + "/404.html", {
+  // --- check /404.html ---
+  const resHtml = await fetch(origin + "/404.html", {
     redirect: "manual",
     headers: {
       "User-Agent": "Mozilla/5.0 (404 Checker)"
     }
   });
 
-  if (resFile.status === 200) {
+  if (resHtml.status === 200) {
     html404Exists = true;
+    html404Url = origin + "/404.html";
   }
 
-  if ([301,302,307,308].includes(resFile.status)) {
-
-    const location = resFile.headers.get("location");
-
-    if (location) {
-
-      const final = new URL(location, origin);
-
+  if ([301,302,307,308].includes(resHtml.status)) {
+    const loc = resHtml.headers.get("location");
+    if (loc) {
+      const final = new URL(loc, origin);
       if (final.pathname === "/") {
         html404RedirectHome = true;
       }
-
     }
+  }
 
+  // --- check /404 (no extension) ---
+  const resAlt = await fetch(origin + "/404", {
+    redirect: "manual",
+    headers: {
+      "User-Agent": "Mozilla/5.0 (404 Checker)"
+    }
+  });
+
+  if (resAlt.status === 200) {
+    alt404Exists = true;
+    alt404Url = origin + "/404";
   }
 
 } catch {}
@@ -199,14 +212,20 @@ try {
         "Access-Control-Allow-Origin": "*",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
+       body: JSON.stringify({
         url: origin,
         has404,
         apache404,
         soft404,
         redirectHome,
+      
         html404Exists,
         html404RedirectHome,
+        html404Url,
+      
+        alt404Exists,
+        alt404Url,
+      
         redirectDomain,
         redirectTarget,
         testUrl: fake404
