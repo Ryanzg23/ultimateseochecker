@@ -898,6 +898,13 @@ data.apache404
      404 page detected
    </a>`
 
+: (data.alt404Exists || data.html404Exists)
+? `<a href="${data.alt404Url || data.html404Url}"
+     target="_blank"
+     class="badge blue badge-link">
+     404 page exists
+   </a>`
+
 : `<span class="badge red">No 404 page</span>`
 }
 
