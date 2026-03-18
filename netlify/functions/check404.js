@@ -140,15 +140,18 @@ export async function handler(event) {
     let soft404 = false;
 
     if (res404.status === 200) {
-
+    
       if (
         lower.includes("not found") ||
         lower.includes("404") ||
-        lower.includes("page not found")
+        lower.includes("page not found") ||
+        lower.includes("page you are looking for") ||
+        lower.includes("doesn't exist") ||
+        lower.includes("does not exist")
       ) {
         soft404 = true;
       }
-
+    
     }
 
    /* ==============================
@@ -172,7 +175,11 @@ try {
     }
   });
 
-  if (resHtml.status === 200) {
+  if (
+    resHtml.status === 200 ||
+    resHtml.status === 403 ||
+    resHtml.status === 406
+  ) {
     html404Exists = true;
     html404Url = origin + "/404.html";
   }
@@ -195,7 +202,11 @@ try {
     }
   });
 
-  if (resAlt.status === 200) {
+  if (
+    resAlt.status === 200 ||
+    resAlt.status === 403 ||
+    resAlt.status === 406
+  ) {
     alt404Exists = true;
     alt404Url = origin + "/404";
   }
