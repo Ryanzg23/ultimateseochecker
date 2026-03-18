@@ -894,6 +894,11 @@ data.redirectHome
      Redirects to homepage
    </span>`
 
+: data.apache404
+? `<span class="badge blue">
+     Apache 404 page
+   </span>`
+
 : (data.has404 || data.html404Exists)
 ? `<a href="${data.testUrl || data.html404Url}"
      target="_blank"
