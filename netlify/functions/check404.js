@@ -169,58 +169,54 @@ export async function handler(event) {
    /* ==============================
    CHECK 404.HTML FILE
 ============================== */
-
 let html404Exists = false;
-let html404RedirectHome = false;
 let html404Url = null;
-
-let alt404Exists = false;
-let alt404Url = null;
 
 try {
 
-  // --- check /404.html ---
-  const resHtml = await fetch(origin + "/404.html", {
-    redirect: "manual",
-    headers: {
-      "User-Agent": "Mozilla/5.0 (404 Checker)"
-    }
-  });
+  const paths = ["/404.html", "/404"];
 
-  if (
-    resHtml.status === 200 ||
-    resHtml.status === 403 ||
-    resHtml.status === 406
-  ) {
-    html404Exists = true;
-    html404Url = origin + "/404.html";
-  }
+  for (const p of paths) {
 
-  if ([301,302,307,308].includes(resHtml.status)) {
-    const loc = resHtml.headers.get("location");
-    if (loc) {
-      const final = new URL(loc, origin);
-      if (final.pathname === "/") {
-        html404RedirectHome = true;
+    let currentUrl = origin + p;
+
+    for (let i = 0; i < 3; i++) {
+
+      const res = await fetch(currentUrl, {
+        redirect: "manual",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (404 Checker)"
+        }
+      });
+
+      // ✅ SUCCESS (even if blocked)
+      if (
+        res.status === 200 ||
+        res.status === 403 ||
+        res.status === 406
+      ) {
+        html404Exists = true;
+        html404Url = currentUrl;
+        break;
       }
-    }
-  }
 
-  // --- check /404 (no extension) ---
-  const resAlt = await fetch(origin + "/404", {
-    redirect: "manual",
-    headers: {
-      "User-Agent": "Mozilla/5.0 (404 Checker)"
-    }
-  });
+      // 🔁 FOLLOW REDIRECT
+      if ([301, 302, 307, 308].includes(res.status)) {
 
-  if (
-    resAlt.status === 200 ||
-    resAlt.status === 403 ||
-    resAlt.status === 406
-  ) {
-    alt404Exists = true;
-    alt404Url = origin + "/404";
+        const location = res.headers.get("location");
+        if (!location) break;
+
+        currentUrl = location.startsWith("http")
+          ? location
+          : new URL(location, currentUrl).href;
+
+      } else {
+        break;
+      }
+
+    }
+
+    if (html404Exists) break;
   }
 
 } catch {}
