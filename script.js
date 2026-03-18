@@ -895,9 +895,11 @@ data.redirectHome
    </span>`
 
 : data.apache404
-? `<span class="badge blue">
+? `<a href="${data.testUrl}"
+     target="_blank"
+     class="badge blue badge-link">
      Apache 404 page
-   </span>`
+   </a>`
 
 : (data.has404 || data.html404Exists)
 ? `<a href="${data.testUrl || data.html404Url}"
