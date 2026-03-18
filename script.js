@@ -919,7 +919,7 @@ data.redirectHome
 ${
 data.redirectHome
 ? `<span class="badge red">
-     Not usable (redirects to homepage)
+     Redirects to homepage
    </span>`
 
 : data.html404Exists
