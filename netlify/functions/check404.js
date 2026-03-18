@@ -115,11 +115,17 @@ export async function handler(event) {
     ============================== */
 
     let has404 = false;
-
+    
+    /* REAL 404 */
     if (res404.status === 404 && !redirectHome) {
       has404 = true;
     }
-
+    
+    /* SOFT 404 should also count as 404 */
+    if (soft404 && !redirectHome) {
+      has404 = true;
+    }
+    
     /* ==============================
        APACHE DEFAULT 404
     ============================== */
@@ -141,13 +147,15 @@ export async function handler(event) {
 
     if (res404.status === 200) {
     
+      const contentLength = text.length;
+    
       if (
         lower.includes("not found") ||
         lower.includes("404") ||
         lower.includes("page not found") ||
-        lower.includes("page you are looking for") ||
         lower.includes("doesn't exist") ||
-        lower.includes("does not exist")
+        lower.includes("does not exist") ||
+        contentLength < 1500   // 🔥 small page = likely 404
       ) {
         soft404 = true;
       }
