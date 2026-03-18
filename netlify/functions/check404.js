@@ -114,21 +114,32 @@ export async function handler(event) {
        PROPER 404 DETECTION
     ============================== */
 
-    let has404 = false;
-        
-        /* SOFT 404 */
-        if (res404.status === 200) {
-          if (
-            lower.includes("404") ||
-            lower.includes("not found") ||
-            lower.includes("page not found") ||
-            lower.includes("doesn't exist") ||
-            lower.includes("does not exist")
-          ) {
-            has404 = true;
-            soft404 = true;
-          }
-        }
+let has404 = false;
+let soft404 = false;
+
+/* REAL 404 */
+if (res404.status === 404 && !redirectHome) {
+  has404 = true;
+}
+
+/* SOFT 404 */
+if (res404.status === 200) {
+
+  const contentLength = text.length;
+
+  if (
+    lower.includes("404") ||
+    lower.includes("not found") ||
+    lower.includes("page not found") ||
+    lower.includes("doesn't exist") ||
+    lower.includes("does not exist") ||
+    contentLength < 1500
+  ) {
+    has404 = true;   // ✅ THIS IS KEY
+    soft404 = true;
+  }
+
+}
     
     /* ==============================
        APACHE DEFAULT 404
@@ -143,28 +154,6 @@ export async function handler(event) {
       apache404 = true;
     }
 
-    /* ==============================
-       SOFT 404 DETECTION
-    ============================== */
-
-    let soft404 = false;
-
-    if (res404.status === 200) {
-    
-      const contentLength = text.length;
-    
-      if (
-        lower.includes("not found") ||
-        lower.includes("404") ||
-        lower.includes("page not found") ||
-        lower.includes("doesn't exist") ||
-        lower.includes("does not exist") ||
-        contentLength < 1500   // 🔥 small page = likely 404
-      ) {
-        soft404 = true;
-      }
-    
-    }
 
    /* ==============================
    CHECK 404.HTML FILE
@@ -232,23 +221,19 @@ try {
         "Content-Type": "application/json"
       },
        body: JSON.stringify({
-        url: origin,
-        has404,
-        apache404,
-        soft404,
-        redirectHome,
-      
-        html404Exists,
-        html404RedirectHome,
-        html404Url,
-      
-        alt404Exists,
-        alt404Url,
-      
-        redirectDomain,
-        redirectTarget,
-        testUrl: fake404
-      })
+          url: origin,
+          has404,
+          apache404,
+          soft404,
+          redirectHome,
+        
+          html404Exists,
+          html404Url,
+        
+          redirectDomain,
+          redirectTarget,
+          testUrl: fake404
+        })
     };
 
   } catch {
