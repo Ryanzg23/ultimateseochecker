@@ -121,9 +121,18 @@ export async function handler(event) {
       has404 = true;
     }
     
-    /* SOFT 404 should also count as 404 */
-    if (soft404 && !redirectHome) {
-      has404 = true;
+    /* SOFT 404 */
+    if (res404.status === 200) {
+      if (
+        lower.includes("404") ||
+        lower.includes("not found") ||
+        lower.includes("page not found") ||
+        lower.includes("doesn't exist") ||
+        lower.includes("does not exist")
+      ) {
+        has404 = true;
+        soft404 = true;
+      }
     }
     
     /* ==============================
