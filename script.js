@@ -898,9 +898,6 @@ data.apache404
      404 page detected
    </a>`
 
-: data.soft404
-? `<span class="badge yellow">Soft 404 detected</span>`
-
 : `<span class="badge red">No 404 page</span>`
 }
 
@@ -910,25 +907,13 @@ data.apache404
 <div class="value file-row">
 
 ${
-(data.html404Exists && !data.html404RedirectHome)
-? `<a href="${data.html404Url}" target="_blank" class="badge blue badge-link">
+data.html404Exists
+? `<a href="${data.url}/404.html"
+     target="_blank"
+     class="badge blue badge-link">
      404.html
    </a>`
-: ``
-}
-
-${
-(data.alt404Exists)
-? `<a href="${data.alt404Url}" target="_blank" class="badge blue badge-link">
-     /404
-   </a>`
-: ``
-}
-
-${
-(!data.html404Exists && !data.alt404Exists)
-? `<span class="badge red">Not found</span>`
-: ``
+: `<span class="badge red">Not found</span>`
 }
 
 <button class="mini-btn generate404"
