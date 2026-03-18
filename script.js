@@ -939,7 +939,7 @@ Generate 404.html
 </div>
 
 ${
-(data.html404Exists || data.alt404Exists) && !data.has404 && !data.soft404
+(data.html404Exists || data.alt404Exists) && !data.has404
 ? `<div class="note red">
      ⚠ Has 404 page but not used
    </div>`
