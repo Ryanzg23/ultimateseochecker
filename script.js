@@ -884,17 +884,15 @@ card.innerHTML = `
 
 </div>
 
+
 <div class="label">404 Page</div>
-<div class="value">
+<div class="value file-row">
 
 ${
 data.redirectHome
 ? `<span class="badge red">
      Redirects to homepage
    </span>`
-
-: data.apache404
-? `<span class="badge blue">Apache 404 page detected</span>`
 
 : data.has404
 ? `<a href="${data.testUrl}"
@@ -904,32 +902,13 @@ data.redirectHome
    </a>`
 
 : data.html404Exists
-? `<span class="badge blue">
-     404 page exists
-   </span>`
-
-: `<span class="badge red">No 404 page</span>`
-}
-
-</div>
-
-<div class="label">404 Page File</div>
-<div class="value file-row">
-
-${
-data.redirectHome
-? `<span class="badge red">
-     Redirects to homepage
-   </span>`
-
-: data.html404Exists
 ? `<a href="${data.html404Url}"
      target="_blank"
      class="badge blue badge-link">
-     404.html
+     404 page exists
    </a>`
 
-: `<span class="badge red">Not found</span>`
+: `<span class="badge red">No 404 page</span>`
 }
 
 <button class="mini-btn generate404"
@@ -938,6 +917,7 @@ Generate 404.html
 </button>
 
 </div>
+
 
 <div class="label">301 Redirect to Homepage</div>
 <div class="value">
