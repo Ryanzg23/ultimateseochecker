@@ -888,7 +888,12 @@ card.innerHTML = `
 <div class="value">
 
 ${
-data.apache404
+data.redirectHome
+? `<span class="badge red">
+     Redirects to homepage (BAD 404)
+   </span>`
+
+: data.apache404
 ? `<span class="badge blue">Apache 404 page detected</span>`
 
 : data.has404
@@ -898,12 +903,10 @@ data.apache404
      404 page detected
    </a>`
 
-: (data.alt404Exists || data.html404Exists)
-? `<a href="${data.alt404Url || data.html404Url}"
-     target="_blank"
-     class="badge blue badge-link">
-     404 page exists
-   </a>`
+: data.html404Exists
+? `<span class="badge blue">
+     404 page exists (not configured)
+   </span>`
 
 : `<span class="badge red">No 404 page</span>`
 }
@@ -914,12 +917,18 @@ data.apache404
 <div class="value file-row">
 
 ${
-data.html404Exists
-? `<a href="${data.url}/404.html"
+data.redirectHome
+? `<span class="badge red">
+     Not usable (redirects to homepage)
+   </span>`
+
+: data.html404Exists
+? `<a href="${data.html404Url}"
      target="_blank"
      class="badge blue badge-link">
      404.html
    </a>`
+
 : `<span class="badge red">Not found</span>`
 }
 
