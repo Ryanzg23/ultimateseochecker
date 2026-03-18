@@ -890,7 +890,7 @@ card.innerHTML = `
 ${
 data.redirectHome
 ? `<span class="badge red">
-     Redirects to homepage (BAD 404)
+     Redirects to homepage
    </span>`
 
 : data.apache404
@@ -905,7 +905,7 @@ data.redirectHome
 
 : data.html404Exists
 ? `<span class="badge blue">
-     404 page exists (not configured)
+     404 page exists
    </span>`
 
 : `<span class="badge red">No 404 page</span>`
