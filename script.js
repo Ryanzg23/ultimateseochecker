@@ -923,14 +923,6 @@ Generate 404.html
 
 </div>
 
-${
-(data.html404Exists || data.alt404Exists) && !data.has404 && !data.soft404
-? `<div class="note red">
-     ⚠ Has 404 page but not used
-   </div>`
-: ``
-}
-
 <div class="label">301 Redirect to Homepage</div>
 <div class="value">
   ${
