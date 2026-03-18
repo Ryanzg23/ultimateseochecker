@@ -906,17 +906,29 @@ data.apache404
 
 </div>
 
-<div class="label">404.html File</div>
+<div class="label">404 Page File</div>
 <div class="value file-row">
 
 ${
-data.html404Exists
-? `<a href="${data.url}/404.html"
-     target="_blank"
-     class="badge blue badge-link">
-     404.html detected
+(data.html404Exists && !data.html404RedirectHome)
+? `<a href="${data.html404Url}" target="_blank" class="badge blue badge-link">
+     404.html
    </a>`
-: `<span class="badge red">Not found</span>`
+: ``
+}
+
+${
+(data.alt404Exists)
+? `<a href="${data.alt404Url}" target="_blank" class="badge blue badge-link">
+     /404
+   </a>`
+: ``
+}
+
+${
+(!data.html404Exists && !data.alt404Exists)
+? `<span class="badge red">Not found</span>`
+: ``
 }
 
 <button class="mini-btn generate404"
@@ -925,6 +937,14 @@ Generate 404.html
 </button>
 
 </div>
+
+${
+(data.html404Exists || data.alt404Exists) && !data.has404 && !data.soft404
+? `<div class="note red">
+     ⚠ Has 404 page but not used
+   </div>`
+: ``
+}
 
 <div class="label">301 Redirect to Homepage</div>
 <div class="value">
