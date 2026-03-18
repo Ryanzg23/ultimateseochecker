@@ -894,18 +894,11 @@ data.redirectHome
      Redirects to homepage
    </span>`
 
-: data.has404
-? `<a href="${data.testUrl}"
+: (data.has404 || data.html404Exists)
+? `<a href="${data.testUrl || data.html404Url}"
      target="_blank"
      class="badge green badge-link">
      404 page detected
-   </a>`
-
-: data.html404Exists
-? `<a href="${data.html404Url}"
-     target="_blank"
-     class="badge blue badge-link">
-     404 page exists
    </a>`
 
 : `<span class="badge red">No 404 page</span>`
