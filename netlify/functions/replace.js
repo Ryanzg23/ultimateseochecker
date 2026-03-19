@@ -106,19 +106,19 @@ exports.handler = async (event) => {
       if (!absolute) return;
 
       const file = await downloadFile(absolute);
-      if (!file) return;
+      if (!file || file.length === 0) return;
 
       let localPath;
 
       if (type === "css") {
-        localPath = `assets/style${cssIndex}.css`;
+        localPath = `./assets/style${cssIndex}.css`;
         cssIndex++;
       } else if (type === "js") {
-        localPath = `assets/script${jsIndex}.js`;
+        localPath = `./assets/script${jsIndex}.js`;
         jsIndex++;
       } else {
         const ext = getExt(absolute);
-        localPath = `assets/img${imgIndex}.${ext}`;
+        localPath = `./assets/img${imgIndex}.${ext}`;
         imgIndex++;
       }
 
@@ -167,37 +167,50 @@ exports.handler = async (event) => {
     // --------------------
     const archive = archiver("zip", { zlib: { level: 9 } });
 
-    const buffers = [];
+const chunks = [];
 
-    archive.on("data", (data) => buffers.push(data));
+archive.on("warning", (err) => {
+  console.warn(err);
+});
 
-    archive.append(html, { name: "index.html" });
+archive.on("error", (err) => {
+  throw err;
+});
 
-    for (const f of files) {
-      archive.append(f.file, { name: f.path });
-    }
+// capture stream properly
+archive.on("data", (chunk) => {
+  chunks.push(chunk);
+});
 
-    await archive.finalize();
+// --------------------
+// ADD FILES
+// --------------------
 
-    const buffer = Buffer.concat(buffers);
+archive.append(html, { name: "index.html" });
 
-    return {
-      statusCode: 200,
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": "attachment; filename=clone.zip"
-      },
-      body: buffer.toString("base64"),
-      isBase64Encoded: true
-    };
+for (const f of files) {
+  archive.append(f.file, { name: f.path });
+}
 
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: "Clone failed",
-        details: err.message
-      })
-    };
-  }
+// --------------------
+// FINALIZE
+// --------------------
+
+await archive.finalize();
+
+// wait for full buffer
+const buffer = Buffer.concat(chunks);
+
+// --------------------
+// RETURN
+// --------------------
+
+return {
+  statusCode: 200,
+  headers: {
+    "Content-Type": "application/zip",
+    "Content-Disposition": "attachment; filename=clone.zip"
+  },
+  body: buffer.toString("base64"),
+  isBase64Encoded: true
 };
