@@ -45,11 +45,13 @@ async function downloadFile(url) {
       responseType: "arraybuffer",
       timeout: 10000,
       headers: {
-        "User-Agent": "Mozilla/5.0 (Cloner Tool)"
+        "User-Agent": "Mozilla/5.0",
+        "Referer": url
       }
     });
     return res.data;
-  } catch {
+  } catch (err) {
+    console.log("FAILED:", url);
     return null;
   }
 }
