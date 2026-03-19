@@ -190,21 +190,30 @@ exports.handler = async (event) => {
     // --------------------
 
     const archive = archiver("zip", { zlib: { level: 9 } });
-    const chunks = [];
-
-    archive.on("data", chunk => chunks.push(chunk));
-    archive.on("error", err => { throw err; });
-
+    
+    let buffers = [];
+    
+    archive.on("data", (chunk) => buffers.push(chunk));
+    archive.on("error", (err) => { throw err; });
+    
+    // ADD FILES FIRST
     archive.append(html, { name: "index.html" });
-
+    
     for (const f of files) {
       archive.append(f.file, { name: f.path });
     }
-
-    await archive.finalize();
-
-    const buffer = Buffer.concat(chunks);
-
+    
+    // FINALIZE
+    await new Promise((resolve, reject) => {
+      archive.on("end", resolve);
+      archive.on("error", reject);
+      archive.finalize();
+    });
+    
+    // BUILD BUFFER AFTER FULL COMPLETE
+    const buffer = Buffer.concat(buffers);
+    
+    // RETURN
     return {
       statusCode: 200,
       headers: {
@@ -214,14 +223,5 @@ exports.handler = async (event) => {
       body: buffer.toString("base64"),
       isBase64Encoded: true
     };
-
-  } catch (err) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: "Clone failed",
-        details: err.message
-      })
-    };
-  }
+    
 };
