@@ -188,7 +188,8 @@ exports.handler = async (event) => {
     // --------------------
     // ZIP
     // --------------------
-
+console.log("FILES COUNT:", files.length);
+    
     const archive = archiver("zip", { zlib: { level: 9 } });
     
     let buffers = [];
