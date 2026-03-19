@@ -12,6 +12,15 @@ app.use(express.json({ limit: "10mb" }));
 // HELPERS
 // --------------------
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function replaceAllSafe(html, oldText, newText) {
+  if (!oldText || !newText || oldText.length < 5) return html;
+  return html.replace(new RegExp(escapeRegex(oldText), "gi"), newText);
+}
+
 function toAbsolute(url, base) {
   try {
     return new URL(url, base).href;
@@ -56,7 +65,13 @@ async function download(url) {
 
 app.post("/clone", async (req, res) => {
   try {
-    const { url } = req.body;
+    const {
+      url,
+      newTitle,
+      newDescription,
+      newCanonical,
+      newAmp
+    } = req.body;
 
     const page = await axios.get(url, {
       headers: { "User-Agent": "Mozilla/5.0" }
@@ -65,6 +80,27 @@ app.post("/clone", async (req, res) => {
     let html = page.data;
     const baseUrl = url;
 
+    const temp$ = cheerio.load(html);
+    
+    const originalTitle = temp$("title").text() || "";
+    const originalDesc = temp$('meta[name="description"]').attr("content") || "";
+    const originalCanonical = temp$('link[rel="canonical"]').attr("href") || "";
+    const originalAmp = temp$('link[rel="amphtml"]').attr("href") || "";
+
+    // force title
+    if (newTitle) {
+      html = html.replace(
+        /<title[^>]*>.*?<\/title>/i,
+        `<title>${newTitle}</title>`
+      );
+    }
+    
+    // global replace
+    html = replaceAllSafe(html, originalTitle, newTitle);
+    html = replaceAllSafe(html, originalDesc, newDescription);
+    html = replaceAllSafe(html, originalCanonical, newCanonical);
+    html = replaceAllSafe(html, originalAmp, newAmp);
+    
     const $ = cheerio.load(html);
 
     let files = [];
@@ -124,19 +160,27 @@ app.post("/clone", async (req, res) => {
 
     // CSS url() rewrite
     for (let f of files) {
-      if (f.path.endsWith(".css")) {
-        let cssContent = f.file.toString();
-
-        const matches = [...cssContent.matchAll(/url\((.*?)\)/g)];
-
-        for (let m of matches) {
-          let raw = m[1].replace(/['"]/g, "");
-          const local = await processAsset(raw);
-          if (local) cssContent = cssContent.replace(raw, local);
+        if (f.path.endsWith(".css")) {
+          let cssContent = f.file.toString();
+        
+          const matches = [...cssContent.matchAll(/url\((.*?)\)/g)];
+        
+          for (let m of matches) {
+            let raw = m[1].replace(/['"]/g, "").trim();
+        
+            if (raw.startsWith("data:")) continue;
+        
+            const absolute = toAbsolute(raw, baseUrl);
+            if (!absolute) continue;
+        
+            const local = await processAsset(absolute);
+            if (!local) continue;
+        
+            cssContent = cssContent.replace(m[1], local);
+          }
+        
+          f.file = Buffer.from(cssContent);
         }
-
-        f.file = Buffer.from(cssContent);
-      }
     }
 
     html = $.html();
