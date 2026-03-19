@@ -25,21 +25,25 @@ function toAbsolute(url, base) {
 }
 
 function getExt(url) {
-  if (url.includes(".png")) return "png";
-  if (url.includes(".svg")) return "svg";
-  if (url.includes(".ico")) return "ico";
-  if (url.includes(".webp")) return "webp";
-  if (url.includes(".gif")) return "gif";
-  if (url.includes(".css")) return "css";
-  if (url.includes(".js")) return "js";
-  return "jpg";
+  const clean = url.split("?")[0];
+
+  if (clean.endsWith(".png")) return "png";
+  if (clean.endsWith(".jpg") || clean.endsWith(".jpeg")) return "jpg";
+  if (clean.endsWith(".svg")) return "svg";
+  if (clean.endsWith(".ico")) return "ico";
+  if (clean.endsWith(".webp")) return "webp";
+  if (clean.endsWith(".gif")) return "gif";
+  if (clean.endsWith(".css")) return "css";
+  if (clean.endsWith(".js")) return "js";
+
+  return "bin";
 }
 
 async function downloadFile(url) {
   try {
     const res = await axios.get(url, {
       responseType: "arraybuffer",
-      timeout: 8000,
+      timeout: 10000,
       headers: {
         "User-Agent": "Mozilla/5.0 (Cloner Tool)"
       }
@@ -73,16 +77,14 @@ exports.handler = async (event) => {
     const baseUrl = newCanonical || canonical;
 
     // --------------------
-    // FORCE TITLE
+    // TEXT REPLACEMENT
     // --------------------
+
     html = html.replace(
       /<title[^>]*>.*?<\/title>/i,
       `<title>${newTitle}</title>`
     );
 
-    // --------------------
-    // GLOBAL REPLACE
-    // --------------------
     html = replaceAllSafe(html, canonical, newCanonical);
     html = replaceAllSafe(html, amphtml, newAmp);
     html = replaceAllSafe(html, title, newTitle);
@@ -91,126 +93,135 @@ exports.handler = async (event) => {
     // --------------------
     // PARSE HTML
     // --------------------
+
     const $ = cheerio.load(html);
 
     let files = [];
-    let imgIndex = 0;
-    let cssIndex = 0;
-    let jsIndex = 0;
+    let assetMap = {};
+    let index = 0;
 
-    async function processAsset(el, attr, type) {
-      let src = $(el).attr(attr);
-      if (!src) return;
+    async function processAsset(url) {
+      const absolute = toAbsolute(url, baseUrl);
+      if (!absolute) return null;
 
-      const absolute = toAbsolute(src, baseUrl);
-      if (!absolute) return;
+      if (assetMap[absolute]) return assetMap[absolute];
 
       const file = await downloadFile(absolute);
-      if (!file || file.length === 0) return;
+      if (!file || file.length === 0) return null;
 
-      let localPath;
+      const ext = getExt(absolute);
+      const localPath = `assets/file${index}.${ext}`;
 
-      if (type === "css") {
-        localPath = `./assets/style${cssIndex}.css`;
-        cssIndex++;
-      } else if (type === "js") {
-        localPath = `./assets/script${jsIndex}.js`;
-        jsIndex++;
-      } else {
-        const ext = getExt(absolute);
-        localPath = `./assets/img${imgIndex}.${ext}`;
-        imgIndex++;
-      }
-
-      $(el).attr(attr, localPath);
+      assetMap[absolute] = localPath;
 
       files.push({ file, path: localPath });
+
+      index++;
+
+      return localPath;
     }
 
     // --------------------
-    // CSS
+    // HTML ASSETS
     // --------------------
-    const cssLinks = $('link[rel="stylesheet"]').toArray();
-    for (const el of cssLinks) {
-      await processAsset(el, "href", "css");
-    }
 
-    // --------------------
-    // JS
-    // --------------------
-    const scripts = $('script[src]').toArray();
-    for (const el of scripts) {
-      await processAsset(el, "src", "js");
-    }
-
-    // --------------------
     // IMAGES
-    // --------------------
     const images = $('img').toArray();
     for (const el of images) {
-      if (imgIndex > 10) break;
-      await processAsset(el, "src", "img");
+      const src = $(el).attr("src");
+      const local = await processAsset(src);
+      if (local) $(el).attr("src", local);
+    }
+
+    // CSS
+    const cssLinks = $('link[rel="stylesheet"]').toArray();
+    for (const el of cssLinks) {
+      const href = $(el).attr("href");
+      const local = await processAsset(href);
+      if (local) $(el).attr("href", local);
+    }
+
+    // JS
+    const scripts = $('script[src]').toArray();
+    for (const el of scripts) {
+      const src = $(el).attr("src");
+      const local = await processAsset(src);
+      if (local) $(el).attr("src", local);
+    }
+
+    // FAVICON
+    const favicons = $('link[rel*="icon"]').toArray();
+    for (const el of favicons) {
+      const href = $(el).attr("href");
+      const local = await processAsset(href);
+      if (local) $(el).attr("href", local);
     }
 
     // --------------------
-    // FAVICON
+    // CSS URL(...) REWRITE
     // --------------------
-    const favicons = $('link[rel*="icon"]').toArray();
-    for (const el of favicons) {
-      await processAsset(el, "href", "img");
+
+    for (let f of files) {
+      if (f.path.endsWith(".css")) {
+        let cssContent = f.file.toString();
+
+        const urls = [...cssContent.matchAll(/url\((.*?)\)/g)];
+
+        for (let match of urls) {
+          let raw = match[1].replace(/['"]/g, "");
+
+          const absolute = toAbsolute(raw, baseUrl);
+          if (!absolute) continue;
+
+          const local = await processAsset(absolute);
+          if (!local) continue;
+
+          cssContent = cssContent.replace(raw, local);
+        }
+
+        f.file = Buffer.from(cssContent);
+      }
     }
 
     html = $.html();
 
     // --------------------
-    // ZIP CREATION (FIXED)
+    // ZIP
     // --------------------
+
     const archive = archiver("zip", { zlib: { level: 9 } });
+    const chunks = [];
 
-const chunks = [];
+    archive.on("data", chunk => chunks.push(chunk));
+    archive.on("error", err => { throw err; });
 
-archive.on("warning", (err) => {
-  console.warn(err);
-});
+    archive.append(html, { name: "index.html" });
 
-archive.on("error", (err) => {
-  throw err;
-});
+    for (const f of files) {
+      archive.append(f.file, { name: f.path });
+    }
 
-// capture stream properly
-archive.on("data", (chunk) => {
-  chunks.push(chunk);
-});
+    await archive.finalize();
 
-// --------------------
-// ADD FILES
-// --------------------
+    const buffer = Buffer.concat(chunks);
 
-archive.append(html, { name: "index.html" });
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": "attachment; filename=clone.zip"
+      },
+      body: buffer.toString("base64"),
+      isBase64Encoded: true
+    };
 
-for (const f of files) {
-  archive.append(f.file, { name: f.path });
-}
-
-// --------------------
-// FINALIZE
-// --------------------
-
-await archive.finalize();
-
-// wait for full buffer
-const buffer = Buffer.concat(chunks);
-
-// --------------------
-// RETURN
-// --------------------
-
-return {
-  statusCode: 200,
-  headers: {
-    "Content-Type": "application/zip",
-    "Content-Disposition": "attachment; filename=clone.zip"
-  },
-  body: buffer.toString("base64"),
-  isBase64Encoded: true
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: "Clone failed",
+        details: err.message
+      })
+    };
+  }
 };
