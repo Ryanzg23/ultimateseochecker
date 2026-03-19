@@ -5,7 +5,6 @@ async function analyze() {
   const url = document.getElementById("url").value;
 
   document.getElementById("loading").style.display = "block";
-  document.getElementById("results").style.display = "none";
 
   const res = await fetch(`/.netlify/functions/cloner?url=${encodeURIComponent(url)}`);
   const data = await res.json();
@@ -33,22 +32,21 @@ async function generate() {
     description: originalData.description,
     canonical: originalData.canonical,
     amphtml: originalData.amphtml,
-
     newTitle: document.getElementById("newTitle").value,
     newDescription: document.getElementById("newDescription").value,
     newCanonical: document.getElementById("newCanonical").value,
     newAmp: document.getElementById("newAmp").value,
   };
 
-  const res = await fetch('/.netlify/functions/replace', {
-    method: 'POST',
-    body: JSON.stringify(payload)
+  const res = await fetch("/.netlify/functions/replace", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 
   const blob = await res.blob();
 
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "index.html";
+  a.download = "clone.zip";
   a.click();
 }
