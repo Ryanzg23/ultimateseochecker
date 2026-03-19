@@ -4,12 +4,18 @@ let originalHTML = "";
 async function analyze() {
   const url = document.getElementById("url").value;
 
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("results").style.display = "none";
+
   const res = await fetch(`/.netlify/functions/cloner?url=${encodeURIComponent(url)}`);
   const data = await res.json();
+
+  document.getElementById("loading").style.display = "none";
 
   originalData = data;
   originalHTML = data.html;
 
+  document.getElementById("results").style.display = "block";
   document.getElementById("results").innerHTML = `
     <p><b>Title:</b> ${data.title}</p>
     <p><b>Description:</b> ${data.description}</p>
