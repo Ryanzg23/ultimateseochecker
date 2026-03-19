@@ -13,7 +13,6 @@ function escapeRegex(str) {
 
 function replaceAllSafe(html, oldText, newText) {
   if (!oldText || oldText.length < 5) return html;
-
   const regex = new RegExp(escapeRegex(oldText), 'gi');
   return html.replace(regex, newText);
 }
@@ -26,11 +25,20 @@ function toAbsolute(url, base) {
   }
 }
 
+function getExt(url) {
+  if (url.includes(".png")) return "png";
+  if (url.includes(".svg")) return "svg";
+  if (url.includes(".ico")) return "ico";
+  if (url.includes(".webp")) return "webp";
+  if (url.includes(".gif")) return "gif";
+  return "jpg";
+}
+
 async function downloadFile(url) {
   try {
     const res = await axios.get(url, {
       responseType: "arraybuffer",
-      timeout: 5000
+      timeout: 7000
     });
     return res.data;
   } catch {
@@ -39,7 +47,7 @@ async function downloadFile(url) {
 }
 
 // --------------------
-// MAIN HANDLER
+// MAIN
 // --------------------
 
 exports.handler = async (event) => {
@@ -58,8 +66,10 @@ exports.handler = async (event) => {
       newAmp
     } = data;
 
+    const baseUrl = newCanonical || canonical;
+
     // --------------------
-    // 1. FORCE TITLE REPLACE
+    // 1. FORCE TITLE
     // --------------------
     html = html.replace(
       /<title[^>]*>.*?<\/title>/i,
@@ -76,36 +86,71 @@ exports.handler = async (event) => {
     html = replaceAllSafe(html, description, newDescription);
 
     // --------------------
-    // 3. PARSE HTML FOR ASSETS
+    // 3. PARSE HTML
     // --------------------
     const $ = cheerio.load(html);
 
-    let assets = [];
+    let assetsMap = {}; // original → local
+    let assetIndex = 0;
 
-    // favicon
-    $('link[rel*="icon"]').each((i, el) => {
-      const href = $(el).attr('href');
-      if (href) assets.push(href);
-    });
+    async function processAsset(el, attr) {
+      let src = $(el).attr(attr);
+      if (!src) return;
 
-    // images (limit to avoid timeout)
-    $('img').each((i, el) => {
-      if (i < 8) {
-        const src = $(el).attr('src');
-        if (src) assets.push(src);
+      const absolute = toAbsolute(src, baseUrl);
+      if (!absolute) return;
+
+      // skip duplicates
+      if (assetsMap[absolute]) {
+        $(el).attr(attr, assetsMap[absolute]);
+        return;
       }
-    });
 
-    // remove duplicates
-    assets = [...new Set(assets)];
+      // limit to avoid timeout
+      if (assetIndex > 12) return;
 
-    // convert to absolute URLs
-    assets = assets
-      .map(a => toAbsolute(a, newCanonical || canonical))
-      .filter(Boolean);
+      const file = await downloadFile(absolute);
+      if (!file) return;
+
+      const ext = getExt(absolute);
+      const localPath = `assets/file${assetIndex}.${ext}`;
+
+      assetsMap[absolute] = localPath;
+
+      $(el).attr(attr, localPath);
+
+      assetIndex++;
+
+      return { file, path: localPath };
+    }
+
+    let files = [];
 
     // --------------------
-    // 4. CREATE ZIP
+    // 4. FAVICON
+    // --------------------
+    const faviconEl = $('link[rel*="icon"]');
+    for (let i = 0; i < faviconEl.length; i++) {
+      const res = await processAsset(faviconEl[i], 'href');
+      if (res) files.push(res);
+    }
+
+    // --------------------
+    // 5. IMAGES
+    // --------------------
+    const images = $('img');
+    for (let i = 0; i < images.length; i++) {
+      const res = await processAsset(images[i], 'src');
+      if (res) files.push(res);
+    }
+
+    // --------------------
+    // FINAL HTML
+    // --------------------
+    html = $.html();
+
+    // --------------------
+    // 6. CREATE ZIP
     // --------------------
     const archive = archiver('zip', { zlib: { level: 9 } });
     const stream = new PassThrough();
@@ -115,37 +160,14 @@ exports.handler = async (event) => {
     // add HTML
     archive.append(html, { name: "index.html" });
 
-    // --------------------
-    // 5. DOWNLOAD + ADD ASSETS
-    // --------------------
-    let index = 0;
-
-    for (const url of assets) {
-      const file = await downloadFile(url);
-
-      if (file) {
-        let ext = "jpg";
-
-        if (url.includes(".png")) ext = "png";
-        else if (url.includes(".svg")) ext = "svg";
-        else if (url.includes(".ico")) ext = "ico";
-        else if (url.includes(".webp")) ext = "webp";
-
-        archive.append(file, {
-          name: `assets/file${index}.${ext}`
-        });
-
-        index++;
-      }
+    // add assets
+    for (const f of files) {
+      archive.append(f.file, { name: f.path });
     }
 
     await archive.finalize();
 
-    // --------------------
-    // 6. RETURN ZIP
-    // --------------------
     const chunks = [];
-
     for await (const chunk of stream) {
       chunks.push(chunk);
     }
@@ -166,7 +188,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: "Failed to generate clone",
+        error: "Clone failed",
         details: err.message
       })
     };
