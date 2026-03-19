@@ -15,7 +15,7 @@ async function generate() {
   btn.disabled = true;
 
   try {
-    const res = await fetch("https://ultimateseochecker.onrender.com", {
+    const res = await fetch("https://ultimateseochecker.onrender.com/clone", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
