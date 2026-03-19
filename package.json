@@ -4,6 +4,7 @@
   "description": "SEO tools with cloner",
   "dependencies": {
     "axios": "^1.6.0",
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "archiver": "^6.0.0"
   }
 }
