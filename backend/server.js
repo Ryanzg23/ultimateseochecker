@@ -21,6 +21,8 @@ function replaceAllSafe(html, oldText, newText) {
   return html.replace(new RegExp(escapeRegex(oldText), "gi"), newText);
 }
 
+
+
 function toAbsolute(url, base) {
   try {
     return new URL(url, base).href;
@@ -70,7 +72,14 @@ app.post("/clone", async (req, res) => {
       newTitle,
       newDescription,
       newCanonical,
-      newAmp
+      newAmp,
+    
+      findText,
+      replaceText,
+    
+      newFavicon,
+      newLogo,
+      newBanner
     } = req.body;
 
     const page = await axios.get(url, {
@@ -102,6 +111,47 @@ app.post("/clone", async (req, res) => {
     html = replaceAllSafe(html, originalAmp, newAmp);
     
     const $ = cheerio.load(html);
+
+
+if (findText && replaceText) {  
+  html = replaceAllSafe(html, findText, replaceText);  
+}
+
+    // favicon
+if (newFavicon) {
+  $('link[rel*="icon"]').attr('href', newFavicon);
+}
+
+// logo (heuristic)
+if (newLogo) {
+  $('img').each((i, el) => {
+    const src = $(el).attr('src') || '';
+    const cls = $(el).attr('class') || '';
+
+    if (
+      src.includes('logo') ||
+      cls.toLowerCase().includes('logo')
+    ) {
+      $(el).attr('src', newLogo);
+    }
+  });
+}
+
+// banner (heuristic)
+if (newBanner) {
+  $('img').each((i, el) => {
+    const src = $(el).attr('src') || '';
+    const cls = $(el).attr('class') || '';
+
+    if (
+      src.includes('banner') ||
+      cls.includes('hero') ||
+      cls.includes('slider')
+    ) {
+      $(el).attr('src', newBanner);
+    }
+  });
+}
 
     let files = [];
     let map = {};
