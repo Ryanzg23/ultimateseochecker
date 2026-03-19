@@ -17,10 +17,19 @@ async function generate() {
   try {
     const payload = {
       url: document.getElementById("url").value,
+    
       newTitle: document.getElementById("newTitle").value,
       newDescription: document.getElementById("newDescription").value,
       newCanonical: document.getElementById("newCanonical").value,
-      newAmp: document.getElementById("newAmp").value
+      newAmp: document.getElementById("newAmp").value,
+    
+      // NEW
+      findText: document.getElementById("findText").value,
+      replaceText: document.getElementById("replaceText").value,
+    
+      newFavicon: document.getElementById("newFavicon").value,
+      newLogo: document.getElementById("newLogo").value,
+      newBanner: document.getElementById("newBanner").value
     };
     
     const res = await fetch("https://ultimateseochecker.onrender.com/clone", {
