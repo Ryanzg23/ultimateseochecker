@@ -15,12 +15,20 @@ async function generate() {
   btn.disabled = true;
 
   try {
+    const payload = {
+      url: document.getElementById("url").value,
+      newTitle: document.getElementById("newTitle").value,
+      newDescription: document.getElementById("newDescription").value,
+      newCanonical: document.getElementById("newCanonical").value,
+      newAmp: document.getElementById("newAmp").value
+    };
+    
     const res = await fetch("https://ultimateseochecker.onrender.com/clone", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ url })
+      body: JSON.stringify(payload)
     });
 
     if (!res.ok) throw new Error("Clone failed");
