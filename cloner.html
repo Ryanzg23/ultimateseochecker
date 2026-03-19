@@ -10,33 +10,46 @@
 <body>
 
 <div class="container">
+
   <h1>Page Cloner + Replacer</h1>
 
-  <input type="text" id="url" placeholder="Enter URL..." />
+  <div class="card">
+    <input type="text" id="url" placeholder="Enter URL..." />
+    <button onclick="analyze()">Analyze Page</button>
+    <p id="loading" style="display:none;">🔄 Analyzing page...</p>
+  </div>
 
-  <button onclick="analyze()">Analyze Page</button>
+  <div id="results" class="card" style="display:none;"></div>
 
-  <div id="results" style="margin-top:20px;"></div>
-
-  <div id="replaceSection" style="display:none; margin-top:20px;">
+  <div id="replaceSection" class="card" style="display:none;">
 
     <h3>Replace Content</h3>
 
-    <label>New Title</label>
-    <input type="text" id="newTitle">
+    <div class="grid">
+      <div>
+        <label>New Title</label>
+        <input type="text" id="newTitle">
+      </div>
 
-    <label>New Description</label>
-    <input type="text" id="newDescription">
+      <div>
+        <label>New Description</label>
+        <input type="text" id="newDescription">
+      </div>
 
-    <label>New Canonical</label>
-    <input type="text" id="newCanonical">
+      <div>
+        <label>New Canonical</label>
+        <input type="text" id="newCanonical">
+      </div>
 
-    <label>New AMP URL</label>
-    <input type="text" id="newAmp">
+      <div>
+        <label>New AMP URL</label>
+        <input type="text" id="newAmp">
+      </div>
+    </div>
 
-    <button onclick="generate()">Generate HTML</button>
-
+    <button class="generate-btn" onclick="generate()">Generate HTML</button>
   </div>
+
 </div>
 
 <script src="cloner.js"></script>
