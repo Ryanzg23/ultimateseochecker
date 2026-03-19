@@ -1,7 +1,9 @@
 {
   "name": "seo-tools",
   "version": "1.0.0",
+  "description": "SEO tools with cloner",
   "dependencies": {
     "axios": "^1.6.0",
     "cheerio": "^1.0.0"
   }
+}
