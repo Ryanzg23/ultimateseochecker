@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Cloner</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Page Cloner + Replacer</h1>
+
+  <input type="text" id="url" placeholder="Enter URL..." />
+
+  <button onclick="analyze()">Analyze Page</button>
+
+  <div id="results" style="margin-top:20px;"></div>
+
+  <div id="replaceSection" style="display:none; margin-top:20px;">
+
+    <h3>Replace Content</h3>
+
+    <label>New Title</label>
+    <input type="text" id="newTitle">
+
+    <label>New Description</label>
+    <input type="text" id="newDescription">
+
+    <label>New Canonical</label>
+    <input type="text" id="newCanonical">
+
+    <label>New AMP URL</label>
+    <input type="text" id="newAmp">
+
+    <button onclick="generate()">Generate HTML</button>
+
+  </div>
+</div>
+
+<script src="cloner.js"></script>
+
+</body>
+</html>
