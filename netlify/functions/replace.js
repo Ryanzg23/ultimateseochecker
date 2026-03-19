@@ -1,7 +1,6 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 const archiver = require("archiver");
-const { PassThrough } = require("stream");
 
 // --------------------
 // HELPERS
@@ -31,6 +30,8 @@ function getExt(url) {
   if (url.includes(".ico")) return "ico";
   if (url.includes(".webp")) return "webp";
   if (url.includes(".gif")) return "gif";
+  if (url.includes(".css")) return "css";
+  if (url.includes(".js")) return "js";
   return "jpg";
 }
 
@@ -38,7 +39,10 @@ async function downloadFile(url) {
   try {
     const res = await axios.get(url, {
       responseType: "arraybuffer",
-      timeout: 7000
+      timeout: 8000,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Cloner Tool)"
+      }
     });
     return res.data;
   } catch {
@@ -69,7 +73,7 @@ exports.handler = async (event) => {
     const baseUrl = newCanonical || canonical;
 
     // --------------------
-    // 1. FORCE TITLE
+    // FORCE TITLE
     // --------------------
     html = html.replace(
       /<title[^>]*>.*?<\/title>/i,
@@ -77,102 +81,105 @@ exports.handler = async (event) => {
     );
 
     // --------------------
-    // 2. GLOBAL REPLACEMENTS
+    // GLOBAL REPLACE
     // --------------------
     html = replaceAllSafe(html, canonical, newCanonical);
     html = replaceAllSafe(html, amphtml, newAmp);
-
     html = replaceAllSafe(html, title, newTitle);
     html = replaceAllSafe(html, description, newDescription);
 
     // --------------------
-    // 3. PARSE HTML
+    // PARSE HTML
     // --------------------
     const $ = cheerio.load(html);
 
-    let assetsMap = {}; // original → local
-    let assetIndex = 0;
+    let files = [];
+    let imgIndex = 0;
+    let cssIndex = 0;
+    let jsIndex = 0;
 
-    async function processAsset(el, attr) {
+    async function processAsset(el, attr, type) {
       let src = $(el).attr(attr);
       if (!src) return;
 
       const absolute = toAbsolute(src, baseUrl);
       if (!absolute) return;
 
-      // skip duplicates
-      if (assetsMap[absolute]) {
-        $(el).attr(attr, assetsMap[absolute]);
-        return;
-      }
-
-      // limit to avoid timeout
-      if (assetIndex > 12) return;
-
       const file = await downloadFile(absolute);
       if (!file) return;
 
-      const ext = getExt(absolute);
-      const localPath = `assets/file${assetIndex}.${ext}`;
+      let localPath;
 
-      assetsMap[absolute] = localPath;
+      if (type === "css") {
+        localPath = `assets/style${cssIndex}.css`;
+        cssIndex++;
+      } else if (type === "js") {
+        localPath = `assets/script${jsIndex}.js`;
+        jsIndex++;
+      } else {
+        const ext = getExt(absolute);
+        localPath = `assets/img${imgIndex}.${ext}`;
+        imgIndex++;
+      }
 
       $(el).attr(attr, localPath);
 
-      assetIndex++;
-
-      return { file, path: localPath };
-    }
-
-    let files = [];
-
-    // --------------------
-    // 4. FAVICON
-    // --------------------
-    const faviconEl = $('link[rel*="icon"]');
-    for (let i = 0; i < faviconEl.length; i++) {
-      const res = await processAsset(faviconEl[i], 'href');
-      if (res) files.push(res);
+      files.push({ file, path: localPath });
     }
 
     // --------------------
-    // 5. IMAGES
+    // CSS
     // --------------------
-    const images = $('img');
-    for (let i = 0; i < images.length; i++) {
-      const res = await processAsset(images[i], 'src');
-      if (res) files.push(res);
+    const cssLinks = $('link[rel="stylesheet"]').toArray();
+    for (const el of cssLinks) {
+      await processAsset(el, "href", "css");
     }
 
     // --------------------
-    // FINAL HTML
+    // JS
     // --------------------
+    const scripts = $('script[src]').toArray();
+    for (const el of scripts) {
+      await processAsset(el, "src", "js");
+    }
+
+    // --------------------
+    // IMAGES
+    // --------------------
+    const images = $('img').toArray();
+    for (const el of images) {
+      if (imgIndex > 10) break;
+      await processAsset(el, "src", "img");
+    }
+
+    // --------------------
+    // FAVICON
+    // --------------------
+    const favicons = $('link[rel*="icon"]').toArray();
+    for (const el of favicons) {
+      await processAsset(el, "href", "img");
+    }
+
     html = $.html();
 
     // --------------------
-    // 6. CREATE ZIP
+    // ZIP CREATION (FIXED)
     // --------------------
-    const archive = archiver('zip', { zlib: { level: 9 } });
-    const stream = new PassThrough();
+    const archive = archiver("zip", { zlib: { level: 9 } });
 
-    archive.pipe(stream);
+    const buffers = [];
 
-    // add HTML
+    archive.on("data", (data) => buffers.push(data));
+
     archive.append(html, { name: "index.html" });
 
-    // add assets
     for (const f of files) {
       archive.append(f.file, { name: f.path });
     }
 
     await archive.finalize();
 
-    const chunks = [];
-    for await (const chunk of stream) {
-      chunks.push(chunk);
-    }
-
-    const buffer = Buffer.concat(chunks);
+    const buffer = Buffer.concat(buffers);
 
     return {
       statusCode: 200,
