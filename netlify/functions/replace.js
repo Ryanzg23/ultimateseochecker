@@ -27,7 +27,13 @@ exports.handler = async (event) => {
     newCanonical,
     newAmp
   } = data;
-
+  
+// Force replace <title> specifically
+html = html.replace(
+  /<title[^>]*>.*?<\/title>/i,
+  `<title>${newTitle}</title>`
+);
+  
   // URL replacements first
   html = replaceAllSafe(html, canonical, newCanonical);
   html = replaceAllSafe(html, amphtml, newAmp);
@@ -35,6 +41,7 @@ exports.handler = async (event) => {
   // TEXT replacements
   html = replaceAllSafe(html, title, newTitle);
   html = replaceAllSafe(html, description, newDescription);
+  
 
   return {
     statusCode: 200,
