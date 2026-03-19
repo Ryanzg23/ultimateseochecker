@@ -10,9 +10,8 @@ async function generate() {
     return;
   }
 
-  // Optional loading indicator
   const btn = document.querySelector(".generate-btn");
-  btn.innerText = "Generating...";
+  btn.innerText = "Cloning...";
   btn.disabled = true;
 
   try {
@@ -24,7 +23,7 @@ async function generate() {
       body: JSON.stringify({ url })
     });
 
-    if (!res.ok) throw new Error("Failed to generate clone");
+    if (!res.ok) throw new Error("Clone failed");
 
     const blob = await res.blob();
 
@@ -37,6 +36,6 @@ async function generate() {
     alert("Error: " + err.message);
   }
 
-  btn.innerText = "Generate HTML";
+  btn.innerText = "Generate Clone";
   btn.disabled = false;
 }
