@@ -86,6 +86,43 @@ button {
       </div>
     </div>
 
+    <div class="card" style="margin-top:20px;">
+  <h3>Advanced Replace</h3>
+
+  <div class="grid">
+    <div>
+      <label>Find Text</label>
+      <input type="text" id="findText" placeholder="text to replace">
+    </div>
+
+    <div>
+      <label>Replace With</label>
+      <input type="text" id="replaceText" placeholder="new text">
+    </div>
+  </div>
+
+  <hr style="margin:20px 0; border-color:#424242;">
+
+  <h4>Asset Replace (Optional)</h4>
+
+  <div class="grid">
+    <div>
+      <label>New Favicon URL</label>
+      <input type="text" id="newFavicon">
+    </div>
+
+    <div>
+      <label>New Logo URL</label>
+      <input type="text" id="newLogo">
+    </div>
+
+    <div>
+      <label>New Banner URL</label>
+      <input type="text" id="newBanner">
+    </div>
+  </div>
+</div>
+
     <button class="generate-btn" onclick="generate()">Generate HTML</button>
   </div>
 
