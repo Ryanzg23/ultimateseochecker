@@ -109,13 +109,12 @@ app.post("/clone", async (req, res) => {
     html = replaceAllSafe(html, originalDesc, newDescription);
     html = replaceAllSafe(html, originalCanonical, newCanonical);
     html = replaceAllSafe(html, originalAmp, newAmp);
-    
-    const $ = cheerio.load(html);
-
 
 if (findText && replaceText) {  
   html = replaceAllSafe(html, findText, replaceText);  
-}
+}   
+    
+    const $ = cheerio.load(html);
 
     // favicon
 if (newFavicon) {
