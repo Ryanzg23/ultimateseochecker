@@ -2,6 +2,23 @@ function escapeRegex(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function normalizeText(text) {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function replaceAllFlexible(html, oldText, newText) {
+  if (!oldText || oldText.length < 5) return html;
+
+  const normalizedOld = normalizeText(oldText);
+
+  const regex = new RegExp(escapeRegex(oldText), 'gi');
+
+  return html.replace(regex, newText);
+}
+
 function replaceAllSafe(html, oldText, newText) {
   if (!oldText || oldText.length < 5) return html;
 
@@ -28,18 +45,20 @@ exports.handler = async (event) => {
     newAmp
   } = data;
   
-// Force replace <title> specifically
+// FORCE title tag
 html = html.replace(
   /<title[^>]*>.*?<\/title>/i,
   `<title>${newTitle}</title>`
 );
+
+// GLOBAL replace (case-insensitive)
+html = replaceAllFlexible(html, title, newTitle);
   
   // URL replacements first
   html = replaceAllSafe(html, canonical, newCanonical);
   html = replaceAllSafe(html, amphtml, newAmp);
 
-  // TEXT replacements
-  html = replaceAllSafe(html, title, newTitle);
+
   html = replaceAllSafe(html, description, newDescription);
   
 
