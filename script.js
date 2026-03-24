@@ -150,6 +150,7 @@ async function generateSitemap(url) {
 }
 
 function generateRobots(domain) {
+
   try {
     const url = new URL(domain.startsWith("http") ? domain : "https://" + domain);
     const origin = url.origin;
@@ -160,18 +161,14 @@ Allow: /
 
 Sitemap: ${origin}/sitemap.xml`;
 
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
+    navigator.clipboard.writeText(content);
 
-    link.href = URL.createObjectURL(blob);
-    link.download = "robots.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    alert("robots.txt copied to clipboard!");
 
   } catch {
     alert("Failed to generate robots.txt");
   }
+
 }
 
 function generateSchema(btn, url) {
