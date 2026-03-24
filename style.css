@@ -953,7 +953,20 @@ border:1px solid rgba(234,179,8,0.35);
   cursor: default;
 }
 
+.copyable {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
 
+.copyable:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.copyable.copied {
+  color: #22c55e; /* green */
+  font-weight: 600;
+}
 
 
 
