@@ -149,7 +149,7 @@ async function generateSitemap(url) {
   }
 }
 
-function generateRobots(domain) {
+function generateRobots(btn, domain) {
 
   try {
     const url = new URL(domain.startsWith("http") ? domain : "https://" + domain);
@@ -163,10 +163,19 @@ Sitemap: ${origin}/sitemap.xml`;
 
     navigator.clipboard.writeText(content);
 
-    alert("robots.txt copied to clipboard!");
+    const original = btn.textContent;
+
+    btn.textContent = "Copied!";
+    btn.disabled = true;
+
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.disabled = false;
+    }, 1200);
 
   } catch {
-    alert("Failed to generate robots.txt");
+    btn.textContent = "Error";
+    setTimeout(() => btn.textContent = "Generate Robots", 1200);
   }
 
 }
@@ -531,7 +540,7 @@ if (schemaList.length) {
         }
 
         <button class="mini-btn robots-gen"
-          onclick="generateRobots('${data.inputUrl}')">
+          onclick="generateRobots(this, '${data.inputUrl}')">
           Generate Robots
         </button>
       `
