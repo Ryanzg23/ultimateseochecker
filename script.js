@@ -1115,7 +1115,11 @@ function copyValue(el, text) {
 
   navigator.clipboard.writeText(text);
 
-  const icon = el.parentElement.querySelector(".copy-icon");
+  const key = el.dataset.copy;
+
+  const card = el.closest(".card");
+  const icon = card.querySelector(`.copy-icon[data-copy="${key}"]`);
+
   if (!icon) return;
 
   const original = icon.textContent;
@@ -1127,7 +1131,6 @@ function copyValue(el, text) {
     icon.textContent = original;
     icon.disabled = false;
   }, 1000);
-
 }
 
 
