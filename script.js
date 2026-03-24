@@ -468,12 +468,20 @@ if (schemaList.length) {
 
       <div class="label">
         Title (${titleCount} characters)
+            <button class="copy-icon"
+               onclick="copyText(this, \`${data.title || ""}\`)">
+               ⧉
+            </button>
         ${titleMismatch ? `<span class="note red">Title mismatch</span>` : ``}
       </div>
       <div class="value">${data.title || "—"}</div>
 
       <div class="label">
         Meta Description (${descCount} characters)
+           <button class="copy-icon"
+             onclick="copyText(this, \`${data.title || ""}\`)">
+             ⧉
+           </button>
         ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
       </div>
       <div class="value">${data.description || "—"}</div>
@@ -491,7 +499,14 @@ if (schemaList.length) {
         </span>
       </div>
 
-      <div class="label">Canonical</div>
+      <div class="label inline">
+        Canonical
+      
+        <button class="copy-icon"
+          onclick="copyText(this, \`${data.canonical || ""}\`)">
+          ⧉
+        </button>
+      </div>
       <div class="value">
         ${
           data.canonical
@@ -1072,7 +1087,20 @@ link.remove();
 }
 
 
+function copyText(btn, text) {
 
+  navigator.clipboard.writeText(text || "");
+
+  const original = btn.textContent;
+
+  btn.textContent = "Copied!";
+  btn.disabled = true;
+
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.disabled = false;
+  }, 1000);
+}
 
 
 
