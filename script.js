@@ -526,15 +526,18 @@ if (schemaList.length) {
   ${
     isPagesDev
       ? `<span class="muted">Not applicable (Pages.dev)</span>`
-      : data.robots
-        ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
-        : `
-          No Robots detected
-          <button class="mini-btn robots-gen"
-            onclick="generateRobots('${data.inputUrl}')">
-            Generate Robots
-          </button>
-        `
+      : `
+        ${
+          data.robots
+            ? `<a href="${data.robots.url}" target="_blank">${data.robots.url}</a>`
+            : `<span class="muted">No Robots detected</span>`
+        }
+
+        <button class="mini-btn robots-gen"
+          onclick="generateRobots('${data.inputUrl}')">
+          Generate Robots
+        </button>
+      `
   }
 </div>
 
@@ -543,17 +546,20 @@ if (schemaList.length) {
   ${
     isPagesDev
       ? `<span class="muted">Not applicable (Pages.dev)</span>`
-      : data.sitemap && data.sitemap.status === "exists"
-        ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
-        : `
-          <span class="muted">No Sitemap detected</span>
-          <button
-            class="mini-btn sitemap-gen"
-            onclick="generateSitemap('${data.inputUrl}')"
-          >
-            Generate Sitemap
-          </button>
-        `
+      : `
+        ${
+          data.sitemap && data.sitemap.status === "exists"
+            ? `<a href="${data.sitemap.url}" target="_blank">${data.sitemap.url}</a>`
+            : `<span class="muted">No Sitemap detected</span>`
+        }
+
+        <button
+          class="mini-btn sitemap-gen"
+          onclick="generateSitemap('${data.inputUrl}')"
+        >
+          Generate Sitemap
+        </button>
+      `
   }
 </div>
 
