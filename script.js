@@ -468,26 +468,26 @@ if (schemaList.length) {
 
       <div class="label">
         Title (${titleCount} characters)
-            <button class="copy-icon"
+            <button class="copy-icon" data-copy="title"
                onclick="copyText(this, \`${data.title || ""}\`)">
                ⧉
             </button>
         ${titleMismatch ? `<span class="note red">Title mismatch</span>` : ``}
       </div>
-      <div class="value copyable"
+      <div class="value copyable" data-copy="title"
         onclick="copyValue(this, \`${data.title || ""}\`)">
         ${data.title || "—"}
       </div>
 
       <div class="label">
         Meta Description (${descCount} characters)
-           <button class="copy-icon"
+           <button class="copy-icon" data-copy="description"
              onclick="copyText(this, \`${data.description || ""}\`)">
              ⧉
            </button>
         ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
       </div>
-      <div class="value copyable"
+      <div class="value copyable" data-copy="description"
         onclick="copyValue(this, \`${data.description || ""}\`)">
         ${data.description || "—"}
       </div>
