@@ -474,7 +474,10 @@ if (schemaList.length) {
             </button>
         ${titleMismatch ? `<span class="note red">Title mismatch</span>` : ``}
       </div>
-      <div class="value">${data.title || "—"}</div>
+      <div class="value copyable"
+        onclick="copyValue(this, \`${data.title || ""}\`)">
+        ${data.title || "—"}
+      </div>
 
       <div class="label">
         Meta Description (${descCount} characters)
@@ -484,7 +487,10 @@ if (schemaList.length) {
            </button>
         ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
       </div>
-      <div class="value">${data.description || "—"}</div>
+      <div class="value copyable"
+        onclick="copyValue(this, \`${data.title || ""}\`)">
+        ${data.title || "—"}
+      </div>
 
       <div class="label">
         Meta Keywords (${data.keywords ? data.keywords.split(",").length : 0})
@@ -1103,7 +1109,23 @@ function copyText(btn, text) {
 }
 
 
+function copyValue(el, text) {
 
+  if (!text) return;
+
+  navigator.clipboard.writeText(text);
+
+  const original = el.textContent;
+
+  el.textContent = "Copied!";
+  el.classList.add("copied");
+
+  setTimeout(() => {
+    el.textContent = original;
+    el.classList.remove("copied");
+  }, 1000);
+
+}
 
 
 
