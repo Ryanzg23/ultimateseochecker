@@ -488,7 +488,7 @@ if (schemaList.length) {
         ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
       </div>
       <div class="value copyable"
-        onclick="copyValue(this, \`${data.title || ""}\`)">
+        onclick="copyValue(this, \`${data.description || ""}\`)">
         ${data.title || "—"}
       </div>
 
