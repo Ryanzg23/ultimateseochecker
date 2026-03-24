@@ -1115,18 +1115,20 @@ function copyValue(el, text) {
 
   navigator.clipboard.writeText(text);
 
-  const original = el.textContent;
+  const icon = el.parentElement.querySelector(".copy-icon");
+  if (!icon) return;
 
-  el.textContent = "Copied!";
-  el.classList.add("copied");
+  const original = icon.textContent;
+
+  icon.textContent = "Copied!";
+  icon.disabled = true;
 
   setTimeout(() => {
-    el.textContent = original;
-    el.classList.remove("copied");
+    icon.textContent = original;
+    icon.disabled = false;
   }, 1000);
 
 }
-
 
 
 
