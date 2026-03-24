@@ -489,7 +489,7 @@ if (schemaList.length) {
       </div>
       <div class="value copyable"
         onclick="copyValue(this, \`${data.description || ""}\`)">
-        ${data.title || "—"}
+        ${data.description || "—"}
       </div>
 
       <div class="label">
