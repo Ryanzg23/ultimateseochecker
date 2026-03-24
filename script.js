@@ -479,7 +479,7 @@ if (schemaList.length) {
       <div class="label">
         Meta Description (${descCount} characters)
            <button class="copy-icon"
-             onclick="copyText(this, \`${data.title || ""}\`)">
+             onclick="copyText(this, \`${data.description || ""}\`)">
              ⧉
            </button>
         ${descMismatch ? `<span class="note red">Description mismatch</span>` : ``}
