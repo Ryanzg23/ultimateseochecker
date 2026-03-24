@@ -974,6 +974,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <title>404 Page</title>
+<meta name="robots" content="noindex, nofollow">
 <style>
 body{
 background:#000;
@@ -1023,7 +1024,7 @@ height:10px;
 z-index:-10;
 }
 hr:after{
-content:"\\2022";
+content:"\2022";
 display:inline-block;
 position:relative;
 top:-0.75em;
@@ -1040,6 +1041,7 @@ background:#000;
 <hr><br>
 <div class='_1'>THE PAGE</div><br>
 <div class='_2'>WAS NOT FOUND</div><br>
+Back to <a href="/">Home</a>
 </div>
 </body>
 </html>`;
