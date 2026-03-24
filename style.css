@@ -932,7 +932,26 @@ border:1px solid rgba(234,179,8,0.35);
 }
 
 
+.copy-icon {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
 
+.copy-icon:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+.copy-icon:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 
 
 
