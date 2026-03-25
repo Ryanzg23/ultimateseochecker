@@ -1006,82 +1006,22 @@ const html = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>404 Page Not Found</title>
 <meta name="robots" content="noindex, nofollow">
+
 <style>
-body{
-background:#000;
-color:#3e3e3e;
-font-family:'Open Sans',sans-serif;
-max-height:700px;
-overflow:hidden;
-}
-.c{
-text-align:center;
-display:block;
-position:relative;
-width:80%;
-margin:100px auto;
-}
-._404{
-font-size:220px;
-position:relative;
-display:inline-block;
-z-index:2;
-height:250px;
-letter-spacing:15px;
-}
-._1{
-text-align:center;
-display:block;
-position:relative;
-letter-spacing:12px;
-font-size:4em;
-line-height:80%;
-}
-._2{
-text-align:center;
-display:block;
-position:relative;
-font-size:20px;
-}
-hr{
-padding:0;
-border:none;
-border-top:5px solid #3e3e3e;
-color:#3e3e3e;
-text-align:center;
-margin:0 auto;
-width:420px;
-height:10px;
-z-index:-10;
-}
-hr:after{
-content:"\\2022";
-display:inline-block;
-position:relative;
-top:-0.75em;
-font-size:2em;
-padding:0 0.2em;
-background:#000;
-}
-a{
-color:#fff;
-text-decoration:none;
-}
-a:hover{
-text-decoration:underline;
-}
+body{background:#000;color:#3e3e3e;font-family:'Open Sans',sans-serif;margin:0;padding:0}.c{text-align:center;width:90%;max-width:800px;margin:80px auto;padding:20px}._404{font-size:clamp(100px,20vw,220px);letter-spacing:10px;line-height:1}._1{letter-spacing:6px;font-size:clamp(24px,5vw,48px);margin-top:10px}._2{font-size:clamp(14px,2.5vw,20px);margin-top:10px;color:#888}hr{border:none;border-top:3px solid #3e3e3e;width:60%;max-width:400px;margin:20px auto}hr:after{content:"\2022";display:inline-block;position:relative;top:-.7em;font-size:1.5em;padding:0 .2em;background:#000}a{display:inline-block;margin-top:20px;color:#706031;text-decoration:none;font-size:16px}a:hover{text-decoration:underline}@media (max-width:480px){.c{margin:50px auto}}
 </style>
 </head>
 
 <body>
 <div class='c'>
-<div class='_404'>404</div>
-<hr><br>
-<div class='_1'>PAGE NOT FOUND</div><br>
-<div class='_2'>Sorry, the page you're looking for doesn't exist.</div><br>
-Back to <a href="/">Home</a>
+  <div class='_404'>404</div>
+  <hr>
+  <div class='_1'>PAGE NOT FOUND</div>
+  <div class='_2'>Sorry, the page you're looking for doesn't exist.</div>
+  <a href="/">Back to Home</a>
 </div>
 </body>
 </html>`;
