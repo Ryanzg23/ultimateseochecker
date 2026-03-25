@@ -1006,7 +1006,7 @@ const html = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>404 Page</title>
+<title>404 Page Not Found</title>
 <meta name="robots" content="noindex, nofollow">
 <style>
 body{
@@ -1065,6 +1065,13 @@ font-size:2em;
 padding:0 0.2em;
 background:#000;
 }
+a{
+color:#fff;
+text-decoration:none;
+}
+a:hover{
+text-decoration:underline;
+}
 </style>
 </head>
 
@@ -1072,8 +1079,8 @@ background:#000;
 <div class='c'>
 <div class='_404'>404</div>
 <hr><br>
-<div class='_1'>THE PAGE</div><br>
-<div class='_2'>WAS NOT FOUND</div><br>
+<div class='_1'>PAGE NOT FOUND</div><br>
+<div class='_2'>Sorry, the page you're looking for doesn't exist.</div><br>
 Back to <a href="/">Home</a>
 </div>
 </body>
