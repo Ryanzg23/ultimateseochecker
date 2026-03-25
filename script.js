@@ -1011,7 +1011,7 @@ const html = `<!doctype html>
 <meta name="robots" content="noindex, nofollow">
 
 <style>
-body{background:#000;color:#3e3e3e;font-family:'Open Sans',sans-serif;margin:0;padding:0}.c{text-align:center;width:90%;max-width:800px;margin:80px auto;padding:20px}._404{font-size:clamp(100px,20vw,220px);letter-spacing:10px;line-height:1}._1{letter-spacing:6px;font-size:clamp(24px,5vw,48px);margin-top:10px}._2{font-size:clamp(14px,2.5vw,20px);margin-top:10px;color:#888}hr{border:none;border-top:3px solid #3e3e3e;width:60%;max-width:400px;margin:20px auto}hr:after{content:"\2022";display:inline-block;position:relative;top:-.7em;font-size:1.5em;padding:0 .2em;background:#000}a{display:inline-block;margin-top:20px;color:#706031;text-decoration:none;font-size:16px}a:hover{text-decoration:underline}@media (max-width:480px){.c{margin:50px auto}}
+body{background:#000;color:#3e3e3e;font-family:'Open Sans',sans-serif;margin:0;padding:0}.c{text-align:center;width:90%;max-width:800px;margin:80px auto;padding:20px}._404{font-size:clamp(100px,20vw,220px);letter-spacing:10px;line-height:1}._1{letter-spacing:6px;font-size:clamp(24px,5vw,48px);margin-top:10px}._2{font-size:clamp(14px,2.5vw,20px);margin-top:10px;color:#888}hr{border:none;border-top:3px solid #3e3e3e;width:60%;max-width:400px;margin:20px auto}hr:after{content:"\\2022";display:inline-block;position:relative;top:-.7em;font-size:1.5em;padding:0 .2em;background:#000}a{display:inline-block;margin-top:20px;color:#706031;text-decoration:none;font-size:16px}a:hover{text-decoration:underline}@media (max-width:480px){.c{margin:50px auto}}
 </style>
 </head>
 
