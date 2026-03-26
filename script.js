@@ -503,6 +503,11 @@ if (schemaList.length) {
         <span class="robots ${robotsInfo.status}">
           ${robotsInfo.label}
         </span>
+      
+        <button class="mini-btn robots-gen"
+          onclick="generateMetaRobots(this)">
+          Generate Meta Robots
+        </button>
       </div>
 
       <div class="label inline">
@@ -1080,6 +1085,22 @@ function copyValue(el, text) {
   }, 1000);
 }
 
+function generateMetaRobots(btn) {
+
+  const code = `<meta name="robots" content="index, follow">`;
+
+  navigator.clipboard.writeText(code);
+
+  const original = btn.textContent;
+
+  btn.textContent = "Copied!";
+  btn.disabled = true;
+
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.disabled = false;
+  }, 1200);
+}
 
 
 
