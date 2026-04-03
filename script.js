@@ -398,7 +398,12 @@ async function processDomain(domain, options = {}) {
 
 let canonicalMismatch = false;
 
-if (!isAmp && data.canonical && data.finalUrl) {
+if (
+  !isAmp &&              // skip AMP
+  !isPagesDev &&         // skip pages.dev
+  data.canonical &&
+  data.finalUrl
+) {
 
   const canonNorm = normalizeUrl(data.canonical);
   const finalNorm = normalizeUrl(data.finalUrl);
