@@ -552,7 +552,7 @@ if (schemaList.length) {
       
         ${canonicalMismatch
         ? `<span class="note red canonical-mismatch has-tooltip">
-             Mismatch Canonical mo!
+             Canonical Mismatch
              <span class="tooltip">
                URL: ${data.finalUrl}
              </span>
