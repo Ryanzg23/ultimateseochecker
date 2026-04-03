@@ -13,6 +13,20 @@ function normalizeUrl(u) {
   }
 }
 
+function isAmpUrl(url, amphtml) {
+  if (!url) return false;
+
+  const u = url.toLowerCase();
+
+  return (
+    u.includes("/amp") ||
+    u.includes("?amp") ||
+    u.endsWith("/amp/") ||
+    u.endsWith("/amp") ||
+    !!amphtml // page has AMP version
+  );
+}
+
 function interpretRobots(content) {
   if (!content) {
     return { label: "not set", status: "neutral", note: "Default is index, follow" };
@@ -398,9 +412,11 @@ async function processDomain(domain, options = {}) {
 
 let canonicalMismatch = false;
 
+const ampDetected = isAmpUrl(data.finalUrl, data.amphtml);
+
 if (
-  !isAmp &&              // skip AMP
-  !isPagesDev &&         // skip pages.dev
+  !ampDetected &&     // 🔥 improved AMP detection
+  !isPagesDev &&
   data.canonical &&
   data.finalUrl
 ) {
