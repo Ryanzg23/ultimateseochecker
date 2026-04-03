@@ -477,11 +477,16 @@ if (schemaList.length) {
 
     card.innerHTML = `
       <div class="card-header">
-        <h3>
-          <a href="${data.finalUrl || data.inputUrl}" target="_blank" class="card-url">
-            ${data.inputUrl}
-          </a>
-        </h3>
+         <h3 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+           <a href="${data.finalUrl || data.inputUrl}" target="_blank" class="card-url">
+             ${data.inputUrl}
+           </a>
+         
+           <button class="copy-icon"
+             onclick="copyText(this, \`${data.inputUrl}\`)">
+             ⧉
+           </button>
+         </h3>
         <div class="card-actions">
           ${!redirected && !isAmp ? `<span class="badge green ok-badge">OK</span>` : ``}
           <button class="secondary small http-btn hidden"
