@@ -4,6 +4,15 @@ const CONCURRENCY = 5;
    HELPERS
 ================================ */
 
+function normalizeUrl(u) {
+  try {
+    const url = new URL(u);
+    return url.hostname.replace(/^www\./, "") + url.pathname.replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+}
+
 function interpretRobots(content) {
   if (!content) {
     return { label: "not set", status: "neutral", note: "Default is index, follow" };
@@ -382,6 +391,23 @@ async function processDomain(domain, options = {}) {
   .toLowerCase();
 
       const isPagesDev = host.includes(".pages.dev")
+     
+/* ================================
+   CANONICAL MISMATCH
+================================ */
+
+let canonicalMismatch = false;
+
+if (!isAmp && data.canonical && data.finalUrl) {
+
+  const canonNorm = normalizeUrl(data.canonical);
+  const finalNorm = normalizeUrl(data.finalUrl);
+
+  if (canonNorm && finalNorm && canonNorm !== finalNorm) {
+    canonicalMismatch = true;
+  }
+
+}
 
     if (is404 || is301Home) {
       card.innerHTML = `
@@ -514,9 +540,19 @@ if (schemaList.length) {
         Canonical
       
         <button class="copy-icon"
+          data-copy="canonical"
           onclick="copyText(this, \`${data.canonical || ""}\`)">
           ⧉
         </button>
+      
+        ${canonicalMismatch
+        ? `<span class="note red has-tooltip">
+             Mismatch
+             <span class="tooltip">
+               URL: ${data.finalUrl}
+             </span>
+           </span>`
+        : ``}
       </div>
       <div class="value">
         ${
