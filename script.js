@@ -546,7 +546,7 @@ if (schemaList.length) {
         </button>
       
         ${canonicalMismatch
-        ? `<span class="note red has-tooltip">
+        ? `<span class="note red canonical-mismatch has-tooltip">
              Mismatch
              <span class="tooltip">
                URL: ${data.finalUrl}
