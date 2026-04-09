@@ -1088,7 +1088,6 @@ body{background:#000;color:#3e3e3e;font-family:'Open Sans',sans-serif;margin:0;p
   <hr>
   <div class='_1'>PAGE NOT FOUND</div>
   <div class='_2'>Sorry, the page you're looking for doesn't exist.</div>
-  <a href="/">Back to Home</a>
 </div>
 </body>
 </html>`;
