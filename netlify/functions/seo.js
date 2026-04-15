@@ -105,6 +105,8 @@ if (canonical) {
     const amphtml =
       getTag(/<link[^>]*rel=["']amphtml["'][^>]*href=["']([^"']*)["']/i) ||
       getTag(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']amphtml["']/i);
+    /* ---------- AMP HTML DETECTION ---------- */
+    const isAmpHtml = /<html[^>]*\s(amp|⚡)(\s|>)/i.test(html);
 
     /* ---------- META ROBOTS ---------- */
     const robotsMeta =
@@ -393,6 +395,7 @@ async function checkLinkStatus(url) {
         keywords,
         canonical,
         amphtml,
+        isAmpHtml, 
         robotsMeta,
         robots,
         sitemap,
