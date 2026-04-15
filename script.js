@@ -414,8 +414,10 @@ let canonicalMismatch = false;
 
 const ampDetected = isAmpUrl(data.finalUrl, data.amphtml);
 
+let canonicalMismatch = false;
+
 if (
-  !ampDetected &&     // 🔥 improved AMP detection
+  !isAmp &&            // ✅ use your AMP connection flag
   !isPagesDev &&
   data.canonical &&
   data.finalUrl
