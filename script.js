@@ -413,8 +413,9 @@ async function processDomain(domain, options = {}) {
 let canonicalMismatch = false;
 
 if (
-  !isAmp &&          // AMP connection skip ✅
-  !isPagesDev &&     // pages.dev skip ✅
+  !isAmp &&
+  !isPagesDev &&
+  !data.isAmpHtml &&   
   data.canonical &&
   data.finalUrl
 ) {
