@@ -55,11 +55,10 @@ https://example.com/page"
       <!-- LEFT ACTIONS -->
       <div class="action-left">
         <button id="runBtn" onclick="run()">Check SEO</button>
-      <button id="toggleButtonsBtn"
-              class="secondary"
-              onclick="toggleCardButtons()">
-        Hide Buttons
-      </button>
+      <div class="switch-wrapper" title="Show/Hide Buttons for all cards">
+  <input type="checkbox" id="toggleButtonsBtn" onchange="toggleCardButtons()">
+  <label for="toggleButtonsBtn" class="switch"></label>
+</div>
         <button id="check404Btn"
                 class="secondary"
                 onclick="run404Check()">
