@@ -294,7 +294,8 @@ function copySchema(btn) {
 }
 
 function toggleCardButtons() {
-  hideCardButtons = !hideCardButtons;
+  const checkbox = document.getElementById("toggleButtonsBtn");
+  hideCardButtons = checkbox.checked;
 
   const btn = document.getElementById("toggleButtonsBtn");
   if (btn) {
