@@ -1,5 +1,5 @@
 const CONCURRENCY = 5;
-
+let hideCardButtons = false;
 /* ================================
    HELPERS
 ================================ */
@@ -293,6 +293,26 @@ function copySchema(btn) {
   setTimeout(() => btn.textContent = "Copy Schema", 1500);
 }
 
+function toggleCardButtons() {
+  hideCardButtons = !hideCardButtons;
+
+  const btn = document.getElementById("toggleButtonsBtn");
+  if (btn) {
+    btn.textContent = hideCardButtons ? "Show Buttons" : "Hide Buttons";
+  }
+
+  applyButtonVisibility();
+}
+
+function applyButtonVisibility() {
+  const buttons = document.querySelectorAll(
+    ".card button, .card .mini-btn, .card .copy-icon"
+  );
+
+  buttons.forEach(el => {
+    el.style.display = hideCardButtons ? "none" : "";
+  });
+}
 
 /* ================================
    MAIN RUN
@@ -385,7 +405,7 @@ async function processDomain(domain, options = {}) {
     </div>
     <div class="muted">Checking domain…</div>
   `;
-
+   applyButtonVisibility();
   insertAfter?.nextSibling
     ? results.insertBefore(card, insertAfter.nextSibling)
     : results.appendChild(card);
@@ -436,6 +456,7 @@ if (
           ${is404 ? "404 – page not found" : "301 → homepage"}
         </div>
       `;
+       applyButtonVisibility();
       return;
     }
 
@@ -929,7 +950,7 @@ async function process404Domain(domain) {
     </div>
     <div class="muted">Checking 404 behaviour...</div>
   `;
-
+applyButtonVisibility();
   results.appendChild(card);
 
   try {
