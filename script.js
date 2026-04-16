@@ -307,7 +307,7 @@ function toggleCardButtons() {
 
 function applyButtonVisibility() {
   const buttons = document.querySelectorAll(
-    ".card button, .card .mini-btn, .card .copy-icon"
+    ".card button, .card .mini-btn, .card .copy-icon, .card .canonical-mismatch"
   );
 
   buttons.forEach(el => {
