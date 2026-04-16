@@ -330,6 +330,7 @@ async function run() {
   setLoading(true);
   document.getElementById("results").innerHTML = "";
   initProgress(domains.length);
+   document.getElementById("toggleWrapper")?.classList.remove("hidden");
 
   let completed = 0;
   const queue = [...domains];
