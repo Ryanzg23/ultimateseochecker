@@ -991,3 +991,50 @@ border:1px solid rgba(234,179,8,0.35);
   animation: mismatch-alert 1s ease-in-out infinite;
 }
 
+
+/* ================================
+   TOGGLE SWITCH (HIDE BUTTONS)
+================================ */
+
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+/* hide default checkbox */
+.switch-wrapper input {
+  display: none;
+}
+
+/* track */
+.switch {
+  width: 46px;
+  height: 24px;
+  background: #6b7280; /* OFF (gray) */
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+/* knob */
+.switch::after {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+}
+
+/* ON state */
+.switch-wrapper input:checked + .switch {
+  background: #22c55e; /* green */
+}
+
+.switch-wrapper input:checked + .switch::after {
+  transform: translateX(20px);
+}
