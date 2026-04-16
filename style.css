@@ -1048,3 +1048,6 @@ border:1px solid rgba(234,179,8,0.35);
   background: transparent;
   border: none;
 }
+.switch-wrapper.hidden {
+  display: none;
+}
