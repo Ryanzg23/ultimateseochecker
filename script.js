@@ -638,8 +638,9 @@ if (schemaList.length) {
         }
       </div>
 
-      <div class="label">Alternate (hreflang)</div>
-      <div class="value alternatemrgn">
+      <div class="label inline">
+        Alternate (hreflang):
+      
         ${renderAlternate(data)}
       </div>
 
