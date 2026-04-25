@@ -415,6 +415,7 @@ async function processDomain(domain, options = {}) {
   try {
     const res = await fetch(`/.netlify/functions/seo?url=${encodeURIComponent(domain)}`);
     const data = await res.json();
+     card.dataset.fullData = JSON.stringify(data);
     if (!res.ok || data.error === "fetch_failed") throw new Error();
 
     const inputRoot = getRootDomain(data.inputUrl);
@@ -635,6 +636,11 @@ if (schemaList.length) {
             ? `<a href="#" onclick="openAmp('${data.amphtml}', this)">${data.amphtml}</a>`
             : data.amphtml || "—"
         }
+      </div>
+
+      <div class="label">Alternate (hreflang)</div>
+      <div class="value">
+        ${renderAlternate(data)}
       </div>
 
 <div class="label">robots.txt</div>
@@ -890,6 +896,41 @@ async function showHttpStatus(btn, domain) {
       <button class="secondary small" onclick="restoreCard(this)">Back</button>
     `;
   }
+}
+
+function showAlternate(btn) {
+
+  const card = btn.closest(".card");
+
+  const data = JSON.parse(card.dataset.fullData || "{}");
+
+  card.dataset.ready = card.innerHTML;
+
+  const rows = (data.alternateLinks || []).map(item => `
+    <div class="http-row">
+      <div class="http-url">${item.hreflang}</div>
+      <div class="http-status">
+        <a href="${item.href}" target="_blank">${item.href}</a>
+      </div>
+    </div>
+  `).join("");
+
+  card.innerHTML = `
+    <div class="card-header">
+      <h3>Alternate (hreflang)</h3>
+      <div class="card-actions">
+        <button class="secondary small" onclick="restoreCard(this)">Back</button>
+      </div>
+    </div>
+
+    <div class="http-table">
+      <div class="http-row head">
+        <div>Hreflang</div>
+        <div>URL</div>
+      </div>
+      ${rows}
+    </div>
+  `;
 }
 
 function restoreCard(btn) {
@@ -1166,6 +1207,49 @@ function copyValue(el, text) {
     icon.textContent = original;
     icon.disabled = false;
   }, 1000);
+}
+
+function renderAlternate(data) {
+
+  const list = data.alternateLinks || [];
+
+  if (!list.length) {
+    return `<span class="muted">Not detected</span>`;
+  }
+
+  const amp = data.amphtml || "";
+
+  const normalize = u => {
+    try {
+      const x = new URL(u);
+      return x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/$/, "");
+    } catch {
+      return u;
+    }
+  };
+
+  const ampNorm = normalize(amp);
+
+  let mismatch = false;
+
+  for (const item of list) {
+    if (normalize(item.href) !== ampNorm) {
+      mismatch = true;
+      break;
+    }
+  }
+
+  if (mismatch) {
+    return `<span class="badge red">Mismatch</span>`;
+  }
+
+  return `
+    <a href="#"
+      onclick="showAlternate(this)"
+      class="badge green badge-link">
+      Checked
+    </a>
+  `;
 }
 
 function generateMetaRobots(btn) {
