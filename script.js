@@ -1239,9 +1239,15 @@ function renderAlternate(data) {
     }
   }
 
-  if (mismatch) {
-    return `<span class="badge red">Mismatch</span>`;
-  }
+   if (mismatch) {
+     return `
+       <a href="#"
+         onclick="showAlternate(this)"
+         class="badge red badge-link">
+         Mismatch
+       </a>
+     `;
+   }
 
   return `
     <a href="#"
