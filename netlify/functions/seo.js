@@ -107,6 +107,32 @@ if (canonical) {
       getTag(/<link[^>]*href=["']([^"']*)["'][^>]*rel=["']amphtml["']/i);
     /* ---------- AMP HTML DETECTION ---------- */
     const isAmpHtml = /<html[^>]*\s(amp|⚡)(\s|>)/i.test(html);
+    /* ---------- ALTERNATE HREFLANG ---------- */
+    const alternateLinks = [];
+    
+    const altRegex = /<link[^>]*rel=["']alternate["'][^>]*>/gi;
+    const hrefRegex = /href=["']([^"']+)["']/i;
+    const hreflangRegex = /hreflang=["']([^"']+)["']/i;
+    
+    let match;
+    
+    while ((match = altRegex.exec(html)) !== null) {
+      const tag = match[0];
+    
+      const href = tag.match(hrefRegex)?.[1] || "";
+      const hreflang = tag.match(hreflangRegex)?.[1] || "default";
+    
+      if (href) {
+        try {
+          const full = new URL(href, finalUrl).href;
+    
+          alternateLinks.push({
+            href: full,
+            hreflang
+          });
+        } catch {}
+      }
+}
 
     /* ---------- META ROBOTS ---------- */
     const robotsMeta =
@@ -396,6 +422,7 @@ async function checkLinkStatus(url) {
         canonical,
         amphtml,
         isAmpHtml, 
+        alternateLinks,
         robotsMeta,
         robots,
         sitemap,
