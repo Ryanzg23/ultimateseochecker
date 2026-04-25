@@ -1244,7 +1244,7 @@ function renderAlternate(data) {
        <a href="#"
          onclick="showAlternate(this)"
          class="badge red badge-link">
-         Mismatch
+         Mismatch (${list.length})
        </a>
      `;
    }
