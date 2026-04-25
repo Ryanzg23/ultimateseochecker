@@ -639,7 +639,7 @@ if (schemaList.length) {
       </div>
 
       <div class="label">Alternate (hreflang)</div>
-      <div class="value">
+      <div class="value alternatemrgn">
         ${renderAlternate(data)}
       </div>
 
@@ -1253,7 +1253,7 @@ function renderAlternate(data) {
     <a href="#"
       onclick="showAlternate(this)"
       class="badge green badge-link">
-      Checked
+      Checked - Matched with AMP Link
     </a>
   `;
 }
