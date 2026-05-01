@@ -778,8 +778,9 @@ function createChecklistCard(ampCard, data) {
 
         <div class="check-sub">
           <label>
-            <label><input type="checkbox" onchange="updateParent(this); saveChecklistState(this)"> Activated Aged Content Sheet</label>
-          </label>
+              <input type="checkbox" onchange="updateParent(this); saveChecklistState(this)">
+              Activated Aged Content Sheet
+            </label>
 
           <label><input type="checkbox" onchange="updateParent(this); saveChecklistState(this)"> Brand Sheet if new domain</label>
         </div>
@@ -841,7 +842,7 @@ function createChecklistCard(ampCard, data) {
       </div>
 
       <div class="check-group">
-        <label><input type="checkbox" onchange="updateParent(this); saveChecklistState(this)"> Domain Tracker GC Telegram</label>
+        <label><input type="checkbox" onchange="saveChecklistState(this)"> Domain Tracker GC Telegram</label>
       </div>
 
     </div>
@@ -896,36 +897,10 @@ function loadChecklistState(checklist) {
 function renderAuthLinks(list) {
   if (!list || !list.length) return "Not detected";
 
-   function badge(item) {
-   
-     const status = item.status;
-   
-     let html = "";
-   
-     if (status === 200) html = `<span class="badge green">200</span>`;
-     else if (status === 404) html = `<span class="badge red">404</span>`;
-     else if (status === 0) html = `<span class="badge red">Error</span>`;
-     else html = `<span class="badge">${status}</span>`;
-   
-     if (item.redirected) {
-       html = `
-         <span class="badge green has-tooltip">
-           200
-           <span class="tooltip">
-             Redirect → ${item.finalUrl}
-           </span>
-         </span>
-       `;
-     }
-   
-     return html;
-   }
-
   if (list.length === 1) {
     return `
       <div>
         <a href="${list[0].url}" target="_blank">${list[0].url}</a>
-        ${badge(list[0])}
       </div>
     `;
   }
@@ -937,7 +912,6 @@ function renderAuthLinks(list) {
     .map(item => `
       <div>
         <a href="${item.url}" target="_blank">${item.url}</a>
-        ${badge(item.status)}
       </div>
     `)
     .join("");
@@ -946,7 +920,6 @@ function renderAuthLinks(list) {
     <div class="auth-links">
       <div>
         <a href="${list[0].url}" target="_blank">${list[0].url}</a>
-        ${badge(list[0].status)}
       </div>
 
       <div class="auth-toggle muted" onclick="expandAuth('${id}', this)">
