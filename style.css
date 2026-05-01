@@ -1055,3 +1055,45 @@ border:1px solid rgba(234,179,8,0.35);
 .checklist-card {
   border: 1px solid #3b82f6;
 }
+
+.checklist {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.check-group {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.check-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.check-sub {
+  margin-top: 8px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.check-sub a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.check-sub a:hover {
+  text-decoration: underline;
+}
+
+.code-box.small {
+  font-size: 12px;
+}
