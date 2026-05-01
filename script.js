@@ -710,6 +710,10 @@ if (schemaList.length) {
       card.querySelector(".ok-badge")?.remove();
       card.querySelector(".http-btn")?.classList.remove("hidden");
     }, 1000);
+     // 🔥 AUTO ADD CHECKLIST AFTER AMP CARD
+      if (isAmp) {
+        createChecklistCard(card, data);
+      }
 
   } catch {
     card.innerHTML = `
@@ -718,10 +722,7 @@ if (schemaList.length) {
     `;
   }
 
-// 🔥 AUTO ADD CHECKLIST AFTER AMP CARD
-if (isAmp) {
-  createChecklistCard(card, data);
-}
+
 
    
 }
