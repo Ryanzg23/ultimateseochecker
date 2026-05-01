@@ -717,6 +717,93 @@ if (schemaList.length) {
       <div class="issue-pill danger">Domain not reachable</div>
     `;
   }
+
+// 🔥 AUTO ADD CHECKLIST AFTER AMP CARD
+if (isAmp) {
+  createChecklistCard(card, data);
+}
+
+   
+}
+
+
+function createChecklistCard(ampCard, data) {
+
+  const results = document.getElementById("results");
+
+  const card = document.createElement("div");
+  card.className = "card checklist-card";
+
+  card.innerHTML = `
+    <div class="card-header">
+      <h3>Workflow Checklist</h3>
+    </div>
+
+    <div class="checklist">
+
+      <div class="check-group">
+        <label><input type="checkbox"> AGED_WEB DETAILS</label>
+
+        <div class="check-sub">
+          <label>
+            <input type="checkbox">
+            <a href="https://docs.google.com/spreadsheets/d/13u9ujHeN7bZLWA4-L2HXqqoT3PKHVqS0CSM3r_ZUQGM/edit?usp=sharing" target="_blank">
+              Activated Aged Content Sheet
+            </a>
+          </label>
+
+          <label><input type="checkbox"> Brand Sheet if new domain</label>
+        </div>
+      </div>
+
+      <div class="check-group">
+        <label><input type="checkbox"> Web Details</label>
+
+        <div class="check-sub">
+          <label>
+            <input type="checkbox">
+            <a href="https://docs.google.com/spreadsheets/d/1AtIiqzLSYDIJ7aCRbfyPUVvPGkixmZY4/edit?usp=sharing" target="_blank">
+              Tim 1
+            </a>
+          </label>
+
+          <label>
+            <input type="checkbox">
+            <a href="https://docs.google.com/spreadsheets/d/1ftxN9lG5Nzk4cEPiMMMI4_IM4TlzoMs-/edit?usp=sharing" target="_blank">
+              Tim 2
+            </a>
+          </label>
+        </div>
+      </div>
+
+      <div class="check-group">
+        <label><input type="checkbox"> DOMAIN MASTERLIST</label>
+
+        <div class="check-sub code-box small">
+<pre><code>| Domain: ${data.inputUrl}
+| Ip:
+| UserName:
+| PassWord:
+| Brand:
+| Server:
+| Package:
+| Website Type:
+| Cloudflare:
+| Domain Type:
+| Setup Date:
+| Status:</code></pre>
+        </div>
+      </div>
+
+      <div class="check-group">
+        <label><input type="checkbox"> Domain Tracker GC Telegram</label>
+      </div>
+
+    </div>
+  `;
+
+  // 👇 insert after AMP card
+  results.insertBefore(card, ampCard.nextSibling);
 }
 
 /* ================================
