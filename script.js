@@ -3,6 +3,16 @@ let hideCardButtons = false;
 /* ================================
    HELPERS
 ================================ */
+function toggleGroup(parentCheckbox) {
+  const group = parentCheckbox.closest(".check-group");
+  if (!group) return;
+
+  const children = group.querySelectorAll(".check-sub input[type='checkbox']");
+
+  children.forEach(cb => {
+    cb.checked = parentCheckbox.checked;
+  });
+}
 
 function normalizeUrl(u) {
   try {
@@ -743,14 +753,20 @@ function createChecklistCard(ampCard, data) {
     <div class="checklist">
 
       <div class="check-group">
-        <label><input type="checkbox"> AGED_WEB DETAILS</label>
+       <label>
+        <input type="checkbox" onchange="toggleGroup(this)">
+        AGED_WEB DETAILS
+        <a href="https://docs.google.com/spreadsheets/d/13u9ujHeN7bZLWA4-L2HXqqoT3PKHVqS0CSM3r_ZUQGM/edit?usp=sharing"
+           target="_blank"
+           class="inline-link">
+           (Open Sheet)
+        </a>
+      </label>
 
         <div class="check-sub">
           <label>
             <input type="checkbox">
-            <a href="https://docs.google.com/spreadsheets/d/13u9ujHeN7bZLWA4-L2HXqqoT3PKHVqS0CSM3r_ZUQGM/edit?usp=sharing" target="_blank">
-              Activated Aged Content Sheet
-            </a>
+            <label><input type="checkbox"> Activated Aged Content Sheet</label>
           </label>
 
           <label><input type="checkbox"> Brand Sheet if new domain</label>
@@ -778,13 +794,13 @@ function createChecklistCard(ampCard, data) {
       </div>
 
       <div class="check-group">
-        <label>
-        <input type="checkbox"> 
+      <label>
+        <input type="checkbox" onchange="toggleGroup(this)">
         DOMAIN MASTERLIST
         <a href="https://docs.google.com/spreadsheets/d/1E0drns7LNil22cxGKxMeBCpvwfyela5yWHgF53Apl-o/edit?usp=sharing"
            target="_blank"
            class="inline-link">
-           🔗
+           (Open Sheet)
         </a>
       </label>
 
