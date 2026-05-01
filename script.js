@@ -765,7 +765,6 @@ function createChecklistCard(ampCard, data) {
 
         <div class="check-sub">
           <label>
-            <input type="checkbox">
             <label><input type="checkbox"> Activated Aged Content Sheet</label>
           </label>
 
