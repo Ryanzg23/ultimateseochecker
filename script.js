@@ -76,6 +76,19 @@ function isHomepageRedirect(inputUrl, finalUrl) {
   }
 }
 
+function updateParent(childCheckbox) {
+
+  const group = childCheckbox.closest(".check-group");
+  if (!group) return;
+
+  const parent = group.querySelector("label > input[type='checkbox']");
+  const children = group.querySelectorAll(".check-sub input[type='checkbox']");
+
+  const allChecked = Array.from(children).every(cb => cb.checked);
+
+  parent.checked = allChecked;
+}
+
 /* ================================
    UI CONTROLS
 ================================ */
@@ -739,7 +752,7 @@ if (schemaList.length) {
 
 
 function createChecklistCard(ampCard, data) {
-
+   const domainKey = (data.inputUrl || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
   const results = document.getElementById("results");
 
   const card = document.createElement("div");
@@ -750,11 +763,11 @@ function createChecklistCard(ampCard, data) {
       <h3>Workflow Checklist</h3>
     </div>
 
-    <div class="checklist">
+    <div class="checklist" data-domain="${domainKey}">
 
       <div class="check-group">
        <label>
-        <input type="checkbox" onchange="toggleGroup(this)">
+        <input type="checkbox" onchange="toggleGroup(this); saveChecklistState(this)">
         AGED_WEB DETAILS
         <a href="https://docs.google.com/spreadsheets/d/13u9ujHeN7bZLWA4-L2HXqqoT3PKHVqS0CSM3r_ZUQGM/edit?usp=sharing"
            target="_blank"
@@ -765,26 +778,26 @@ function createChecklistCard(ampCard, data) {
 
         <div class="check-sub">
           <label>
-            <label><input type="checkbox"> Activated Aged Content Sheet</label>
+            <label><input type="checkbox" onchange="updateParent(this); saveChecklistState(this)"> Activated Aged Content Sheet</label>
           </label>
 
-          <label><input type="checkbox"> Brand Sheet if new domain</label>
+          <label><input type="checkbox" onchange="updateParent(this); saveChecklistState(this)"> Brand Sheet if new domain</label>
         </div>
       </div>
 
       <div class="check-group">
-        <label><input type="checkbox"> Web Details</label>
+        <label><input type="checkbox" onchange="toggleGroup(this); saveChecklistState(this)"> Web Details</label>
 
         <div class="check-sub">
           <label>
-            <input type="checkbox">
+            <input type="checkbox" onchange="updateParent(this); saveChecklistState(this)">
             <a href="https://docs.google.com/spreadsheets/d/1AtIiqzLSYDIJ7aCRbfyPUVvPGkixmZY4/edit?usp=sharing" target="_blank">
               Tim 1
             </a>
           </label>
 
           <label>
-            <input type="checkbox">
+            <input type="checkbox" onchange="updateParent(this); saveChecklistState(this)">
             <a href="https://docs.google.com/spreadsheets/d/1ftxN9lG5Nzk4cEPiMMMI4_IM4TlzoMs-/edit?usp=sharing" target="_blank">
               Tim 2
             </a>
@@ -828,7 +841,7 @@ function createChecklistCard(ampCard, data) {
       </div>
 
       <div class="check-group">
-        <label><input type="checkbox"> Domain Tracker GC Telegram</label>
+        <label><input type="checkbox" onchange="updateParent(this)"> Domain Tracker GC Telegram</label>
       </div>
 
     </div>
@@ -840,8 +853,42 @@ function createChecklistCard(ampCard, data) {
    } else {
      results.appendChild(card);
    }
+
+   setTimeout(() => {
+     const checklist = card.querySelector(".checklist");
+     if (checklist) loadChecklistState(checklist);
+   }, 0);
 }
 
+function saveChecklistState(checkbox) {
+
+  const checklist = checkbox.closest(".checklist");
+  if (!checklist) return;
+
+  const domain = checklist.dataset.domain;
+
+  const checkboxes = checklist.querySelectorAll("input[type='checkbox']");
+
+  const state = Array.from(checkboxes).map(cb => cb.checked);
+
+  localStorage.setItem("checklist_" + domain, JSON.stringify(state));
+}
+
+function loadChecklistState(checklist) {
+
+  const domain = checklist.dataset.domain;
+
+  const saved = localStorage.getItem("checklist_" + domain);
+  if (!saved) return;
+
+  const state = JSON.parse(saved);
+
+  const checkboxes = checklist.querySelectorAll("input[type='checkbox']");
+
+  checkboxes.forEach((cb, i) => {
+    cb.checked = state[i] || false;
+  });
+}
 /* ================================
    AUTH RENDER
 ================================ */
