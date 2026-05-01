@@ -790,19 +790,21 @@ function createChecklistCard(ampCard, data) {
         <label><input type="checkbox" onchange="toggleGroup(this); saveChecklistState(this)"> Web Details</label>
 
         <div class="check-sub">
-          <label>
-            <input type="checkbox" onchange="updateParent(this); saveChecklistState(this)">
-            <a href="https://docs.google.com/spreadsheets/d/1AtIiqzLSYDIJ7aCRbfyPUVvPGkixmZY4/edit?usp=sharing" target="_blank">
-              Tim 1
-            </a>
-          </label>
-
-          <label>
-            <input type="checkbox" onchange="updateParent(this); saveChecklistState(this)">
-            <a href="https://docs.google.com/spreadsheets/d/1ftxN9lG5Nzk4cEPiMMMI4_IM4TlzoMs-/edit?usp=sharing" target="_blank">
-              Tim 2
-            </a>
-          </label>
+            <label>
+              <input type="checkbox" onchange="updateParent(this); saveChecklistState(this)">
+              <a href="https://docs.google.com/spreadsheets/d/1AtIiqzLSYDIJ7aCRbfyPUVvPGkixmZY4/edit?usp=sharing" target="_blank">
+                Tim 1
+              </a>
+              <span class="sub-note">(MAH, BBN, USG, USL & U138)</span>
+            </label>
+            
+            <label>
+              <input type="checkbox" onchange="updateParent(this); saveChecklistState(this)">
+              <a href="https://docs.google.com/spreadsheets/d/1ftxN9lG5Nzk4cEPiMMMI4_IM4TlzoMs-/edit?usp=sharing" target="_blank">
+                Tim 2
+              </a>
+              <span class="sub-note">(MBSW, DPX, DPN, MBN & MBP)</span>
+            </label>
         </div>
       </div>
 
