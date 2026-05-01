@@ -778,10 +778,25 @@ function createChecklistCard(ampCard, data) {
       </div>
 
       <div class="check-group">
-        <label><input type="checkbox"> DOMAIN MASTERLIST</label>
+        <label>
+        <input type="checkbox"> 
+        DOMAIN MASTERLIST
+        <a href="https://docs.google.com/spreadsheets/d/1E0drns7LNil22cxGKxMeBCpvwfyela5yWHgF53Apl-o/edit?usp=sharing"
+           target="_blank"
+           class="inline-link">
+           🔗
+        </a>
+      </label>
 
-        <div class="check-sub code-box small">
-<pre><code>| Domain: ${data.inputUrl}
+<div class="check-sub code-box small" style="position:relative;">
+
+<button class="copy-icon"
+  style="position:absolute; top:8px; right:8px;"
+  onclick="copyChecklist(this)">
+  ⧉
+</button>
+
+<pre><code id="masterlist-format">| Domain: ${data.inputUrl}
 | Ip:
 | UserName:
 | PassWord:
@@ -793,7 +808,8 @@ function createChecklistCard(ampCard, data) {
 | Domain Type:
 | Setup Date:
 | Status:</code></pre>
-        </div>
+
+</div>
       </div>
 
       <div class="check-group">
@@ -1265,6 +1281,24 @@ link.remove();
 function copyText(btn, text) {
 
   navigator.clipboard.writeText(text || "");
+
+  const original = btn.textContent;
+
+  btn.textContent = "Copied!";
+  btn.disabled = true;
+
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.disabled = false;
+  }, 1000);
+}
+
+function copyChecklist(btn) {
+
+  const box = btn.parentElement.querySelector("code");
+  const text = box?.innerText || "";
+
+  navigator.clipboard.writeText(text);
 
   const original = btn.textContent;
 
