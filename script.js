@@ -841,7 +841,7 @@ function createChecklistCard(ampCard, data) {
       </div>
 
       <div class="check-group">
-        <label><input type="checkbox" onchange="updateParent(this)"> Domain Tracker GC Telegram</label>
+        <label><input type="checkbox" onchange="updateParent(this); saveChecklistState(this)"> Domain Tracker GC Telegram</label>
       </div>
 
     </div>
