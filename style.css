@@ -1097,3 +1097,8 @@ border:1px solid rgba(234,179,8,0.35);
 .code-box.small {
   font-size: 12px;
 }
+.inline-link {
+  margin-left: 6px;
+  font-size: 13px;
+  text-decoration: none;
+}
