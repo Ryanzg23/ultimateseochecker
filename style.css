@@ -1109,3 +1109,9 @@ border:1px solid rgba(234,179,8,0.35);
 .inline-link:hover {
   text-decoration: underline;
 }
+
+.sub-note {
+  font-size: 11px;
+  color: #888;
+  margin-left: 6px;
+}
