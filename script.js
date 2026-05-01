@@ -803,7 +803,11 @@ function createChecklistCard(ampCard, data) {
   `;
 
   // 👇 insert after AMP card
-  results.insertBefore(card, ampCard.nextSibling);
+  if (ampCard.nextSibling) {
+     results.insertBefore(card, ampCard.nextSibling);
+   } else {
+     results.appendChild(card);
+   }
 }
 
 /* ================================
